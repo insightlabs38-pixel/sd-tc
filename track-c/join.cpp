@@ -206,22 +206,39 @@ struct Worker {
 
 static void parse_range(const char *p, const char *end, const std::vector<uint16_t> &regions,
                         unsigned unmatched, Worker &w) {
+    struct Pending {
+        uint64_t id;
+        Field name, note;
+        int64_t amount;
+        unsigned group;
+    };
     try {
+        std::array<Pending, 8> batch;
         while (p < end) {
-            bom(p, end);
-            uint64_t id = number(p, end);
-            comma(p, end);
-            Field name = text_field(p, end, true);
-            comma(p, end);
-            Field note = text_field(p, end, false);
-            comma(p, end);
-            uint64_t region = number(p, end);
-            comma(p, end);
-            int64_t amount = cents(p, end);
-            newline(p, end);
-            unsigned group = region < regions.size() && regions[region] != UINT16_MAX ? regions[region] : unmatched;
-            uint32_t name_id = w.names.intern(name);
-            w.groups[group].add(id, amount, name, note, w.names.first_in_group(name_id, group));
+            unsigned count = 0;
+            const size_t mask = w.names.table.size() - 1;
+            do {
+                bom(p, end);
+                uint64_t id = number(p, end);
+                comma(p, end);
+                Field name = text_field(p, end, true);
+                comma(p, end);
+                Field note = text_field(p, end, false);
+                comma(p, end);
+                uint64_t region = number(p, end);
+                comma(p, end);
+                int64_t amount = cents(p, end);
+                newline(p, end);
+                unsigned group = region < regions.size() && regions[region] != UINT16_MAX ? regions[region] : unmatched;
+                batch[count++] = Pending{id, name, note, amount, group};
+                __builtin_prefetch(&w.names.table[name.hash & mask], 0, 1);
+            } while (count < batch.size() && p < end);
+            for (unsigned i = 0; i < count; ++i) {
+                const Pending &r = batch[i];
+                uint32_t name_id = w.names.intern(r.name);
+                w.groups[r.group].add(r.id, r.amount, r.name, r.note,
+                                      w.names.first_in_group(name_id, r.group));
+            }
         }
     } catch (...) { w.error = std::current_exception(); }
 }
