@@ -4,6 +4,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <exception>
+#include <thread>
 #include <fcntl.h>
 #include <stdexcept>
 #include <string>
@@ -180,6 +182,35 @@ static std::string money(int64_t n) {
     return s + std::to_string(mag % 100);
 }
 
+struct Worker {
+    std::vector<Group> groups;
+    Names names;
+    std::exception_ptr error;
+    explicit Worker(size_t group_count) : groups(group_count) { }
+};
+
+static void parse_range(const char *p, const char *end, const std::vector<uint16_t> &regions,
+                        unsigned unmatched, Worker &w) {
+    try {
+        while (p < end) {
+            bom(p, end);
+            uint64_t id = number(p, end);
+            comma(p, end);
+            Field name = text_field(p, end, true);
+            comma(p, end);
+            Field note = text_field(p, end, false);
+            comma(p, end);
+            uint64_t region = number(p, end);
+            comma(p, end);
+            int64_t amount = cents(p, end);
+            newline(p, end);
+            unsigned group = region < regions.size() && regions[region] != UINT16_MAX ? regions[region] : unmatched;
+            uint32_t name_id = w.names.intern(name);
+            w.groups[group].add(id, amount, name, note, w.names.first_in_group(name_id, group));
+        }
+    } catch (...) { w.error = std::current_exception(); }
+}
+
 int main() {
     try {
         File lookup("/data/regions.csv");
@@ -216,23 +247,71 @@ int main() {
         if (end - p < 29 || memcmp(p, rh, 29)) throw std::runtime_error("records header");
         p += 29;
         newline(p, end);
+        const char *record_start = p;
+        unsigned threads = end - p < (1 << 20) ? 1 : 6;
+        std::vector<const char *> cuts(threads + 1);
+        cuts[0] = record_start;
+        cuts[threads] = end;
+        if (threads > 1) {
+            std::vector<uint8_t> parity(threads);
+            std::vector<std::thread> jobs;
+            for (unsigned i = 0; i < threads; ++i) {
+                const char *a = record_start + (end - record_start) * i / threads;
+                const char *b = record_start + (end - record_start) * (i + 1) / threads;
+                jobs.emplace_back([&, i, a, b] {
+                    uint8_t x = 0;
+                    for (const char *q = a; q < b; ++q) x ^= (*q == '"');
+                    parity[i] = x;
+                });
+            }
+            for (auto &job : jobs) job.join();
+            uint8_t in_quote = 0;
+            for (unsigned i = 1; i < threads; ++i) {
+                in_quote ^= parity[i - 1];
+                uint8_t state = in_quote;
+                const char *q = record_start + (end - record_start) * i / threads;
+                for (; q < end; ++q) {
+                    if (*q == '"') state ^= 1;
+                    if (*q == '\n' && !state) { ++q; break; }
+                }
+                cuts[i] = q;
+            }
+        }
+        std::vector<Worker> workers;
+        workers.reserve(threads);
+        for (unsigned i = 0; i < threads; ++i) workers.emplace_back(unmatched + 1);
+        std::vector<std::thread> jobs;
+        for (unsigned i = 0; i < threads; ++i)
+            jobs.emplace_back([&, i] { parse_range(cuts[i], cuts[i + 1], regions, unmatched, workers[i]); });
+        for (auto &job : jobs) job.join();
+        for (const auto &w : workers) if (w.error) std::rethrow_exception(w.error);
         std::vector<Group> groups(unmatched + 1);
-        Names names;
-        while (p < end) {
-            bom(p, end);
-            uint64_t id = number(p, end);
-            comma(p, end);
-            Field name = text_field(p, end, true);
-            comma(p, end);
-            Field note = text_field(p, end, false);
-            comma(p, end);
-            uint64_t region = number(p, end);
-            comma(p, end);
-            int64_t amount = cents(p, end);
-            newline(p, end);
-            unsigned group = region < regions.size() && regions[region] != UINT16_MAX ? regions[region] : unmatched;
-            uint32_t name_id = names.intern(name);
-            groups[group].add(id, amount, name, note, names.first_in_group(name_id, group));
+        Names global_names;
+        for (const auto &w : workers) {
+            for (unsigned g = 0; g <= unmatched; ++g) {
+                const Group &src = w.groups[g];
+                if (!src.count) continue;
+                Group &dst = groups[g];
+                if (!dst.count || src.min < dst.min) dst.min = src.min;
+                if (!dst.count || src.max > dst.max) dst.max = src.max;
+                dst.count += src.count;
+                dst.id_sum += src.id_sum;
+                dst.sum += src.sum;
+                dst.name_bytes += src.name_bytes;
+                dst.note_bytes += src.note_bytes;
+            }
+            for (const NameSlot &slot : w.names.table) {
+                if (slot.id == UINT32_MAX) continue;
+                uint32_t id = global_names.intern(slot.field);
+                for (unsigned word = 0; word < 4; ++word) {
+                    uint64_t bits = w.names.seen[slot.id][word];
+                    while (bits) {
+                        unsigned group = word * 64 + __builtin_ctzll(bits);
+                        if (global_names.first_in_group(id, group)) ++groups[group].distinct;
+                        bits &= bits - 1;
+                    }
+                }
+            }
         }
         std::vector<unsigned> order;
         for (unsigned i = 0; i < country.size(); ++i) if (groups[i].count) order.push_back(i);
