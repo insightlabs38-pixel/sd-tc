@@ -227,17 +227,19 @@ static void parse_range(const char *p, const char *end, const std::vector<uint16
                 Field note = text_field(p, end, false);
                 comma(p, end);
                 uint64_t region = number(p, end);
+                if (region < regions.size()) __builtin_prefetch(&regions[region], 0, 1);
                 comma(p, end);
                 int64_t amount = cents(p, end);
                 newline(p, end);
-                unsigned group = region < regions.size() && regions[region] != UINT16_MAX ? regions[region] : unmatched;
-                batch[count++] = Pending{id, name, note, amount, group};
+                batch[count++] = Pending{id, name, note, amount, static_cast<uint32_t>(region)};
             } while (count < batch.size() && p < end);
             for (unsigned i = 0; i < count; ++i) {
                 const Pending &r = batch[i];
                 uint32_t name_id = w.names.intern(r.name);
-                w.groups[r.group].add(r.id, r.amount, r.name, r.note,
-                                      w.names.first_in_group(name_id, r.group));
+                unsigned group = r.group < regions.size() && regions[r.group] != UINT16_MAX
+                                     ? regions[r.group] : unmatched;
+                w.groups[group].add(r.id, r.amount, r.name, r.note,
+                                    w.names.first_in_group(name_id, group));
             }
         }
     } catch (...) { w.error = std::current_exception(); }
