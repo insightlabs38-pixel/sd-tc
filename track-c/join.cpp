@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <charconv>
 #include <array>
 #include <cstdint>
 #include <cstdio>
@@ -148,9 +147,8 @@ struct Names {
 
 static uint64_t number(const char *&p, const char *end) {
     uint64_t n = 0;
-    auto result = std::from_chars(p, end, n);
-    if (result.ec != std::errc{} || result.ptr == p) throw std::runtime_error("missing integer");
-    p = result.ptr;
+    if (p == end || *p < '0' || *p > '9') throw std::runtime_error("missing integer");
+    while (p < end && *p >= '0' && *p <= '9') n = n * 10 + (*p++ - '0');
     return n;
 }
 static int64_t cents(const char *&p, const char *end) {
