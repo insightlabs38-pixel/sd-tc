@@ -273,13 +273,19 @@ static std::vector<Group> merge_workers(const std::vector<Worker> &workers, unsi
         jobs.emplace_back([&, shard] {
             try {
                 Names merged(1 << 15);
-                for (const Worker &w : workers) {
-                    for (const Field &slot : w.names.table) {
-                        if (slot.id == UINT32_MAX || ((slot.hash >> 16) % shards) != shard) continue;
-                        uint32_t id = merged.intern(slot);
+                struct Entry {
+                    const Field *name;
+                    const std::array<uint64_t, 4> *bits;
+                };
+                std::array<Entry, 8> pending;
+                unsigned count = 0;
+                auto flush = [&] {
+                    for (unsigned i = 0; i < count; ++i) {
+                        const Entry &entry = pending[i];
+                        uint32_t id = merged.intern(*entry.name);
                         for (unsigned word = 0; word < 4; ++word) {
                             uint64_t &dst = merged.seen[id][word];
-                            uint64_t fresh = w.names.seen[slot.id][word] & ~dst;
+                            uint64_t fresh = (*entry.bits)[word] & ~dst;
                             dst |= fresh;
                             while (fresh) {
                                 ++distinct[shard][word * 64 + __builtin_ctzll(fresh)];
@@ -287,7 +293,17 @@ static std::vector<Group> merge_workers(const std::vector<Worker> &workers, unsi
                             }
                         }
                     }
+                    count = 0;
+                };
+                for (const Worker &w : workers) {
+                    for (const Field &slot : w.names.table) {
+                        if (slot.id == UINT32_MAX || ((slot.hash >> 16) % shards) != shard) continue;
+                        pending[count++] = Entry{&slot, &w.names.seen[slot.id]};
+                        __builtin_prefetch(&merged.table[slot.hash & (merged.table.size() - 1)], 0, 1);
+                        if (count == pending.size()) flush();
+                    }
                 }
+                if (count) flush();
             } catch (...) { errors[shard] = std::current_exception(); }
         });
     }
