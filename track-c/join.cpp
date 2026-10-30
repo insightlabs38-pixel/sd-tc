@@ -76,23 +76,20 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
             }
         }
         uint32_t h = FNV_OFFSET;
-        for (;;) {
-            const char *q = static_cast<const char *>(memchr(p, '"', end - p));
-            if (!q) throw std::runtime_error("unclosed quote");
-            for (const char *x = p; x < q; ++x)
-                h = (h ^ static_cast<unsigned char>(*x)) * FNV_PRIME;
-            f.len += static_cast<uint32_t>(q - p);
-            if (q + 1 < end && q[1] == '"') {
-                h = (h ^ static_cast<unsigned char>('"')) * FNV_PRIME;
-                ++f.len;
-                p = q + 2;
-                continue;
+        while (p < end) {
+            unsigned char c = static_cast<unsigned char>(*p++);
+            if (c == '"') {
+                if (p < end && *p == '"') ++p;
+                else {
+                    f.raw_len = static_cast<uint32_t>(p - f.raw - 1);
+                    f.hash = h;
+                    return f;
+                }
             }
-            f.raw_len = static_cast<uint32_t>(q - f.raw);
-            f.hash = h;
-            p = q + 1;
-            return f;
+            ++f.len;
+            if (need_hash) h = (h ^ c) * FNV_PRIME;
         }
+        throw std::runtime_error("unclosed quote");
     }
     f.raw = p;
     uint32_t h = FNV_OFFSET;
@@ -161,11 +158,15 @@ struct Names {
         table.swap(next);
     }
     uint32_t intern(const Field &f) {
-        if ((used + 1) * 10 >= table.size() * 9) grow();
         size_t i = f.hash & (table.size() - 1);
         while (table[i].id != UINT32_MAX) {
             if (table[i].hash == f.hash && equal_field(table[i], f)) return table[i].id;
             i = (i + 1) & (table.size() - 1);
+        }
+        if ((used + 1) * 10 >= table.size() * 9) {
+            grow();
+            i = f.hash & (table.size() - 1);
+            while (table[i].id != UINT32_MAX) i = (i + 1) & (table.size() - 1);
         }
         uint32_t id = static_cast<uint32_t>(seen.size());
         table[i] = f;
