@@ -64,6 +64,38 @@ def handwritten():
         + bom + b'3,"c",,7,0.50'
     )
     check_case("quoted-bom-no-final-terminator")
+    DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n")
+    DATA.joinpath("records.csv").write_bytes(
+        bom + b"id,name,note,region_id,amount\r\n"
+        b'1,"kawjkkxlukqs","",7,1.00\n'
+        b'2,"sttpibhnmhzv","",7,2.00\n'
+        b'3,"kawjkkxlukqs","",7,3.00\r\n'
+    )
+    check_case("colliding-name-hashes")
+
+
+def split_boundary_stress():
+    bom = b"\xef\xbb\xbf"
+    header = bom + b"id,name,note,region_id,amount\r\n"
+    DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n8,BBB\n")
+    rows = bytearray(header)
+    for i in range(1, 24001):
+        rows.extend(f'{i},"name {i % 10}","short",7,1.00'.encode())
+        rows.extend(b"\r\n" if i % 2 else b"\n")
+    long_start = len(rows)
+    rows.extend(b'24001,"long","' + b'alpha\nbeta,said ""no""\n' * 5500
+                + b'omega",8,-0.05\r\n')
+    long_end = len(rows)
+    rows.extend(bom)
+    for i in range(24002, 48002):
+        rows.extend(f'{i},"name {i % 10}","short",7,1.00'.encode())
+        rows.extend(b"\r\n" if i % 2 else b"\n")
+    start = len(header)
+    if not any(long_start < start + (len(rows) - start) * i // 6 < long_end
+               for i in range(1, 6)):
+        raise AssertionError("long quoted record missed partition boundary")
+    DATA.joinpath("records.csv").write_bytes(rows)
+    check_case("long-quoted-record-crosses-worker-boundary")
 
 
 def main():
@@ -72,6 +104,7 @@ def main():
     command("g++", "-O3", "-std=c++17", "-DNDEBUG", "-flto", "-Wall", "-Wextra",
             "-Werror", "-o", "/tmp/sd-track-c", str(BIN))
     handwritten()
+    split_boundary_stress()
     for seed, scale in [(1, "tiny"), (2, "tiny"), (3, "tiny"),
                         (2, "sample"), (1, "sample"), (1, "full")]:
         command(sys.executable, str(GEN), "--seed", str(seed), "--scale", scale,
