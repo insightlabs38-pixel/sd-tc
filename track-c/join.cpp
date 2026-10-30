@@ -265,6 +265,15 @@ static std::vector<Group> merge_workers(const std::vector<Worker> &workers, unsi
         return groups;
     }
     constexpr unsigned shards = 6;
+    using MergeSlot = std::pair<const Field *, const Names *>;
+    std::array<std::vector<MergeSlot>, shards> partitions;
+    size_t total_names = 0;
+    for (const Worker &w : workers) total_names += w.names.used;
+    for (auto &partition : partitions) partition.reserve(total_names / shards + 64);
+    for (const Worker &w : workers)
+        for (const Field &slot : w.names.table)
+            if (slot.id != UINT32_MAX)
+                partitions[(slot.hash >> 16) % shards].emplace_back(&slot, &w.names);
     std::array<std::array<uint32_t, 256>, shards> distinct{};
     std::array<std::exception_ptr, shards> errors{};
     std::vector<std::thread> jobs;
@@ -273,18 +282,15 @@ static std::vector<Group> merge_workers(const std::vector<Worker> &workers, unsi
         jobs.emplace_back([&, shard] {
             try {
                 Names merged(1 << 15);
-                for (const Worker &w : workers) {
-                    for (const Field &slot : w.names.table) {
-                        if (slot.id == UINT32_MAX || ((slot.hash >> 16) % shards) != shard) continue;
-                        uint32_t id = merged.intern(slot);
-                        for (unsigned word = 0; word < 4; ++word) {
-                            uint64_t &dst = merged.seen[id][word];
-                            uint64_t fresh = w.names.seen[slot.id][word] & ~dst;
-                            dst |= fresh;
-                            while (fresh) {
-                                ++distinct[shard][word * 64 + __builtin_ctzll(fresh)];
-                                fresh &= fresh - 1;
-                            }
+                for (const auto &[slot, owner] : partitions[shard]) {
+                    uint32_t id = merged.intern(*slot);
+                    for (unsigned word = 0; word < 4; ++word) {
+                        uint64_t &dst = merged.seen[id][word];
+                        uint64_t fresh = owner->seen[slot->id][word] & ~dst;
+                        dst |= fresh;
+                        while (fresh) {
+                            ++distinct[shard][word * 64 + __builtin_ctzll(fresh)];
+                            fresh &= fresh - 1;
                         }
                     }
                 }
