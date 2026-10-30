@@ -218,14 +218,14 @@ struct Group {
     uint64_t count = 0, id_sum = 0, name_bytes = 0, note_bytes = 0;
     int64_t sum = 0, min = 0, max = 0;
     uint32_t distinct = 0;
-    void add(uint64_t id, int64_t amount, const Field &name, const Field &note, bool first) {
+    void add(uint64_t id, int64_t amount, const Field &name, uint32_t note_len, bool first) {
         if (!count || amount < min) min = amount;
         if (!count || amount > max) max = amount;
         ++count;
         id_sum += id;
         sum += amount;
         name_bytes += name.len;
-        note_bytes += note.len;
+        note_bytes += note_len;
         distinct += first;
     }
 };
@@ -248,7 +248,8 @@ static void parse_range(const char *p, const char *end, const std::vector<uint16
                         unsigned unmatched, Worker &w) {
     struct Pending {
         uint64_t id;
-        Field name, note;
+        Field name;
+        uint32_t note_len;
         int64_t amount;
         unsigned group;
     };
@@ -272,14 +273,14 @@ static void parse_range(const char *p, const char *end, const std::vector<uint16
                 comma(p, end);
                 int64_t amount = cents(p, end);
                 newline(p, end);
-                batch[count++] = Pending{id, name, note, amount, static_cast<uint32_t>(region)};
+                batch[count++] = Pending{id, name, note.len, amount, static_cast<uint32_t>(region)};
             } while (count < batch.size() && p < end);
             for (unsigned i = 0; i < count; ++i) {
                 const Pending &r = batch[i];
                 uint32_t name_id = w.names.intern(r.name);
                 unsigned group = r.group < regions.size() && regions[r.group] != UINT16_MAX
                                      ? regions[r.group] : unmatched;
-                w.groups[group].add(r.id, r.amount, r.name, r.note,
+                w.groups[group].add(r.id, r.amount, r.name, r.note_len,
                                     w.names.first_in_group(name_id, group));
             }
             if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
