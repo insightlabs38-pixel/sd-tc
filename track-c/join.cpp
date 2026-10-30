@@ -119,7 +119,7 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
         }
     }
     f.raw = p;
-    while (p < end && *p != ',' && *p != '\\r' && *p != '\\n') {
+    while (p < end && *p != ',' && *p != '\r' && *p != '\n') {
         ++p;
         ++f.len;
     }
