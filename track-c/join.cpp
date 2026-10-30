@@ -77,6 +77,8 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
 
 static bool equal_field(const Field &f, const Field &g) {
     if (f.len != g.len) return false;
+    if (f.raw_len == f.len && g.raw_len == g.len)
+        return std::memcmp(f.raw, g.raw, f.len) == 0;
     const char *a = f.raw, *b = g.raw;
     const char *ae = a + f.raw_len, *be = b + g.raw_len;
     while (a < ae && b < be) {
