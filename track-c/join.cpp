@@ -114,7 +114,7 @@ struct Names {
     std::vector<NameSlot> table;
     std::vector<std::array<uint64_t, 4>> seen;
     size_t used = 0;
-    explicit Names(size_t capacity = 1 << 18) : table(capacity) { }
+    explicit Names(size_t capacity = 1 << 18) : table(capacity) { seen.reserve(capacity); }
     void grow() {
         std::vector<NameSlot> next(table.size() * 2);
         for (const auto &slot : table) {
