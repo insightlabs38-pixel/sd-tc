@@ -131,11 +131,12 @@ def grow_stress():
 def merge_collision_stress():
     bom = b"\xef\xbb\xbf"
     DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n8,BBB\n")
-    rows = bytearray(b"id,name,note,region_id,amount\n")
+    rows = bytearray(b"id,name,note,region_id,amount\\n")
+    names = ("kawjkkxlukqs", "sttpibhnmhzv", "mduogtndfxub", "hfjiuhcjyfgb")
     for i in range(1, 50001):
         if i % 10000 == 1 and i > 1:
             rows.extend(bom)
-        name = "kawjkkxlukqs" if i % 2 else "sttpibhnmhzv"
+        name = names[i % len(names)]
         note = "a\nb" if i % 4096 == 0 else "short"
         ending = "\r\n" if i % 2 else "\n"
         rows.extend(f'{i},"{name}","{note}",{7 if i % 3 else 8},1.00{ending}'.encode())

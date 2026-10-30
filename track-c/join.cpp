@@ -51,50 +51,13 @@ struct Field {
 };
 static_assert(sizeof(Field) == 24, "name slot layout");
 
-static uint64_t hash_mix(uint64_t h, uint64_t word) {
-    h ^= word * 0x9e3779b185ebca87ULL;
-    return ((h << 27) | (h >> 37)) * 0xc2b2ae3d27d4eb4fULL;
-}
-static uint32_t hash_finish(uint64_t h) {
-    h ^= h >> 33;
-    h *= 0xff51afd7ed558ccdULL;
-    h ^= h >> 33;
-    h *= 0xc4ceb9fe1a85ec53ULL;
-    h ^= h >> 33;
-    return static_cast<uint32_t>(h ^ (h >> 32));
-}
-static uint32_t hash_field(const Field &f) {
-    uint64_t h = 0x517cc1b727220a95ULL ^
-                 (static_cast<uint64_t>(f.len) * 0x9e3779b185ebca87ULL);
-    const char *p = f.raw, *end = p + f.raw_len;
-    if (f.raw_len == f.len) {
-        while (end - p >= 8) {
-            uint64_t word;
-            std::memcpy(&word, p, sizeof(word));
-            h = hash_mix(h, word);
-            p += 8;
-        }
-        if (p != end) {
-            uint64_t tail = 0;
-            std::memcpy(&tail, p, end - p);
-            h = hash_mix(h, tail);
-        }
-    } else {
-        uint64_t word = 0;
-        unsigned filled = 0;
-        while (p < end) {
-            unsigned char c = static_cast<unsigned char>(*p++);
-            if (c == '"' && p < end && *p == '"') ++p;
-            word |= static_cast<uint64_t>(c) << (8 * filled++);
-            if (filled == 8) {
-                h = hash_mix(h, word);
-                word = 0;
-                filled = 0;
-            }
-        }
-        if (filled) h = hash_mix(h, word);
-    }
-    return hash_finish(h);
+static constexpr uint32_t HASH_OFFSET = 5381U;
+static uint32_t finish_hash(uint32_t h) {
+    h ^= h >> 16;
+    h *= 0x7feb352dU;
+    h ^= h >> 15;
+    h *= 0x846ca68bU;
+    return h ^ (h >> 16);
 }
 
 static Field text_field(const char *&p, const char *end, bool need_hash) {
@@ -103,28 +66,46 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
     if (f.quoted) {
         ++p;
         f.raw = p;
-        for (;;) {
-            const char *q = static_cast<const char *>(memchr(p, '"', end - p));
-            if (!q) throw std::runtime_error("unclosed quote");
-            f.len += static_cast<uint32_t>(q - p);
-            if (q + 1 < end && q[1] == '"') {
-                ++f.len;
-                p = q + 2;
-                continue;
+        if (!need_hash) {
+            for (;;) {
+                const char *q = static_cast<const char *>(memchr(p, '"', end - p));
+                if (!q) throw std::runtime_error("unclosed quote");
+                f.len += static_cast<uint32_t>(q - p);
+                if (q + 1 < end && q[1] == '"') {
+                    ++f.len;
+                    p = q + 2;
+                    continue;
+                }
+                f.raw_len = static_cast<uint32_t>(q - f.raw);
+                p = q + 1;
+                return f;
             }
-            f.raw_len = static_cast<uint32_t>(q - f.raw);
-            p = q + 1;
-            if (need_hash) f.hash = hash_field(f);
-            return f;
         }
+        uint32_t h = HASH_OFFSET;
+        while (p < end) {
+            unsigned char c = static_cast<unsigned char>(*p++);
+            if (c == '"') {
+                if (p < end && *p == '"') ++p;
+                else {
+                    f.raw_len = static_cast<uint32_t>(p - f.raw - 1);
+                    f.hash = finish_hash(h);
+                    return f;
+                }
+            }
+            ++f.len;
+            if (need_hash) h = (h * 33U) ^ c;
+        }
+        throw std::runtime_error("unclosed quote");
     }
     f.raw = p;
+    uint32_t h = HASH_OFFSET;
     while (p < end && *p != ',' && *p != '\r' && *p != '\n') {
-        ++p;
+        unsigned char c = static_cast<unsigned char>(*p++);
         ++f.len;
+        if (need_hash) h = (h * 33U) ^ c;
     }
     f.raw_len = f.len;
-    if (need_hash) f.hash = hash_field(f);
+    f.hash = finish_hash(h);
     return f;
 }
 
