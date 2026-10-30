@@ -308,7 +308,7 @@ static std::vector<Group> merge_workers(const std::vector<Worker> &workers, unsi
             groups[g].distinct = workers.front().groups[g].distinct;
         return groups;
     }
-    constexpr unsigned shards = 6;
+    constexpr unsigned shards = 4;
     std::array<std::array<uint32_t, 256>, shards> distinct{};
     std::array<std::exception_ptr, shards> errors{};
     std::vector<std::thread> jobs;
