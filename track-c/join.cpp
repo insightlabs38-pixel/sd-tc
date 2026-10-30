@@ -127,7 +127,7 @@ struct Names {
     char *arena_cursor = nullptr;
     size_t arena_remaining = 0;
     explicit Names(size_t capacity = 1 << 18, bool own = false)
-        : table(capacity), own_names(own) { seen.reserve(capacity * 4 / 5); }
+        : table(capacity), own_names(own) { seen.reserve(capacity); }
     const char *keep(const Field &f) {
         constexpr size_t block = 1 << 20;
         if (!f.raw_len) return f.raw;
