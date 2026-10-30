@@ -158,15 +158,11 @@ struct Names {
         table.swap(next);
     }
     uint32_t intern(const Field &f) {
+        if ((used + 1) * 10 >= table.size() * 9) grow();
         size_t i = f.hash & (table.size() - 1);
         while (table[i].id != UINT32_MAX) {
             if (table[i].hash == f.hash && equal_field(table[i], f)) return table[i].id;
             i = (i + 1) & (table.size() - 1);
-        }
-        if ((used + 1) * 10 >= table.size() * 9) {
-            grow();
-            i = f.hash & (table.size() - 1);
-            while (table[i].id != UINT32_MAX) i = (i + 1) & (table.size() - 1);
         }
         uint32_t id = static_cast<uint32_t>(seen.size());
         table[i] = f;
