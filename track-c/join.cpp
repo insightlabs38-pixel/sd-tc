@@ -213,7 +213,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint16
         unsigned group;
     };
     try {
-        std::array<Pending, 8> batch;
+        std::array<Pending, 16> batch;
         while (p < end) {
             unsigned count = 0;
             const size_t mask = w.names.table.size() - 1;
@@ -222,6 +222,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint16
                 uint64_t id = number(p, end);
                 comma(p, end);
                 Field name = text_field(p, end, true);
+                __builtin_prefetch(&w.names.table[name.hash & mask], 0, 1);
                 comma(p, end);
                 Field note = text_field(p, end, false);
                 comma(p, end);
@@ -231,7 +232,6 @@ static void parse_range(const char *p, const char *end, const std::vector<uint16
                 newline(p, end);
                 unsigned group = region < regions.size() && regions[region] != UINT16_MAX ? regions[region] : unmatched;
                 batch[count++] = Pending{id, name, note, amount, group};
-                __builtin_prefetch(&w.names.table[name.hash & mask], 0, 1);
             } while (count < batch.size() && p < end);
             for (unsigned i = 0; i < count; ++i) {
                 const Pending &r = batch[i];

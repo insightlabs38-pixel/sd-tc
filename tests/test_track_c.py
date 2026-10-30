@@ -101,10 +101,25 @@ def split_boundary_stress():
 def grow_stress():
     DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n")
     rows = bytearray(b"id,name,note,region_id,amount\n")
-    for i in range(1, 140001):
+    for i in range(1, 220001):
         rows.extend(f'{i},"unique {i}","",7,1.00\n'.encode())
     DATA.joinpath("records.csv").write_bytes(rows)
-    check_case("global-name-table-grow")
+    check_case("sharded-name-table-grow")
+
+
+def merge_collision_stress():
+    bom = b"\xef\xbb\xbf"
+    DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n8,BBB\n")
+    rows = bytearray(b"id,name,note,region_id,amount\n")
+    for i in range(1, 50001):
+        if i % 10000 == 1 and i > 1:
+            rows.extend(bom)
+        name = "kawjkkxlukqs" if i % 2 else "sttpibhnmhzv"
+        note = "a\nb" if i % 4096 == 0 else "short"
+        ending = "\r\n" if i % 2 else "\n"
+        rows.extend(f'{i},"{name}","{note}",{7 if i % 3 else 8},1.00{ending}'.encode())
+    DATA.joinpath("records.csv").write_bytes(rows)
+    check_case("cross-worker-colliding-names")
 
 
 def main():
@@ -115,6 +130,7 @@ def main():
     handwritten()
     split_boundary_stress()
     grow_stress()
+    merge_collision_stress()
     for seed, scale in [(1, "tiny"), (2, "tiny"), (3, "tiny"),
                         (2, "sample"), (1, "sample"), (1, "full")]:
         command(sys.executable, str(GEN), "--seed", str(seed), "--scale", scale,
