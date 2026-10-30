@@ -244,7 +244,7 @@ struct Worker {
     explicit Worker(size_t group_count) : groups(group_count), names(1 << 17, true) { }
 };
 
-static void parse_range(const char *p, const char *end, const std::vector<uint16_t> &regions,
+static void parse_range(const char *p, const char *end, const std::vector<uint8_t> &regions,
                         unsigned unmatched, Worker &w) {
     struct Pending {
         uint64_t id;
@@ -278,7 +278,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint16
             for (unsigned i = 0; i < count; ++i) {
                 const Pending &r = batch[i];
                 uint32_t name_id = w.names.intern(r.name);
-                unsigned group = r.group < regions.size() && regions[r.group] != UINT16_MAX
+                unsigned group = r.group < regions.size() && regions[r.group] != UINT8_MAX
                                      ? regions[r.group] : unmatched;
                 w.groups[group].add(r.id, r.amount, r.name, r.note_len,
                                     w.names.first_in_group(name_id, group));
@@ -350,7 +350,7 @@ int main() {
         const char *header = "region_id,country\n";
         if (end - p < 18 || memcmp(p, header, 18)) throw std::runtime_error("regions header");
         p += 18;
-        std::vector<uint16_t> regions(1000000, UINT16_MAX);
+        std::vector<uint8_t> regions(1000000, UINT8_MAX);
         std::array<int16_t, 17576> code_index;
         code_index.fill(-1);
         std::vector<std::string> country;
@@ -365,7 +365,7 @@ int main() {
                 country.emplace_back(p, 3);
             }
             if (id >= regions.size()) throw std::runtime_error("lookup id out of range");
-            regions[id] = static_cast<uint16_t>(code_index[code]);
+            regions[id] = static_cast<uint8_t>(code_index[code]);
             p += 3;
             newline(p, end);
         }
