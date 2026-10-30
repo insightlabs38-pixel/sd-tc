@@ -51,14 +51,8 @@ struct Field {
 };
 static_assert(sizeof(Field) == 24, "name slot layout");
 
-static constexpr uint32_t HASH_OFFSET = 5381U;
-static uint32_t finish_hash(uint32_t h) {
-    h ^= h >> 16;
-    h *= 0x7feb352dU;
-    h ^= h >> 15;
-    h *= 0x846ca68bU;
-    return h ^ (h >> 16);
-}
+static constexpr uint32_t FNV_OFFSET = 2166136261U;
+static constexpr uint32_t FNV_PRIME = 16777619U;
 
 static Field text_field(const char *&p, const char *end, bool need_hash) {
     Field f{};
@@ -81,31 +75,31 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
                 return f;
             }
         }
-        uint32_t h = HASH_OFFSET;
+        uint32_t h = FNV_OFFSET;
         while (p < end) {
             unsigned char c = static_cast<unsigned char>(*p++);
             if (c == '"') {
                 if (p < end && *p == '"') ++p;
                 else {
                     f.raw_len = static_cast<uint32_t>(p - f.raw - 1);
-                    f.hash = finish_hash(h);
+                    f.hash = h;
                     return f;
                 }
             }
             ++f.len;
-            if (need_hash) h = (h * 33U) ^ c;
+            if (need_hash) h = (h ^ c) * FNV_PRIME;
         }
         throw std::runtime_error("unclosed quote");
     }
     f.raw = p;
-    uint32_t h = HASH_OFFSET;
+    uint32_t h = FNV_OFFSET;
     while (p < end && *p != ',' && *p != '\r' && *p != '\n') {
         unsigned char c = static_cast<unsigned char>(*p++);
         ++f.len;
-        if (need_hash) h = (h * 33U) ^ c;
+        if (need_hash) h = (h ^ c) * FNV_PRIME;
     }
     f.raw_len = f.len;
-    f.hash = finish_hash(h);
+    f.hash = h;
     return f;
 }
 
