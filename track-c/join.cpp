@@ -375,7 +375,7 @@ int main() {
         p += 29;
         newline(p, end);
         const char *record_start = p;
-        unsigned threads = end - p < (1 << 20) ? 1 : 6;
+        unsigned threads = end - p < (1 << 20) ? 1 : 3;
         std::vector<const char *> cuts(threads + 1);
         cuts[0] = record_start;
         cuts[threads] = end;

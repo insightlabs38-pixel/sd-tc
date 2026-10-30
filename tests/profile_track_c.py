@@ -13,7 +13,7 @@ EXPECTED = "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
 
 
 def instrument(source, workers):
-    needle = "unsigned threads = end - p < (1 << 20) ? 1 : 6;"
+    needle = "unsigned threads = end - p < (1 << 20) ? 1 : 3;"
     assert source.count(needle) == 1
     source = source.replace(needle, f"unsigned threads = end - p < (1 << 20) ? 1 : {workers};")
     source = "#include <chrono>\n" + source
@@ -42,7 +42,7 @@ def instrument(source, workers):
 
 def main():
     source = SOURCE.read_text()
-    counts = (1, 3, 6, 12)
+    counts = (1, 2, 3, 4, 5, 6, 12)
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
         for workers in counts:
