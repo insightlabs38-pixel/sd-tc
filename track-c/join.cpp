@@ -148,7 +148,12 @@ struct Names {
 static uint64_t number(const char *&p, const char *end) {
     uint64_t n = 0;
     if (p == end || *p < '0' || *p > '9') throw std::runtime_error("missing integer");
-    while (p < end && *p >= '0' && *p <= '9') n = n * 10 + (*p++ - '0');
+    while (end - p >= 2 && static_cast<unsigned>(p[0] - '0') < 10 &&
+           static_cast<unsigned>(p[1] - '0') < 10) {
+        n = n * 100 + 10 * (p[0] - '0') + (p[1] - '0');
+        p += 2;
+    }
+    if (p < end && static_cast<unsigned>(*p - '0') < 10) n = n * 10 + (*p++ - '0');
     return n;
 }
 static int64_t cents(const char *&p, const char *end) {
