@@ -23,7 +23,7 @@ jobs:
         run: python3 tests/test_track_c.py
       - name: Paired full-scale runtime and RSS comparison
         run: |
-          git show c9412988e8c39227653b9fda7f9d5274ff634c5c:track-c/join.cpp > /tmp/sd-track-c-baseline.cpp
+          git show d31a0fe70e02ece927dedf2966a3c7762003f13c:track-c/join.cpp > /tmp/sd-track-c-baseline.cpp
           g++ -O3 -std=c++17 -DNDEBUG -flto -pthread -Wall -Wextra -Werror \
             -o /tmp/sd-track-c-baseline /tmp/sd-track-c-baseline.cpp
           wc -l /tmp/sd-track-c-baseline.cpp track-c/join.cpp

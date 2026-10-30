@@ -34,12 +34,12 @@ struct Field {
     const char *raw;
     uint32_t raw_len;
     uint32_t len;
-    uint64_t hash;
+    uint32_t hash;
     bool quoted;
 };
 
-static constexpr uint64_t FNV_OFFSET = 14695981039346656037ULL;
-static constexpr uint64_t FNV_PRIME = 1099511628211ULL;
+static constexpr uint32_t FNV_OFFSET = 2166136261U;
+static constexpr uint32_t FNV_PRIME = 16777619U;
 
 static Field text_field(const char *&p, const char *end, bool need_hash) {
     Field f{};
@@ -62,7 +62,7 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
                 return f;
             }
         }
-        uint64_t h = FNV_OFFSET;
+        uint32_t h = FNV_OFFSET;
         while (p < end) {
             unsigned char c = static_cast<unsigned char>(*p++);
             if (c == '"') {
@@ -79,7 +79,7 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
         throw std::runtime_error("unclosed quote");
     }
     f.raw = p;
-    uint64_t h = FNV_OFFSET;
+    uint32_t h = FNV_OFFSET;
     while (p < end && *p != ',' && *p != '\r' && *p != '\n') {
         unsigned char c = static_cast<unsigned char>(*p++);
         ++f.len;
