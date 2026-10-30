@@ -48,7 +48,7 @@ def main():
         for workers in counts:
             src = root / f"join-{workers}.cpp"
             src.write_text(instrument(source, workers))
-            subprocess.run(["g++", "-O3", "-std=c++17", "-DNDEBUG", "-flto", "-pthread",
+            subprocess.run(["g++", "-O3", "-march=x86-64-v3", "-std=c++17", "-DNDEBUG", "-flto", "-pthread",
                             "-Wall", "-Wextra", "-Werror", "-o", str(root / f"join-{workers}"),
                             str(src)], check=True)
         results = {count: [] for count in counts}
