@@ -109,38 +109,29 @@ static bool equal_field(const Field &f, const Field &g) {
 
 struct Names {
     std::vector<Field> table;
-    std::vector<uint8_t> control;
     std::vector<std::array<uint64_t, 4>> seen;
     size_t used = 0;
-    explicit Names(size_t capacity = 1 << 18)
-        : table(capacity), control(capacity, 0) { seen.reserve(capacity); }
+    explicit Names(size_t capacity = 1 << 18) : table(capacity) { seen.reserve(capacity); }
     void grow() {
         std::vector<Field> next(table.size() * 2);
-        std::vector<uint8_t> next_control(next.size(), 0);
-        for (size_t old = 0; old < table.size(); ++old) {
-            if (!control[old]) continue;
-            const Field &slot = table[old];
+        for (const auto &slot : table) {
+            if (slot.id == UINT32_MAX) continue;
             size_t i = slot.hash & (next.size() - 1);
-            while (next_control[i]) i = (i + 1) & (next.size() - 1);
+            while (next[i].id != UINT32_MAX) i = (i + 1) & (next.size() - 1);
             next[i] = slot;
-            next_control[i] = control[old];
         }
         table.swap(next);
-        control.swap(next_control);
     }
     uint32_t intern(const Field &f) {
         if ((used + 1) * 10 >= table.size() * 9) grow();
         size_t i = f.hash & (table.size() - 1);
-        const uint8_t tag = static_cast<uint8_t>((f.hash >> 25) + 1U);
-        while (control[i]) {
-            if (control[i] == tag && table[i].hash == f.hash &&
-                equal_field(table[i], f)) return table[i].id;
+        while (table[i].id != UINT32_MAX) {
+            if (table[i].hash == f.hash && equal_field(table[i], f)) return table[i].id;
             i = (i + 1) & (table.size() - 1);
         }
         uint32_t id = static_cast<uint32_t>(seen.size());
         table[i] = f;
         table[i].id = id;
-        control[i] = tag;
         seen.push_back({0, 0, 0, 0});
         ++used;
         return id;
@@ -235,6 +226,61 @@ static void parse_range(const char *p, const char *end, const std::vector<uint16
     } catch (...) { w.error = std::current_exception(); }
 }
 
+static std::vector<Group> merge_workers(const std::vector<Worker> &workers, unsigned group_count) {
+    std::vector<Group> groups(group_count);
+    for (const Worker &w : workers) {
+        for (unsigned g = 0; g < group_count; ++g) {
+            const Group &src = w.groups[g];
+            if (!src.count) continue;
+            Group &dst = groups[g];
+            if (!dst.count || src.min < dst.min) dst.min = src.min;
+            if (!dst.count || src.max > dst.max) dst.max = src.max;
+            dst.count += src.count;
+            dst.id_sum += src.id_sum;
+            dst.sum += src.sum;
+            dst.name_bytes += src.name_bytes;
+            dst.note_bytes += src.note_bytes;
+        }
+    }
+    if (workers.size() == 1) {
+        for (unsigned g = 0; g < group_count; ++g)
+            groups[g].distinct = workers.front().groups[g].distinct;
+        return groups;
+    }
+    constexpr unsigned shards = 6;
+    std::array<std::array<uint32_t, 256>, shards> distinct{};
+    std::array<std::exception_ptr, shards> errors{};
+    std::vector<std::thread> jobs;
+    jobs.reserve(shards);
+    for (unsigned shard = 0; shard < shards; ++shard) {
+        jobs.emplace_back([&, shard] {
+            try {
+                Names merged(1 << 15);
+                for (const Worker &w : workers) {
+                    for (const Field &slot : w.names.table) {
+                        if (slot.id == UINT32_MAX || ((slot.hash >> 16) % shards) != shard) continue;
+                        uint32_t id = merged.intern(slot);
+                        for (unsigned word = 0; word < 4; ++word) {
+                            uint64_t &dst = merged.seen[id][word];
+                            uint64_t fresh = w.names.seen[slot.id][word] & ~dst;
+                            dst |= fresh;
+                            while (fresh) {
+                                ++distinct[shard][word * 64 + __builtin_ctzll(fresh)];
+                                fresh &= fresh - 1;
+                            }
+                        }
+                    }
+                }
+            } catch (...) { errors[shard] = std::current_exception(); }
+        });
+    }
+    for (auto &job : jobs) job.join();
+    for (const auto &error : errors) if (error) std::rethrow_exception(error);
+    for (unsigned shard = 0; shard < shards; ++shard)
+        for (unsigned g = 0; g < group_count; ++g) groups[g].distinct += distinct[shard][g];
+    return groups;
+}
+
 int main() {
     try {
         File lookup("/data/regions.csv");
@@ -309,39 +355,7 @@ int main() {
             jobs.emplace_back([&, i] { parse_range(cuts[i], cuts[i + 1], regions, unmatched, workers[i]); });
         for (auto &job : jobs) job.join();
         for (const auto &w : workers) if (w.error) std::rethrow_exception(w.error);
-        std::vector<Group> groups(unmatched + 1);
-        Names &global_names = workers.front().names;
-        for (size_t wi = 0; wi < workers.size(); ++wi) {
-            const Worker &w = workers[wi];
-            for (unsigned g = 0; g <= unmatched; ++g) {
-                const Group &src = w.groups[g];
-                if (!src.count) continue;
-                Group &dst = groups[g];
-                if (!dst.count || src.min < dst.min) dst.min = src.min;
-                if (!dst.count || src.max > dst.max) dst.max = src.max;
-                dst.count += src.count;
-                dst.id_sum += src.id_sum;
-                dst.sum += src.sum;
-                dst.name_bytes += src.name_bytes;
-                dst.note_bytes += src.note_bytes;
-                if (!wi) dst.distinct = src.distinct;
-            }
-            if (!wi) continue;
-            for (size_t slot_index = 0; slot_index < w.names.table.size(); ++slot_index) {
-                if (!w.names.control[slot_index]) continue;
-                const Field &slot = w.names.table[slot_index];
-                uint32_t id = global_names.intern(slot);
-                for (unsigned word = 0; word < 4; ++word) {
-                    uint64_t &dst = global_names.seen[id][word];
-                    uint64_t fresh = w.names.seen[slot.id][word] & ~dst;
-                    dst |= fresh;
-                    while (fresh) {
-                        ++groups[word * 64 + __builtin_ctzll(fresh)].distinct;
-                        fresh &= fresh - 1;
-                    }
-                }
-            }
-        }
+        std::vector<Group> groups = merge_workers(workers, unmatched + 1);
         std::vector<unsigned> order;
         for (unsigned i = 0; i < country.size(); ++i) if (groups[i].count) order.push_back(i);
         std::sort(order.begin(), order.end(), [&](unsigned a, unsigned b) { return country[a] < country[b]; });
