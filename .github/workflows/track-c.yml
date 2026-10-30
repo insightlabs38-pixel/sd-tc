@@ -13,12 +13,29 @@ jobs:
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 4
       - name: Prepare data and output mounts
         run: |
           sudo mkdir -p /data /out
           sudo chown "$(id -u):$(id -g)" /data /out
       - name: Differential oracle, tiny/sample/full seeds
         run: python3 tests/test_track_c.py
+      - name: Paired full-scale runtime and RSS comparison
+        run: |
+          git show 9f68e9f76b9fb4e82a1c2eef6b1d2b335861280b:track-c/join.cpp > /tmp/sd-track-c-baseline.cpp
+          g++ -O3 -std=c++17 -DNDEBUG -flto -pthread -Wall -Wextra -Werror \
+            -o /tmp/sd-track-c-baseline /tmp/sd-track-c-baseline.cpp
+          wc -l /tmp/sd-track-c-baseline.cpp track-c/join.cpp
+          for trial in 1 2 3 4 5; do
+            if [ "$((trial % 2))" -eq 0 ]; then variants="current baseline"; else variants="baseline current"; fi
+            for variant in $variants; do
+              if [ "$variant" = "current" ]; then bin=/tmp/sd-track-c; else bin=/tmp/sd-track-c-baseline; fi
+              /usr/bin/time -f "$variant trial=$trial elapsed_s=%e peak_rss_kib=%M" "$bin"
+              test "$(sha256sum /out/aggregates.txt | cut -d' ' -f1)" = \
+                "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+            done
+          done
       - name: Build pinned offline Docker context
         run: docker build --network=none -t sd-track-c:ci track-c
       - name: Validate sandbox and full official hash
