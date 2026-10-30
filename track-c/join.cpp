@@ -201,7 +201,7 @@ struct Worker {
     std::vector<Group> groups;
     Names names;
     std::exception_ptr error;
-    explicit Worker(size_t group_count) : groups(group_count), names(1 << 17) { }
+    explicit Worker(size_t group_count) : groups(group_count), names(1 << 18) { }
 };
 
 static void parse_range(const char *p, const char *end, const std::vector<uint16_t> &regions,
