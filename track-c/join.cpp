@@ -1,0 +1,258 @@
+#include <algorithm>
+#include <array>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <fcntl.h>
+#include <stdexcept>
+#include <string>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <vector>
+
+struct File {
+    const char *data;
+    size_t size;
+    explicit File(const char *path) {
+        int fd = open(path, O_RDONLY);
+        if (fd < 0) throw std::runtime_error(std::string("open ") + path);
+        struct stat st;
+        if (fstat(fd, &st)) throw std::runtime_error("fstat");
+        size = st.st_size;
+        data = static_cast<const char *>(mmap(nullptr, size, PROT_READ, MAP_PRIVATE, fd, 0));
+        close(fd);
+        if (data == MAP_FAILED) throw std::runtime_error("mmap");
+    }
+    ~File() { munmap(const_cast<char *>(data), size); }
+};
+
+struct Field {
+    const char *raw;
+    uint32_t raw_len;
+    uint32_t len;
+    uint64_t hash;
+    bool quoted;
+};
+
+static constexpr uint64_t FNV_OFFSET = 14695981039346656037ULL;
+static constexpr uint64_t FNV_PRIME = 1099511628211ULL;
+
+static Field text_field(const char *&p, const char *end, bool need_hash) {
+    Field f{};
+    f.quoted = p < end && *p == '"';
+    if (f.quoted) {
+        ++p;
+        f.raw = p;
+        uint64_t h = FNV_OFFSET;
+        while (p < end) {
+            unsigned char c = static_cast<unsigned char>(*p++);
+            if (c == '"') {
+                if (p < end && *p == '"') ++p;
+                else {
+                    f.raw_len = static_cast<uint32_t>(p - f.raw - 1);
+                    f.hash = h;
+                    return f;
+                }
+            }
+            ++f.len;
+            if (need_hash) h = (h ^ c) * FNV_PRIME;
+        }
+        throw std::runtime_error("unclosed quote");
+    }
+    f.raw = p;
+    uint64_t h = FNV_OFFSET;
+    while (p < end && *p != ',' && *p != '\r' && *p != '\n') {
+        unsigned char c = static_cast<unsigned char>(*p++);
+        ++f.len;
+        if (need_hash) h = (h ^ c) * FNV_PRIME;
+    }
+    f.raw_len = f.len;
+    f.hash = h;
+    return f;
+}
+
+static bool equal_field(const Field &f, const Field &g) {
+    if (f.len != g.len) return false;
+    const char *a = f.raw, *b = g.raw;
+    const char *ae = a + f.raw_len, *be = b + g.raw_len;
+    while (a < ae && b < be) {
+        unsigned char x = *a++, y = *b++;
+        if (f.quoted && x == '"' && a < ae && *a == '"') ++a;
+        if (g.quoted && y == '"' && b < be && *b == '"') ++b;
+        if (x != y) return false;
+    }
+    return a == ae && b == be;
+}
+
+struct NameSlot {
+    Field field;
+    uint32_t id = UINT32_MAX;
+};
+
+struct Names {
+    std::vector<NameSlot> table;
+    std::vector<std::array<uint64_t, 4>> seen;
+    size_t used = 0;
+    explicit Names() : table(1 << 18) { }
+    void grow() {
+        std::vector<NameSlot> next(table.size() * 2);
+        for (const auto &slot : table) {
+            if (slot.id == UINT32_MAX) continue;
+            size_t i = slot.field.hash & (next.size() - 1);
+            while (next[i].id != UINT32_MAX) i = (i + 1) & (next.size() - 1);
+            next[i] = slot;
+        }
+        table.swap(next);
+    }
+    uint32_t intern(const Field &f) {
+        if ((used + 1) * 10 >= table.size() * 7) grow();
+        size_t i = f.hash & (table.size() - 1);
+        while (table[i].id != UINT32_MAX) {
+            if (table[i].field.hash == f.hash && equal_field(table[i].field, f)) return table[i].id;
+            i = (i + 1) & (table.size() - 1);
+        }
+        uint32_t id = static_cast<uint32_t>(seen.size());
+        table[i] = {f, id};
+        seen.push_back({0, 0, 0, 0});
+        ++used;
+        return id;
+    }
+    bool first_in_group(uint32_t id, unsigned group) {
+        uint64_t &cell = seen[id][group >> 6];
+        uint64_t mask = 1ULL << (group & 63);
+        if (cell & mask) return false;
+        cell |= mask;
+        return true;
+    }
+};
+
+static uint64_t number(const char *&p, const char *end) {
+    uint64_t n = 0;
+    if (p == end || *p < '0' || *p > '9') throw std::runtime_error("missing integer");
+    while (p < end && *p >= '0' && *p <= '9') n = n * 10 + (*p++ - '0');
+    return n;
+}
+static int64_t cents(const char *&p, const char *end) {
+    bool neg = p < end && *p == '-';
+    if (neg) ++p;
+    int64_t n = static_cast<int64_t>(number(p, end));
+    if (p + 2 >= end || *p++ != '.') throw std::runtime_error("bad decimal");
+    int64_t fraction = (p[0] - '0') * 10 + (p[1] - '0');
+    p += 2;
+    return neg ? -(n * 100 + fraction) : n * 100 + fraction;
+}
+static void comma(const char *&p, const char *end) {
+    if (p == end || *p++ != ',') throw std::runtime_error("missing comma");
+}
+static void newline(const char *&p, const char *end) {
+    if (p < end && *p == '\r') ++p;
+    if (p < end) {
+        if (*p++ != '\n') throw std::runtime_error("missing LF");
+    }
+}
+static void bom(const char *&p, const char *end) {
+    if (end - p >= 3 && static_cast<unsigned char>(p[0]) == 0xef &&
+        static_cast<unsigned char>(p[1]) == 0xbb && static_cast<unsigned char>(p[2]) == 0xbf) p += 3;
+}
+
+struct Group {
+    uint64_t count = 0, id_sum = 0, name_bytes = 0, note_bytes = 0;
+    int64_t sum = 0, min = 0, max = 0;
+    uint32_t distinct = 0;
+    void add(uint64_t id, int64_t amount, const Field &name, const Field &note, bool first) {
+        if (!count || amount < min) min = amount;
+        if (!count || amount > max) max = amount;
+        ++count;
+        id_sum += id;
+        sum += amount;
+        name_bytes += name.len;
+        note_bytes += note.len;
+        distinct += first;
+    }
+};
+static std::string money(int64_t n) {
+    bool negative = n < 0;
+    uint64_t mag = negative ? static_cast<uint64_t>(-(n + 1)) + 1 : static_cast<uint64_t>(n);
+    std::string s = (negative ? "-" : "") + std::to_string(mag / 100) + ".";
+    if (mag % 100 < 10) s += '0';
+    return s + std::to_string(mag % 100);
+}
+
+int main() {
+    try {
+        File lookup("/data/regions.csv");
+        const char *p = lookup.data, *end = p + lookup.size;
+        const char *header = "region_id,country\n";
+        if (end - p < 18 || memcmp(p, header, 18)) throw std::runtime_error("regions header");
+        p += 18;
+        std::vector<uint16_t> regions(1000000, UINT16_MAX);
+        std::array<int16_t, 17576> code_index;
+        code_index.fill(-1);
+        std::vector<std::string> country;
+        while (p < end) {
+            uint64_t id = number(p, end);
+            comma(p, end);
+            if (end - p < 3) throw std::runtime_error("short country");
+            int code = ((p[0] - 'A') * 26 + p[1] - 'A') * 26 + p[2] - 'A';
+            if (code < 0 || code >= 17576) throw std::runtime_error("bad country");
+            if (code_index[code] == -1) {
+                code_index[code] = static_cast<int16_t>(country.size());
+                country.emplace_back(p, 3);
+            }
+            if (id >= regions.size()) throw std::runtime_error("lookup id out of range");
+            regions[id] = static_cast<uint16_t>(code_index[code]);
+            p += 3;
+            newline(p, end);
+        }
+        if (country.size() > 255) throw std::runtime_error("too many countries");
+        const unsigned unmatched = static_cast<unsigned>(country.size());
+        File records("/data/records.csv");
+        p = records.data;
+        end = p + records.size;
+        bom(p, end);
+        const char *rh = "id,name,note,region_id,amount";
+        if (end - p < 29 || memcmp(p, rh, 29)) throw std::runtime_error("records header");
+        p += 29;
+        newline(p, end);
+        std::vector<Group> groups(unmatched + 1);
+        Names names;
+        while (p < end) {
+            bom(p, end);
+            uint64_t id = number(p, end);
+            comma(p, end);
+            Field name = text_field(p, end, true);
+            comma(p, end);
+            Field note = text_field(p, end, false);
+            comma(p, end);
+            uint64_t region = number(p, end);
+            comma(p, end);
+            int64_t amount = cents(p, end);
+            newline(p, end);
+            unsigned group = region < regions.size() && regions[region] != UINT16_MAX ? regions[region] : unmatched;
+            uint32_t name_id = names.intern(name);
+            groups[group].add(id, amount, name, note, names.first_in_group(name_id, group));
+        }
+        std::vector<unsigned> order;
+        for (unsigned i = 0; i < country.size(); ++i) if (groups[i].count) order.push_back(i);
+        std::sort(order.begin(), order.end(), [&](unsigned a, unsigned b) { return country[a] < country[b]; });
+        if (groups[unmatched].count) order.push_back(unmatched);
+        FILE *out = fopen("/out/aggregates.txt", "wb");
+        if (!out) throw std::runtime_error("open output");
+        for (unsigned i : order) {
+            const Group &g = groups[i];
+            std::string line = (i == unmatched ? "_UNMATCHED" : country[i]) + " " +
+                std::to_string(g.count) + " " + std::to_string(g.id_sum) + " " +
+                money(g.sum) + " " + money(g.min) + " " + money(g.max) + " " +
+                std::to_string(g.distinct) + " " + std::to_string(g.name_bytes) + " " +
+                std::to_string(g.note_bytes) + "\n";
+            if (fwrite(line.data(), 1, line.size(), out) != line.size()) throw std::runtime_error("write output");
+        }
+        if (fclose(out)) throw std::runtime_error("close output");
+        return 0;
+    } catch (const std::exception &e) {
+        fprintf(stderr, "track-c: %s\n", e.what());
+        return 1;
+    }
+}
