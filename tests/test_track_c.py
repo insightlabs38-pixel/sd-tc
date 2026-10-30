@@ -98,6 +98,15 @@ def split_boundary_stress():
     check_case("long-quoted-record-crosses-worker-boundary")
 
 
+def grow_stress():
+    DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n")
+    rows = bytearray(b"id,name,note,region_id,amount\n")
+    for i in range(1, 140001):
+        rows.extend(f'{i},"unique {i}","",7,1.00\n'.encode())
+    DATA.joinpath("records.csv").write_bytes(rows)
+    check_case("global-name-table-grow")
+
+
 def main():
     DATA.mkdir(exist_ok=True)
     OUT.mkdir(exist_ok=True)
@@ -105,6 +114,7 @@ def main():
             "-Werror", "-o", "/tmp/sd-track-c", str(BIN))
     handwritten()
     split_boundary_stress()
+    grow_stress()
     for seed, scale in [(1, "tiny"), (2, "tiny"), (3, "tiny"),
                         (2, "sample"), (1, "sample"), (1, "full")]:
         command(sys.executable, str(GEN), "--seed", str(seed), "--scale", scale,

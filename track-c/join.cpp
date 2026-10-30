@@ -109,29 +109,38 @@ static bool equal_field(const Field &f, const Field &g) {
 
 struct Names {
     std::vector<Field> table;
+    std::vector<uint8_t> control;
     std::vector<std::array<uint64_t, 4>> seen;
     size_t used = 0;
-    explicit Names(size_t capacity = 1 << 18) : table(capacity) { seen.reserve(capacity); }
+    explicit Names(size_t capacity = 1 << 18)
+        : table(capacity), control(capacity, 0) { seen.reserve(capacity); }
     void grow() {
         std::vector<Field> next(table.size() * 2);
-        for (const auto &slot : table) {
-            if (slot.id == UINT32_MAX) continue;
+        std::vector<uint8_t> next_control(next.size(), 0);
+        for (size_t old = 0; old < table.size(); ++old) {
+            if (!control[old]) continue;
+            const Field &slot = table[old];
             size_t i = slot.hash & (next.size() - 1);
-            while (next[i].id != UINT32_MAX) i = (i + 1) & (next.size() - 1);
+            while (next_control[i]) i = (i + 1) & (next.size() - 1);
             next[i] = slot;
+            next_control[i] = control[old];
         }
         table.swap(next);
+        control.swap(next_control);
     }
     uint32_t intern(const Field &f) {
         if ((used + 1) * 10 >= table.size() * 9) grow();
         size_t i = f.hash & (table.size() - 1);
-        while (table[i].id != UINT32_MAX) {
-            if (table[i].hash == f.hash && equal_field(table[i], f)) return table[i].id;
+        const uint8_t tag = static_cast<uint8_t>((f.hash >> 25) + 1U);
+        while (control[i]) {
+            if (control[i] == tag && table[i].hash == f.hash &&
+                equal_field(table[i], f)) return table[i].id;
             i = (i + 1) & (table.size() - 1);
         }
         uint32_t id = static_cast<uint32_t>(seen.size());
         table[i] = f;
         table[i].id = id;
+        control[i] = tag;
         seen.push_back({0, 0, 0, 0});
         ++used;
         return id;
@@ -318,8 +327,9 @@ int main() {
                 if (!wi) dst.distinct = src.distinct;
             }
             if (!wi) continue;
-            for (const Field &slot : w.names.table) {
-                if (slot.id == UINT32_MAX) continue;
+            for (size_t slot_index = 0; slot_index < w.names.table.size(); ++slot_index) {
+                if (!w.names.control[slot_index]) continue;
+                const Field &slot = w.names.table[slot_index];
                 uint32_t id = global_names.intern(slot);
                 for (unsigned word = 0; word < 4; ++word) {
                     uint64_t &dst = global_names.seen[id][word];
