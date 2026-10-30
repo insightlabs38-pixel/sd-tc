@@ -97,7 +97,7 @@ struct Names {
     std::vector<NameSlot> table;
     std::vector<std::array<uint64_t, 4>> seen;
     size_t used = 0;
-    explicit Names() : table(1 << 18) { }
+    explicit Names(size_t capacity = 1 << 18) : table(capacity) { }
     void grow() {
         std::vector<NameSlot> next(table.size() * 2);
         for (const auto &slot : table) {
@@ -109,7 +109,7 @@ struct Names {
         table.swap(next);
     }
     uint32_t intern(const Field &f) {
-        if ((used + 1) * 10 >= table.size() * 7) grow();
+        if ((used + 1) * 10 >= table.size() * 9) grow();
         size_t i = f.hash & (table.size() - 1);
         while (table[i].id != UINT32_MAX) {
             if (table[i].field.hash == f.hash && equal_field(table[i].field, f)) return table[i].id;
@@ -186,7 +186,7 @@ struct Worker {
     std::vector<Group> groups;
     Names names;
     std::exception_ptr error;
-    explicit Worker(size_t group_count) : groups(group_count) { }
+    explicit Worker(size_t group_count) : groups(group_count), names(1 << 17) { }
 };
 
 static void parse_range(const char *p, const char *end, const std::vector<uint16_t> &regions,
