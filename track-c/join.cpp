@@ -254,7 +254,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint16
         unsigned group;
     };
     try {
-        std::array<Pending, 16> batch;
+        std::array<Pending, 32> batch;
         const char *reclaimed = p;
         while (p < end) {
             unsigned count = 0;
