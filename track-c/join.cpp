@@ -1,3 +1,4 @@
+#include <immintrin.h>
 #include <nmmintrin.h>
 #include <algorithm>
 #include <array>
@@ -72,31 +73,45 @@ static uint32_t raw_hash(const char *p, size_t n) {
 static Field text_field(const char *&p, const char *end, bool need_hash, uint32_t &length) {
     Field f{};
     length = 0;
-    bool quoted = p < end && *p == '"';
-    if (quoted) {
-        ++p;
-        f.raw = p;
-        for (;;) {
-            const char *q = static_cast<const char *>(memchr(p, '"', end - p));
-            if (!q) throw std::runtime_error("unclosed quote");
-            length += static_cast<uint32_t>(q - p);
-            if (q + 1 < end && q[1] == '"') {
-                ++length;
-                p = q + 2;
-                continue;
+    if (p < end && *p == '"') {
+        f.raw = ++p;
+        const char *cursor = p;
+        uint32_t quotes_before = 0;
+        while (cursor < end) {
+            uint32_t quotes = 0, commas = 0;
+            unsigned count = static_cast<unsigned>(std::min<ptrdiff_t>(32, end - cursor));
+            if (count == 32) {
+                __m256i bytes = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(cursor));
+                quotes = static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(bytes, _mm256_set1_epi8('"'))));
+                commas = static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(bytes, _mm256_set1_epi8(','))));
+            } else for (unsigned i = 0; i < count; ++i) {
+                quotes |= static_cast<uint32_t>(cursor[i] == '"') << i;
+                commas |= static_cast<uint32_t>(cursor[i] == ',') << i;
             }
-            f.raw_len = static_cast<uint32_t>(q - f.raw);
-            f.hash = need_hash ? raw_hash(f.raw, f.raw_len) : HASH_OFFSET;
-            p = q + 1;
-            return f;
+            uint32_t candidates = quotes & (commas >> 1);
+            if (count == 32 && end - cursor > 32 && (quotes & 0x80000000U) && cursor[32] == ',') candidates |= 0x80000000U;
+            while (candidates) {
+                unsigned bit = __builtin_ctz(candidates);
+                const char *q = cursor + bit, *run = q;
+                while (run > f.raw && run[-1] == '"') --run;
+                if ((q - run + 1) & 1) {
+                    f.raw_len = static_cast<uint32_t>(q - f.raw);
+                    uint32_t inside = quotes_before + __builtin_popcount(quotes & ((1U << bit) - 1));
+                    length = f.raw_len - inside / 2;
+                    f.hash = need_hash ? raw_hash(f.raw, f.raw_len) : HASH_OFFSET;
+                    p = q + 1;
+                    return f;
+                }
+                candidates &= candidates - 1;
+            }
+            quotes_before += __builtin_popcount(quotes);
+            cursor += count;
         }
+        throw std::runtime_error("unclosed quoted text");
     }
     f.raw = p;
-    while (p < end && *p != ',' && *p != '\r' && *p != '\n') {
-        ++p;
-        ++length;
-    }
-    f.raw_len = length;
+    while (p < end && *p != ',' && *p != '\r' && *p != '\n') ++p;
+    f.raw_len = length = static_cast<uint32_t>(p - f.raw);
     f.hash = need_hash ? raw_hash(f.raw, f.raw_len) : HASH_OFFSET;
     return f;
 }
