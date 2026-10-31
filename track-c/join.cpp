@@ -1,8 +1,8 @@
+#include <nmmintrin.h>
 #include <algorithm>
 #include <array>
 #include <atomic>
 #include <cstdint>
-#include <nmmintrin.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -10,7 +10,7 @@
 #include <memory>
 #include <mutex>
 #include <thread>
-#include <utility>
+#include <unordered_map>
 #include <fcntl.h>
 #include <stdexcept>
 #include <string>
@@ -57,8 +57,7 @@ static_assert(sizeof(Field) == 24, "name slot layout");
 
 static constexpr uint32_t HASH_OFFSET = 5381U;
 
-// Quoted text has a unique CSV spelling, so raw-byte hashes preserve logical equality.
-static uint32_t hash_bytes(const char *p, size_t n) {
+static uint32_t raw_hash(const char *p, size_t n) {
     uint32_t h = HASH_OFFSET;
     while (n >= 8) {
         uint64_t word;
@@ -67,7 +66,9 @@ static uint32_t hash_bytes(const char *p, size_t n) {
         p += 8;
         n -= 8;
     }
-    while (n--) h = _mm_crc32_u8(h, static_cast<unsigned char>(*p++));
+    if (n & 4) { uint32_t w; std::memcpy(&w, p, 4); h = _mm_crc32_u32(h, w); p += 4; }
+    if (n & 2) { uint16_t w; std::memcpy(&w, p, 2); h = _mm_crc32_u16(h, w); p += 2; }
+    if (n & 1) h = _mm_crc32_u8(h, static_cast<unsigned char>(*p));
     return h;
 }
 
@@ -87,34 +88,40 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
                 continue;
             }
             f.raw_len = static_cast<uint32_t>(q - f.raw);
+            f.hash = need_hash ? raw_hash(f.raw, f.raw_len) : HASH_OFFSET;
             p = q + 1;
-            f.hash = need_hash ? hash_bytes(f.raw, f.raw_len) : HASH_OFFSET;
             return f;
         }
     }
     f.raw = p;
-    while (p < end && *p != ',' && *p != '\r' && *p != '\n') ++p;
-    f.raw_len = f.len = static_cast<uint32_t>(p - f.raw);
-    f.hash = need_hash ? hash_bytes(f.raw, f.len) : HASH_OFFSET;
+    while (p < end && *p != ',' && *p != '\r' && *p != '\n') {
+        ++p;
+        ++f.len;
+    }
+    f.raw_len = f.len;
+    f.hash = need_hash ? raw_hash(f.raw, f.raw_len) : HASH_OFFSET;
     return f;
-}
-
-template <class A, class B>
-static bool equal_field(const A &f, const B &g) {
-    // Valid CSV has a unique raw spelling for each logical value.
-    return f.raw_len == g.raw_len && std::memcmp(f.raw, g.raw, f.raw_len) == 0;
 }
 
 struct SharedNames {
     static constexpr unsigned shard_bits = 6;
-    static constexpr size_t slots_per_shard = 1 << 12;
+    static constexpr size_t slots_per_shard = 1 << 11;
     static uint32_t spread(uint32_t h) { return h ^ (h >> 11) ^ (h >> 22); }
     struct Slot {
-        const char *raw = nullptr;
+        char key[16]{};
         uint32_t raw_len = 0;
+        uint32_t padding = 0;
+        bool matches(const Field &f) const {
+            if (raw_len != f.raw_len) return false;
+            if (raw_len <= 16) return std::memcmp(key, f.raw, raw_len) == 0;
+            const char *p;
+            std::memcpy(&p, key, sizeof(p));
+            return std::memcmp(key + 8, f.raw, 8) == 0 &&
+                   std::memcmp(p + 8, f.raw + 8, raw_len - 8) == 0;
+        }
         std::atomic<uint64_t> seen[4]{};
     };
-    static_assert(sizeof(Slot) == 48, "compact shared name slot");
+    static_assert(sizeof(Slot) == 56, "compact shared name slot");
     struct Shard {
         struct Overflow {
             Field field;
@@ -158,7 +165,7 @@ struct SharedNames {
                 }
                 if ((entry & 0xffff0000U) == (f.hash & 0xffff0000U)) {
                     Slot &slot = pool[id - 1];
-                    if (equal_field(slot, f))
+                    if (slot.matches(f))
                         return {&slot, true};
                 }
                 i = (i + 1) & (slots_per_shard - 1);
@@ -180,7 +187,7 @@ struct SharedNames {
         if (!match.second && empty == slots_per_shard) {
             const uint64_t bit = 1ULL << (group & 63);
             for (auto &entry : s.overflow) {
-                if (entry.field.hash != name.hash || !equal_field(entry.field, name)) continue;
+                if (entry.field.hash != name.hash || entry.field.raw_len != name.raw_len || std::memcmp(entry.field.raw, name.raw, name.raw_len)) continue;
                 uint64_t &cell = entry.seen[group >> 6];
                 bool fresh = !(cell & bit);
                 cell |= bit;
@@ -195,7 +202,12 @@ struct SharedNames {
         }
         if (!match.second) {
             slot = &s.pool[s.used];
-            slot->raw = s.keep(name);
+            if (name.raw_len <= 16) std::memcpy(slot->key, name.raw, name.raw_len);
+            else {
+                const char *saved = s.keep(name);
+                std::memcpy(slot->key, &saved, sizeof(saved));
+                std::memcpy(slot->key + 8, name.raw, 8);
+            }
             slot->raw_len = name.raw_len;
             s.index[empty].store((name.hash & 0xffff0000U) | ++s.used,
                                  std::memory_order_release);
@@ -291,11 +303,11 @@ static std::string money(int64_t n) {
 struct Worker {
     std::vector<Group> groups;
     std::exception_ptr error;
-    explicit Worker(size_t group_count) : groups(group_count) {}
+    explicit Worker(size_t group_count) : groups(group_count) { }
 };
 
 static void parse_range(const char *p, const char *end, const std::vector<uint8_t> &regions,
-                        unsigned unmatched, Worker &w, SharedNames &names) {
+                        unsigned unmatched, Worker &w, SharedNames &shared) {
     struct Pending {
         uint64_t id;
         Field name;
@@ -309,14 +321,13 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
         while (p < end) {
             unsigned count = 0;
             do {
-                if (static_cast<unsigned char>(*p) == 0xef) bom(p, end);
+                bom(p, end);
                 uint64_t id = number(p, end);
                 comma(p, end);
                 Field name = text_field(p, end, true);
                 uint32_t spread = SharedNames::spread(name.hash);
-                auto &shard = names.shards[spread & ((1 << SharedNames::shard_bits) - 1)];
-                __builtin_prefetch(&shard.index[(spread >> SharedNames::shard_bits) &
-                                                (SharedNames::slots_per_shard - 1)], 0, 1);
+                auto &shard = shared.shards[spread & 63];
+                __builtin_prefetch(&shard.index[(spread >> 6) & (SharedNames::slots_per_shard - 1)], 0, 1);
                 comma(p, end);
                 Field note = text_field(p, end, false);
                 comma(p, end);
@@ -334,31 +345,11 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 unsigned group = r.group < regions.size() && regions[r.group] != UINT8_MAX
                                      ? regions[r.group] : unmatched;
                 w.groups[group].add(r.id, r.amount, r.name, r.note_len,
-                                    names.first(r.name, group));
+                                    shared.first(r.name, group));
             }
             if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
         }
     } catch (...) { w.error = std::current_exception(); }
-}
-
-static std::vector<Group> merge_workers(const std::vector<Worker> &workers, unsigned group_count) {
-    std::vector<Group> groups(group_count);
-    for (const Worker &w : workers) {
-        for (unsigned g = 0; g < group_count; ++g) {
-            const Group &src = w.groups[g];
-            if (!src.count) continue;
-            Group &dst = groups[g];
-            if (!dst.count || src.min < dst.min) dst.min = src.min;
-            if (!dst.count || src.max > dst.max) dst.max = src.max;
-            dst.count += src.count;
-            dst.id_sum += src.id_sum;
-            dst.sum += src.sum;
-            dst.name_bytes += src.name_bytes;
-            dst.note_bytes += src.note_bytes;
-            dst.distinct += src.distinct;
-        }
-    }
-    return groups;
 }
 
 int main() {
@@ -388,7 +379,6 @@ int main() {
             newline(p, end);
         }
         if (country.size() > 255) throw std::runtime_error("too many countries");
-        (void)madvise(const_cast<char *>(lookup.data), lookup.size, MADV_DONTNEED);
         const unsigned unmatched = static_cast<unsigned>(country.size());
         File records("/data/records.csv");
         p = records.data;
@@ -399,7 +389,7 @@ int main() {
         p += 29;
         newline(p, end);
         const char *record_start = p;
-        unsigned threads = end - p < (1 << 20) ? 1 : 4;
+        unsigned threads = end - p < (1 << 20) ? 1 : 6;
         std::vector<const char *> cuts(threads + 1);
         cuts[0] = record_start;
         cuts[threads] = end;
@@ -426,16 +416,29 @@ int main() {
                 cuts[i] = q;
             }
         }
-        static SharedNames names;
+        static SharedNames shared;
         std::vector<Worker> workers;
         workers.reserve(threads);
         for (unsigned i = 0; i < threads; ++i) workers.emplace_back(unmatched + 1);
         std::vector<std::thread> jobs;
         for (unsigned i = 0; i < threads; ++i)
-            jobs.emplace_back([&, i] { parse_range(cuts[i], cuts[i + 1], regions, unmatched, workers[i], names); });
+            jobs.emplace_back([&, i] { parse_range(cuts[i], cuts[i + 1], regions, unmatched, workers[i], shared); });
         for (auto &job : jobs) job.join();
         for (const auto &w : workers) if (w.error) std::rethrow_exception(w.error);
-        std::vector<Group> groups = merge_workers(workers, unmatched + 1);
+        std::vector<Group> groups(unmatched + 1);
+        for (const Worker &w : workers) for (unsigned g = 0; g <= unmatched; ++g) {
+            const Group &src = w.groups[g];
+            if (!src.count) continue;
+            Group &dst = groups[g];
+            if (!dst.count || src.min < dst.min) dst.min = src.min;
+            if (!dst.count || src.max > dst.max) dst.max = src.max;
+            dst.count += src.count;
+            dst.id_sum += src.id_sum;
+            dst.sum += src.sum;
+            dst.name_bytes += src.name_bytes;
+            dst.note_bytes += src.note_bytes;
+            dst.distinct += src.distinct;
+        }
         std::vector<unsigned> order;
         for (unsigned i = 0; i < country.size(); ++i) if (groups[i].count) order.push_back(i);
         std::sort(order.begin(), order.end(), [&](unsigned a, unsigned b) { return country[a] < country[b]; });

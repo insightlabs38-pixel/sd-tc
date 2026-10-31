@@ -1,7 +1,7 @@
 name: Track C correctness and container
 on:
   push:
-    branches: [main]
+    branches: [main, "frontier/round2-**"]
     paths:
       - "track-c/**"
       - "tests/**"
@@ -10,7 +10,7 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,7 +23,7 @@ jobs:
         run: python3 tests/test_track_c.py
       - name: Paired full-scale runtime and RSS comparison
         run: |
-          git show 2098c804aba1f500c0be0a395084929f554edabd:track-c/join.cpp > /tmp/sd-track-c-baseline.cpp
+          git show d1189c62ac6d6e56ba034e57919f0de3dc0f5128:track-c/join.cpp > /tmp/sd-track-c-baseline.cpp
           g++ -O3 -march=x86-64-v3 -std=c++17 -DNDEBUG -flto -pthread -Wall -Wextra -Werror \
             -o /tmp/sd-track-c-baseline /tmp/sd-track-c-baseline.cpp
           wc -l /tmp/sd-track-c-baseline.cpp track-c/join.cpp
@@ -45,3 +45,18 @@ jobs:
           test "$(sha256sum /out/aggregates.txt | cut -d' ' -f1)" = \
             "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
           test "$(find /out -maxdepth 1 -type f | wc -l)" -eq 1
+  sanitizers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        sanitizer: ["address,undefined", "thread"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare sandbox paths and sanitizer address space
+        run: |
+          sudo mkdir -p /data /out
+          sudo chown "$(id -u):$(id -g)" /data /out
+          sudo sysctl -w vm.mmap_rnd_bits=28
+      - name: Independent references and hostile cases
+        run: python3 tests/qualify_frontier.py --sanitizer='${{ matrix.sanitizer }}'
