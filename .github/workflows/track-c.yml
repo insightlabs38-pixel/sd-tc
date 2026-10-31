@@ -57,7 +57,7 @@ jobs:
       - name: Paired full-PGO architecture comparison
         run: |
           staging=$(mktemp -d)
-          git show b7bb0d5c32b2aa06cd1d046d4dabf31d65cd0389:track-c/join.cpp > "$staging/join.cpp"
+          git show 59e47be:track-c/join.cpp > "$staging/join.cpp"
           cp track-c/Dockerfile track-c/generator.py "$staging/"
           docker build --network=none -t sd-track-c:previous-pgo "$staging"
           container_id=$(docker create sd-track-c:previous-pgo)

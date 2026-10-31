@@ -157,6 +157,20 @@ def packed_metadata_stress():
     check_case("packed-metadata-lengths-and-full-hash-collisions")
 
 
+def wide_money_packet_stress():
+    DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n8,BBB\n")
+    values = (b"0.00", b"-0.05", b"99999.99", b"21474836.47", b"21474836.48",
+              b"-21474836.48", b"-21474836.49", b"12345678901.23", b"-12345678901.23")
+    rows = bytearray(b"id,name,note,region_id,amount\n")
+    for i in range(70000):
+        region = b"9999999" if i % 11 == 0 else b"7" if i % 3 else b"8"
+        name = b"A" * (i % 34)
+        rows.extend(str(100000000000 + i).encode() + b',"' + name + b'","x",' + region +
+                    b"," + values[i % len(values)] + (b"\n" if i % 2 else b"\r\n"))
+    DATA.joinpath("records.csv").write_bytes(rows)
+    check_case("wide-signed-money-and-compact-row-fallback")
+
+
 def huge_name_arena_stress():
     # Both large-arena storage and >24-bit logical lengths must remain exact.
     bom = b"\xef\xbb\xbf"
@@ -257,6 +271,7 @@ def main():
     handwritten()
     quote_vector_boundary_stress()
     packed_metadata_stress()
+    wide_money_packet_stress()
     split_boundary_stress()
     huge_name_arena_stress()
     grow_stress()

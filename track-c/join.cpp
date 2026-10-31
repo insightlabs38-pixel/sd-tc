@@ -47,13 +47,10 @@ static void discard_consumed(const char *&cursor, const char *end) {
 
 struct Field {
     const char *raw = nullptr;
-    uint32_t raw_len : 31;
-    uint32_t quoted : 1;
-    uint32_t len = 0;
+    uint32_t raw_len = 0;
     uint32_t hash = 0;
-    uint32_t id = UINT32_MAX;
 };
-static_assert(sizeof(Field) == 24, "name slot layout");
+static_assert(sizeof(Field) == 16, "projected name metadata");
 
 static constexpr uint32_t HASH_OFFSET = 5381U;
 
@@ -72,18 +69,19 @@ static uint32_t raw_hash(const char *p, size_t n) {
     return h;
 }
 
-static Field text_field(const char *&p, const char *end, bool need_hash) {
+static Field text_field(const char *&p, const char *end, bool need_hash, uint32_t &length) {
     Field f{};
-    f.quoted = p < end && *p == '"';
-    if (f.quoted) {
+    length = 0;
+    bool quoted = p < end && *p == '"';
+    if (quoted) {
         ++p;
         f.raw = p;
         for (;;) {
             const char *q = static_cast<const char *>(memchr(p, '"', end - p));
             if (!q) throw std::runtime_error("unclosed quote");
-            f.len += static_cast<uint32_t>(q - p);
+            length += static_cast<uint32_t>(q - p);
             if (q + 1 < end && q[1] == '"') {
-                ++f.len;
+                ++length;
                 p = q + 2;
                 continue;
             }
@@ -96,9 +94,9 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
     f.raw = p;
     while (p < end && *p != ',' && *p != '\r' && *p != '\n') {
         ++p;
-        ++f.len;
+        ++length;
     }
-    f.raw_len = f.len;
+    f.raw_len = length;
     f.hash = need_hash ? raw_hash(f.raw, f.raw_len) : HASH_OFFSET;
     return f;
 }
@@ -285,13 +283,13 @@ struct Group {
     uint64_t count = 0, id_sum = 0, name_bytes = 0, note_bytes = 0;
     int64_t sum = 0, min = 0, max = 0;
     uint32_t distinct = 0;
-    void add(uint64_t id, int64_t amount, const Field &name, uint32_t note_len, bool first) {
+    void add(uint64_t id, int64_t amount, uint32_t name_len, uint32_t note_len, bool first) {
         if (!count || amount < min) min = amount;
         if (!count || amount > max) max = amount;
         ++count;
         id_sum += id;
         sum += amount;
-        name_bytes += name.len;
+        name_bytes += name_len;
         note_bytes += note_len;
         distinct += first;
     }
@@ -315,10 +313,11 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
     struct Pending {
         uint64_t id;
         Field name;
-        uint32_t note_len;
-        int64_t amount;
+        int32_t amount;
+        uint32_t name_len, note_len;
         unsigned group;
     };
+    static_assert(sizeof(Pending) == 40, "compact pending row");
     try {
         std::array<Pending, 32> batch;
         const char *reclaimed = p;
@@ -328,12 +327,14 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 bom(p, end);
                 uint64_t id = number(p, end);
                 comma(p, end);
-                Field name = text_field(p, end, true);
+                uint32_t name_len;
+                Field name = text_field(p, end, true, name_len);
                 uint32_t spread = SharedNames::spread(name.hash);
                 auto &shard = shared.shards[spread & 63];
                 __builtin_prefetch(&shard.index[(spread >> 6) & (SharedNames::slots_per_shard - 1)], 0, 1);
                 comma(p, end);
-                Field note = text_field(p, end, false);
+                uint32_t note_len;
+                (void)text_field(p, end, false, note_len);
                 comma(p, end);
                 uint64_t region = number(p, end);
                 uint32_t region_key = region < regions.size()
@@ -342,13 +343,19 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 comma(p, end);
                 int64_t amount = cents(p, end);
                 newline(p, end);
-                batch[count++] = Pending{id, name, note.len, amount, region_key};
+                if (__builtin_expect(amount < INT32_MIN || amount > INT32_MAX, 0)) {
+                    unsigned group = region_key < regions.size() && regions[region_key] != UINT8_MAX
+                                         ? regions[region_key] : unmatched;
+                    w.groups[group].add(id, amount, name_len, note_len, shared.first(name, group));
+                    continue;
+                }
+                batch[count++] = Pending{id, name, static_cast<int32_t>(amount), name_len, note_len, region_key};
             } while (count < batch.size() && p < end);
             for (unsigned i = 0; i < count; ++i) {
                 const Pending &r = batch[i];
                 unsigned group = r.group < regions.size() && regions[r.group] != UINT8_MAX
                                      ? regions[r.group] : unmatched;
-                w.groups[group].add(r.id, r.amount, r.name, r.note_len,
+                w.groups[group].add(r.id, r.amount, r.name_len, r.note_len,
                                     shared.first(r.name, group));
             }
             if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);

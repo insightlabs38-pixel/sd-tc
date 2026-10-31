@@ -22,6 +22,7 @@ def main():
     cases.handwritten()
     cases.quote_vector_boundary_stress()
     cases.packed_metadata_stress()
+    cases.wide_money_packet_stress()
     cases.split_boundary_stress()
     cases.huge_name_arena_stress()
     cases.grow_stress()
