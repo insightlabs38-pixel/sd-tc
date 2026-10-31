@@ -80,7 +80,7 @@ static const char *find_quote(const char *p, const char *end) {
         if (mask) return p + __builtin_ctz(mask);
         p += 16;
     }
-    return find_quote(p, end);
+    return static_cast<const char *>(memchr(p, '"', end - p));
 }
 
 static Field text_field(const char *&p, const char *end, bool need_hash) {
@@ -90,7 +90,7 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
         ++p;
         f.raw = p;
         for (;;) {
-            const char *q = static_cast<const char *>(memchr(p, '"', end - p));
+            const char *q = find_quote(p, end);
             if (!q) throw std::runtime_error("unclosed quote");
             f.len += static_cast<uint32_t>(q - p);
             if (q + 1 < end && q[1] == '"') {
