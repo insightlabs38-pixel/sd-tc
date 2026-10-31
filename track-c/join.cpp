@@ -21,18 +21,23 @@
 
 struct File {
     const char *data;
-    size_t size;
+    size_t size, mapped;
     explicit File(const char *path) {
         int fd = open(path, O_RDONLY);
         if (fd < 0) throw std::runtime_error(std::string("open ") + path);
         struct stat st;
         if (fstat(fd, &st)) throw std::runtime_error("fstat");
         size = st.st_size;
-        data = static_cast<const char *>(mmap(nullptr, size, PROT_READ, MAP_PRIVATE, fd, 0));
+        size_t page = static_cast<size_t>(sysconf(_SC_PAGESIZE));
+        mapped = (size + page - 1) / page * page + page;
+        data = static_cast<const char *>(mmap(nullptr, mapped, PROT_READ, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0));
+        if (data == MAP_FAILED) { close(fd); throw std::runtime_error("reserve mmap"); }
+        if (size && mmap(const_cast<char *>(data), size, PROT_READ, MAP_PRIVATE | MAP_FIXED, fd, 0) == MAP_FAILED) {
+            munmap(const_cast<char *>(data), mapped); close(fd); throw std::runtime_error("file mmap");
+        }
         close(fd);
-        if (data == MAP_FAILED) throw std::runtime_error("mmap");
     }
-    ~File() { munmap(const_cast<char *>(data), size); }
+    ~File() { munmap(const_cast<char *>(data), mapped); }
 };
 
 static void discard_consumed(const char *&cursor, const char *end) {
@@ -58,6 +63,15 @@ static_assert(sizeof(Field) == 24, "name slot layout");
 static constexpr uint32_t HASH_OFFSET = 5381U;
 
 static uint32_t raw_hash(const char *p, size_t n) {
+    if (n <= 16) {
+        alignas(16) static const unsigned char mask[32] = {
+            255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
+            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        __m128i key = _mm_and_si128(_mm_loadu_si128(reinterpret_cast<const __m128i *>(p)),
+                                  _mm_loadu_si128(reinterpret_cast<const __m128i *>(mask + 16 - n)));
+        uint32_t h = static_cast<uint32_t>(_mm_crc32_u64(HASH_OFFSET, static_cast<uint64_t>(_mm_cvtsi128_si64(key))));
+        return static_cast<uint32_t>(_mm_crc32_u64(h, static_cast<uint64_t>(_mm_extract_epi64(key, 1))));
+    }
     uint32_t h = HASH_OFFSET;
     while (n >= 8) {
         uint64_t word;
@@ -73,21 +87,13 @@ static uint32_t raw_hash(const char *p, size_t n) {
 }
 
 static const char *find_quote(const char *p, const char *end) {
-    const __m256i quote32 = _mm256_set1_epi8('"');
-    while (end - p >= 32) {
+    const __m256i quote = _mm256_set1_epi8('"');
+    while (p < end) {
         __m256i block = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(p));
-        unsigned mask = static_cast<unsigned>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(block, quote32)));
-        if (mask) return p + __builtin_ctz(mask);
+        unsigned mask = static_cast<unsigned>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(block, quote)));
+        if (mask) { const char *q = p + __builtin_ctz(mask); return q < end ? q : nullptr; }
         p += 32;
     }
-    const __m128i quote16 = _mm_set1_epi8('"');
-    while (end - p >= 16) {
-        __m128i block = _mm_loadu_si128(reinterpret_cast<const __m128i *>(p));
-        unsigned mask = static_cast<unsigned>(_mm_movemask_epi8(_mm_cmpeq_epi8(block, quote16)));
-        if (mask) return p + __builtin_ctz(mask);
-        p += 16;
-    }
-    for (; p < end; ++p) if (*p == '"') return p;
     return nullptr;
 }
 
@@ -133,7 +139,13 @@ struct SharedNames {
         char key[16]{};
         std::atomic<uint64_t> seen[4]{};
         bool matches(const Field &f) const {
-            if (f.raw_len <= 16) return std::memcmp(key, f.raw, f.raw_len) == 0;
+            if (f.raw_len <= 16) {
+                __m128i a = _mm_loadu_si128(reinterpret_cast<const __m128i *>(key));
+                __m128i b = _mm_loadu_si128(reinterpret_cast<const __m128i *>(f.raw));
+                unsigned same = static_cast<unsigned>(_mm_movemask_epi8(_mm_cmpeq_epi8(a, b)));
+                unsigned valid = 0xffffU >> (16 - f.raw_len);
+                return (same & valid) == valid;
+            }
             const char *p;
             uint32_t length;
             std::memcpy(&p, key, sizeof(p));
