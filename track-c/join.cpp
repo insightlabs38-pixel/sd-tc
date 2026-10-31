@@ -120,7 +120,6 @@ struct Arena {
 
 struct SharedNames {
     struct alignas(64) Entry {
-        std::atomic<uint32_t> state{0};
         uint32_t hash = 0;
         uint32_t raw_len = 0;
         char key[16]{};
@@ -144,6 +143,7 @@ struct SharedNames {
     static constexpr size_t capacity = 1 << 17;
     static constexpr uint32_t limit = 120000;
     std::unique_ptr<Entry[]> table{new Entry[capacity]};
+    std::unique_ptr<std::atomic<uint8_t>[]> control{new std::atomic<uint8_t>[capacity]()};
     std::array<Flag, 12> active;
     std::atomic<unsigned> used{0}, phase{0};
     unsigned worker_count;
@@ -153,12 +153,12 @@ struct SharedNames {
 
     __attribute__((noinline, cold)) Entry *find_primary(const Field &field) {
         size_t i = field.hash & (capacity - 1);
+        const uint8_t tag = static_cast<uint8_t>((field.hash >> 25) + 2);
         for (;;) {
-            Entry &entry = table[i];
-            uint32_t state = entry.state.load(std::memory_order_acquire);
+            uint8_t state = control[i].load(std::memory_order_acquire);
             if (!state) return nullptr;
-            while (state == 1) state = entry.state.load(std::memory_order_acquire);
-            if (entry.matches(field)) return &entry;
+            while (state == 1) state = control[i].load(std::memory_order_acquire);
+            if (state == tag && table[i].matches(field)) return &table[i];
             i = (i + 1) & (capacity - 1);
         }
     }
@@ -185,9 +185,10 @@ struct SharedNames {
 
     bool first_in_group(const Field &field, unsigned group, Arena &storage, unsigned worker_id) {
         size_t i = field.hash & (capacity - 1);
+        const uint8_t tag = static_cast<uint8_t>((field.hash >> 25) + 2);
         for (;;) {
             Entry &entry = table[i];
-            uint32_t state = entry.state.load(std::memory_order_acquire);
+            uint8_t state = control[i].load(std::memory_order_acquire);
             if (__builtin_expect(!state, 0)) {
                 active[worker_id].value.store(1, std::memory_order_seq_cst);
                 if (phase.load(std::memory_order_acquire) != 0) {
@@ -196,8 +197,8 @@ struct SharedNames {
                     if (Entry *found = find_primary(field)) return found->first(group);
                     return first_overflow(field, group);
                 }
-                uint32_t expected = 0;
-                if (entry.state.compare_exchange_strong(expected, 1, std::memory_order_acq_rel)) {
+                uint8_t expected = 0;
+                if (control[i].compare_exchange_strong(expected, 1, std::memory_order_acq_rel)) {
                     entry.hash = field.hash;
                     entry.raw_len = field.raw_len;
                     if (field.raw_len <= sizeof(entry.key)) {
@@ -207,7 +208,7 @@ struct SharedNames {
                         std::memcpy(entry.key, &saved, sizeof(saved));
                         std::memcpy(entry.key + 8, field.raw, 8);
                     }
-                    entry.state.store(2, std::memory_order_release);
+                    control[i].store(tag, std::memory_order_release);
                     bool first = entry.first(group);
                     unsigned count = used.fetch_add(1, std::memory_order_relaxed) + 1;
                     active[worker_id].value.store(0, std::memory_order_release);
@@ -217,8 +218,8 @@ struct SharedNames {
                 active[worker_id].value.store(0, std::memory_order_release);
                 state = expected;
             }
-            while (state == 1) state = entry.state.load(std::memory_order_acquire);
-            if (state == 2 && entry.hash == field.hash && entry.raw_len == field.raw_len) {
+            while (state == 1) state = control[i].load(std::memory_order_acquire);
+            if (state == tag && entry.hash == field.hash && entry.raw_len == field.raw_len) {
                 bool same;
                 if (field.raw_len <= sizeof(entry.key)) {
                     same = std::memcmp(entry.key, field.raw, field.raw_len) == 0;
