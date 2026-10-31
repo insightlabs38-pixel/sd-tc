@@ -36,6 +36,26 @@ def check_case(label, reference_hash=None):
         print(f"{label}: exact, {len(got)} output bytes, sha256={digest}", flush=True)
 
 
+def _crc32c_table():
+    table = []
+    for i in range(256):
+        value = i
+        for _ in range(8):
+            value = (value >> 1) ^ (0x82F63B78 if value & 1 else 0)
+        table.append(value)
+    return table
+
+
+CRC32C_TABLE = _crc32c_table()
+
+
+def crc32c(data):
+    value = 5381
+    for byte in data:
+        value = CRC32C_TABLE[(value ^ byte) & 255] ^ (value >> 8)
+    return value
+
+
 def handwritten():
     bom = b"\xef\xbb\xbf"
     DATA.joinpath("regions.csv").write_bytes(
@@ -67,11 +87,23 @@ def handwritten():
     DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n")
     DATA.joinpath("records.csv").write_bytes(
         bom + b"id,name,note,region_id,amount\r\n"
-        b'1,"kawjkkxlukqs","",7,1.00\n'
-        b'2,"sttpibhnmhzv","",7,2.00\n'
-        b'3,"kawjkkxlukqs","",7,3.00\r\n'
+        b'1,"HWIGCKWZQ","",7,1.00\n'
+        b'2,"BUBZVTFQS","",7,2.00\n'
+        b'3,"HWIGCKWZQ","",7,3.00\r\n'
     )
+    assert crc32c(b"HWIGCKWZQ") == crc32c(b"BUBZVTFQS")
     check_case("colliding-name-hashes")
+    DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n")
+    DATA.joinpath("records.csv").write_bytes(
+        b"id,name,note,region_id,amount\n"
+        b'1,plain,"",7,1.00\n'
+        b'2,"plain",,7,2.00\n'
+        b'3,"a""b","",7,3.00\n'
+        b'4,"a""b",,7,4.00\n'
+        b'5,"comma,inside","",7,5.00\n'
+        b'6,"comma,inside",,7,6.00\n'
+    )
+    check_case("canonical-raw-name-equivalence")
     DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n")
     DATA.joinpath("records.csv").write_bytes(
         b"id,name,note,region_id,amount\n"
@@ -79,27 +111,34 @@ def handwritten():
         b'2,"wrapped","",4294967303,-0.05\n'
     )
     check_case("wide-unknown-region-id")
+    DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n")
+    DATA.joinpath("records.csv").write_bytes(
+        b"id,name,note,region_id,amount\n"
+        b'12345678,"eight","",7,1.00\n'
+        b'12345679,"eight",,7,-0.01\r\n'
+    )
+    check_case("eight-digit-id-fast-path")
 
 
 
 def huge_name_arena_stress():
-    # The Python CSV reference has a 128 KiB default field limit; check this
-    # valid larger record against independently computed exact output bytes.
+    # Both large-arena storage and >24-bit logical lengths must remain exact.
     bom = b"\xef\xbb\xbf"
-    name = b'"' + b"A" * ((1 << 20) + 17) + b'""B"'
     DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n8,BBB\n")
-    DATA.joinpath("records.csv").write_bytes(
-        bom + b"id,name,note,region_id,amount\r\n"
-        + b'1,' + name + b',"note",7,1.00\n'
-        + bom + b'2,' + name + b',"",7,-0.05\r\n'
-        + b'3,"",,8,0.00\n'
-    )
-    command("/tmp/sd-track-c")
-    expected = (b"AAA 2 3 0.95 -0.05 1.00 1 2097190 4\n"
-                b"BBB 1 3 0.00 0.00 0.00 1 0 0\n")
-    if (OUT / "aggregates.txt").read_bytes() != expected:
-        raise AssertionError("huge-name-arena: output differs from hand-computed bytes")
-    print("huge-name-arena: exact, long quoted name crosses worker boundaries", flush=True)
+    for width in ((1 << 20) + 17, (1 << 24) + 17):
+        name = b'"' + b"A" * width + b'""B"'
+        DATA.joinpath("records.csv").write_bytes(
+            bom + b"id,name,note,region_id,amount\r\n"
+            + b'1,' + name + b',"note",7,1.00\n'
+            + bom + b'2,' + name + b',"",7,-0.05\r\n'
+            + b'3,"",,8,0.00\n'
+        )
+        command("/tmp/sd-track-c")
+        expected = (f"AAA 2 3 0.95 -0.05 1.00 1 {2 * (width + 2)} 4\n".encode()
+                    + b"BBB 1 3 0.00 0.00 0.00 1 0 0\n")
+        if (OUT / "aggregates.txt").read_bytes() != expected:
+            raise AssertionError(f"huge-name-arena-{width}: output differs from exact bytes")
+        print(f"huge-name-arena-{width}: exact, long name and worker boundaries", flush=True)
 
 
 def split_boundary_stress():
@@ -153,6 +192,27 @@ def merge_collision_stress():
     check_case("cross-worker-colliding-names")
 
 
+def concentrated_shard_stress():
+    # Exercise the collision-safe overflow path with >4096 names in one shard.
+    names = []
+    for i in range(400000):
+        value = f"n{i}"
+        h = crc32c(value.encode())
+        spread = h ^ (h >> 11) ^ (h >> 22)
+        if (spread & 63) == 0:
+            names.append(value)
+            if len(names) == 4200:
+                break
+    assert len(names) == 4200
+    DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n")
+    rows = bytearray(b"id,name,note,region_id,amount\n")
+    for i in range(42000):
+        rows.extend(f'{i + 1},"{names[i % len(names)]}","",7,1.00\n'.encode())
+    assert len(rows) > (1 << 20), "exercise concurrent four-worker overflow"
+    DATA.joinpath("records.csv").write_bytes(rows)
+    check_case("concentrated-name-shard-overflow")
+
+
 def main():
     DATA.mkdir(exist_ok=True)
     OUT.mkdir(exist_ok=True)
@@ -162,6 +222,7 @@ def main():
     split_boundary_stress()
     huge_name_arena_stress()
     grow_stress()
+    concentrated_shard_stress()
     merge_collision_stress()
     for seed, scale in [(1, "tiny"), (2, "tiny"), (3, "tiny"),
                         (2, "sample"), (1, "sample"), (1, "full")]:
