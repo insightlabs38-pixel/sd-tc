@@ -121,7 +121,7 @@ struct Arena {
 };
 
 struct SharedNames {
-    struct Entry {
+    struct alignas(64) Entry {
         std::atomic<uint32_t> state{0};
         Field field{};
         std::atomic<uint64_t> seen[4]{};
