@@ -194,19 +194,11 @@ struct Names {
 static uint64_t number(const char *&p, const char *end) {
     const char *start = p;
     uint64_t n = 0;
-    while (end - p >= 2) {
-        unsigned a = static_cast<unsigned char>(p[0]) - '0';
-        unsigned b = static_cast<unsigned char>(p[1]) - '0';
-        if (a > 9 || b > 9) break;
-        n = n * 100 + a * 10 + b;
-        p += 2;
-    }
-    if (p < end) {
+    while (p < end) {
         unsigned digit = static_cast<unsigned char>(*p) - '0';
-        if (digit <= 9) {
-            n = n * 10 + digit;
-            ++p;
-        }
+        if (digit > 9) break;
+        n = n * 10 + digit;
+        ++p;
     }
     if (p == start) throw std::runtime_error("missing integer");
     return n;
