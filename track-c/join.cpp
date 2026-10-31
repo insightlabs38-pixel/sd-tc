@@ -123,6 +123,7 @@ static bool equal_field(const Field &f, const Field &g) {
 struct SharedNames {
     static constexpr unsigned shard_bits = 6;
     static constexpr size_t slots_per_shard = 1 << 12;
+    static uint32_t spread(uint32_t h) { return h ^ (h >> 11) ^ (h >> 22); }
     struct Slot {
         Field field{};
         std::atomic<uint64_t> seen[4]{};
@@ -154,7 +155,7 @@ struct SharedNames {
             return dst;
         }
         std::pair<Slot *, bool> probe(const Field &f) {
-            size_t i = (f.hash >> shard_bits) & (slots_per_shard - 1);
+            size_t i = (spread(f.hash) >> shard_bits) & (slots_per_shard - 1);
             for (size_t n = 0; n < slots_per_shard; ++n) {
                 Slot &slot = table[i];
                 if (!slot.ready.load(std::memory_order_acquire)) return {&slot, false};
@@ -166,7 +167,7 @@ struct SharedNames {
     };
     std::array<Shard, 1 << shard_bits> shards;
     bool first(const Field &name, unsigned group) {
-        Shard &s = shards[name.hash & (shards.size() - 1)];
+        Shard &s = shards[spread(name.hash) & (shards.size() - 1)];
         auto match = s.probe(name);
         Slot *slot = match.first;
         if (!match.second) {
