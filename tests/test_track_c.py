@@ -36,6 +36,26 @@ def check_case(label, reference_hash=None):
         print(f"{label}: exact, {len(got)} output bytes, sha256={digest}", flush=True)
 
 
+def _crc32c_table():
+    table = []
+    for i in range(256):
+        value = i
+        for _ in range(8):
+            value = (value >> 1) ^ (0x82F63B78 if value & 1 else 0)
+        table.append(value)
+    return table
+
+
+CRC32C_TABLE = _crc32c_table()
+
+
+def crc32c(data):
+    value = 5381
+    for byte in data:
+        value = CRC32C_TABLE[(value ^ byte) & 255] ^ (value >> 8)
+    return value
+
+
 def handwritten():
     bom = b"\xef\xbb\xbf"
     DATA.joinpath("regions.csv").write_bytes(
@@ -67,10 +87,11 @@ def handwritten():
     DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n")
     DATA.joinpath("records.csv").write_bytes(
         bom + b"id,name,note,region_id,amount\r\n"
-        b'1,"kawjkkxlukqs","",7,1.00\n'
-        b'2,"sttpibhnmhzv","",7,2.00\n'
-        b'3,"kawjkkxlukqs","",7,3.00\r\n'
+        b'1,"HWIGCKWZQ","",7,1.00\n'
+        b'2,"BUBZVTFQS","",7,2.00\n'
+        b'3,"HWIGCKWZQ","",7,3.00\r\n'
     )
+    assert crc32c(b"HWIGCKWZQ") == crc32c(b"BUBZVTFQS")
     check_case("colliding-name-hashes")
     DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n")
     DATA.joinpath("records.csv").write_bytes(
@@ -158,9 +179,7 @@ def concentrated_shard_stress():
     names = []
     for i in range(400000):
         value = f"n{i}"
-        h = 5381
-        for byte in value.encode():
-            h = ((h * 33) ^ byte) & 0xffffffff
+        h = crc32c(value.encode())
         spread = h ^ (h >> 11) ^ (h >> 22)
         if (spread & 63) == 0:
             names.append(value)
@@ -171,6 +190,7 @@ def concentrated_shard_stress():
     rows = bytearray(b"id,name,note,region_id,amount\n")
     for i in range(42000):
         rows.extend(f'{i + 1},"{names[i % len(names)]}","",7,1.00\n'.encode())
+    assert len(rows) > (1 << 20), "exercise concurrent four-worker overflow"
     DATA.joinpath("records.csv").write_bytes(rows)
     check_case("concentrated-name-shard-overflow")
 
