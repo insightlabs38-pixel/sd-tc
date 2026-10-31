@@ -7,7 +7,9 @@
 #include <cstring>
 #include <exception>
 #include <memory>
+#include <mutex>
 #include <thread>
+#include <unordered_map>
 #include <fcntl.h>
 #include <stdexcept>
 #include <string>
@@ -118,24 +120,85 @@ struct Arena {
 
 struct SharedNames {
     struct alignas(64) Entry {
-        std::atomic<uint32_t> state{0};
         uint32_t hash = 0;
         uint32_t raw_len = 0;
         char key[16]{};
         std::atomic<uint64_t> seen[4]{};
+        __attribute__((always_inline)) bool matches(const Field &field) const {
+            if (hash != field.hash || raw_len != field.raw_len) return false;
+            if (field.raw_len <= sizeof(key))
+                return std::memcmp(key, field.raw, field.raw_len) == 0;
+            const char *saved;
+            std::memcpy(&saved, key, sizeof(saved));
+            return std::memcmp(key + 8, field.raw, 8) == 0 &&
+                   std::memcmp(saved + 8, field.raw + 8, field.raw_len - 8) == 0;
+        }
+        __attribute__((always_inline)) bool first(unsigned group) {
+            uint64_t bit = 1ULL << (group & 63);
+            return !(seen[group >> 6].fetch_or(bit, std::memory_order_relaxed) & bit);
+        }
     };
     static_assert(sizeof(Entry) == 64, "inline name slot");
-    static constexpr size_t capacity = 1 << 18;
+    struct alignas(64) Flag { std::atomic<unsigned> value{0}; };
+    static constexpr size_t capacity = 1 << 17;
+    static constexpr uint32_t limit = 120000;
     std::unique_ptr<Entry[]> table{new Entry[capacity]};
+    std::unique_ptr<std::atomic<uint8_t>[]> control{new std::atomic<uint8_t>[capacity]()};
+    std::array<Flag, 12> active;
+    std::atomic<unsigned> used{0}, phase{0};
+    unsigned worker_count;
+    std::mutex overflow_mutex;
+    std::unordered_map<std::string, std::array<uint64_t, 4>> overflow;
+    explicit SharedNames(unsigned count) : worker_count(count) { }
 
-    bool first_in_group(const Field &field, unsigned group, Arena &storage) {
+    __attribute__((noinline, cold)) Entry *find_primary(const Field &field) {
         size_t i = field.hash & (capacity - 1);
+        const uint8_t tag = static_cast<uint8_t>((field.hash >> 25) + 2);
+        for (;;) {
+            uint8_t state = control[i].load(std::memory_order_acquire);
+            if (!state) return nullptr;
+            while (state == 1) state = control[i].load(std::memory_order_acquire);
+            if (state == tag && table[i].matches(field)) return &table[i];
+            i = (i + 1) & (capacity - 1);
+        }
+    }
+
+    __attribute__((noinline, cold)) void close_primary() {
+        unsigned expected = 0;
+        if (phase.compare_exchange_strong(expected, 1, std::memory_order_acq_rel)) {
+            for (unsigned i = 0; i < worker_count; ++i)
+                while (active[i].value.load(std::memory_order_seq_cst)) std::this_thread::yield();
+            phase.store(2, std::memory_order_release);
+        }
+    }
+
+    __attribute__((noinline, cold)) bool first_overflow(const Field &field, unsigned group) {
+        std::lock_guard<std::mutex> guard(overflow_mutex);
+        auto result = overflow.try_emplace(std::string(field.raw, field.raw_len),
+                                           std::array<uint64_t, 4>{});
+        uint64_t &cell = result.first->second[group >> 6];
+        uint64_t bit = 1ULL << (group & 63);
+        bool first = !(cell & bit);
+        cell |= bit;
+        return first;
+    }
+
+    bool first_in_group(const Field &field, unsigned group, Arena &storage, unsigned worker_id) {
+        size_t i = field.hash & (capacity - 1);
+        const uint8_t tag = static_cast<uint8_t>((field.hash >> 25) + 2);
         for (;;) {
             Entry &entry = table[i];
-            uint32_t state = entry.state.load(std::memory_order_acquire);
-            if (!state) {
-                uint32_t expected = 0;
-                if (entry.state.compare_exchange_strong(expected, 1, std::memory_order_acq_rel)) {
+            uint8_t state = control[i].load(std::memory_order_acquire);
+            if (__builtin_expect(!state, 0)) {
+                active[worker_id].value.store(1, std::memory_order_seq_cst);
+                if (phase.load(std::memory_order_acquire) != 0) {
+                    active[worker_id].value.store(0, std::memory_order_release);
+                    while (phase.load(std::memory_order_acquire) == 1) std::this_thread::yield();
+                    if (Entry *found = find_primary(field)) return found->first(group);
+                    return first_overflow(field, group);
+                }
+                uint8_t expected = 0;
+                if (control[i].compare_exchange_strong(expected, 1, std::memory_order_acq_rel)) {
                     entry.hash = field.hash;
                     entry.raw_len = field.raw_len;
                     if (field.raw_len <= sizeof(entry.key)) {
@@ -145,14 +208,18 @@ struct SharedNames {
                         std::memcpy(entry.key, &saved, sizeof(saved));
                         std::memcpy(entry.key + 8, field.raw, 8);
                     }
-                    entry.state.store(2, std::memory_order_release);
-                    state = 2;
-                } else {
-                    state = expected;
+                    control[i].store(tag, std::memory_order_release);
+                    bool first = entry.first(group);
+                    unsigned count = used.fetch_add(1, std::memory_order_relaxed) + 1;
+                    active[worker_id].value.store(0, std::memory_order_release);
+                    if (count >= limit) close_primary();
+                    return first;
                 }
+                active[worker_id].value.store(0, std::memory_order_release);
+                state = expected;
             }
-            while (state == 1) state = entry.state.load(std::memory_order_acquire);
-            if (state == 2 && entry.hash == field.hash && entry.raw_len == field.raw_len) {
+            while (state == 1) state = control[i].load(std::memory_order_acquire);
+            if (state == tag && entry.hash == field.hash && entry.raw_len == field.raw_len) {
                 bool same;
                 if (field.raw_len <= sizeof(entry.key)) {
                     same = std::memcmp(entry.key, field.raw, field.raw_len) == 0;
@@ -238,7 +305,7 @@ struct Worker {
 };
 
 static void parse_range(const char *p, const char *end, const std::vector<uint8_t> &regions,
-                        unsigned unmatched, Worker &w, SharedNames &shared) {
+                        unsigned unmatched, Worker &w, SharedNames &shared, unsigned worker_id) {
     struct Pending {
         uint64_t id;
         Field name;
@@ -274,7 +341,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 unsigned group = r.group < regions.size() && regions[r.group] != UINT8_MAX
                                      ? regions[r.group] : unmatched;
                 w.groups[group].add(r.id, r.amount, r.name, r.note_len,
-                                    shared.first_in_group(r.name, group, w.names));
+                                    shared.first_in_group(r.name, group, w.names, worker_id));
             }
             if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
         }
@@ -352,13 +419,13 @@ int main() {
                 cuts[i] = q;
             }
         }
-        SharedNames shared;
+        SharedNames shared(threads);
         std::vector<Worker> workers;
         workers.reserve(threads);
         for (unsigned i = 0; i < threads; ++i) workers.emplace_back(unmatched + 1);
         std::vector<std::thread> jobs;
         for (unsigned i = 0; i < threads; ++i)
-            jobs.emplace_back([&, i] { parse_range(cuts[i], cuts[i + 1], regions, unmatched, workers[i], shared); });
+            jobs.emplace_back([&, i] { parse_range(cuts[i], cuts[i + 1], regions, unmatched, workers[i], shared, i); });
         for (auto &job : jobs) job.join();
         for (const auto &w : workers) if (w.error) std::rethrow_exception(w.error);
         std::vector<Group> groups(unmatched + 1);
