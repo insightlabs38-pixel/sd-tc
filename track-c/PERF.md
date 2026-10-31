@@ -186,3 +186,10 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Paired 12-trial **full-PGO** runner medians: **105.302 -> 101.869 ms**, RSS **16,496 -> 16,496 KiB**, estimated complete-K proxy **+1.67%**; independent attempt 2: **105.087 -> 100.343 ms**, RSS **16,756 -> 16,756 KiB**, proxy **+2.34%**.
 - Source-only trials: 113.357 -> 109.195 ms, RSS 17,500 -> 18,504 KiB (K +0.76%); replication 109.487 -> 107.327 ms, RSS 17,244 -> 18,684 KiB (K -0.61%). Release uses full-PGO, not source-only. Scored source lines unchanged, D=1.
 - **Promoted** source blob `a9b2c765efe2a5fedec7671d9df9be77a700c853`. Official scoring-box T/M/S/D/K still pending through Luna; runner RSS is not cgroup memory. Preserve AVX2 predecessor as rollback.
+
+## Guarded fused money SWAR trial (2026-10-31)
+
+- [CI 41252674260](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41252674260) passed full seed-1 SHA-256, holdouts 11/29, new money width/sign/EOF fixture, sanitizers, offline Docker and sandbox.
+- Compared with verified 128-shard source `a9b2c765efe2a5fedec7671d9df9be77a700c853`, source-only 12-pair median **86.485 -> 86.149 ms**; full-PGO **81.938 -> 84.812 ms**, RSS **16,776 KiB** both.
+- Physical source **487 -> 504 lines**, unchanged D=1; full-PGO K proxy approximately **-2.2%** including source growth. Reject; the PGO-vs-untrained comparison is not a champion comparison.
+- Restored the exact qualified 128-shard source. The independent adversarial money fixture and corrected main-to-main CI baseline remain; no redundant restoration CI.
