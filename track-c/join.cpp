@@ -318,20 +318,17 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 Field note = text_field(p, end, false);
                 comma(p, end);
                 uint64_t region = number(p, end);
-                uint32_t region_key = region < regions.size()
-                                          ? static_cast<uint32_t>(region) : UINT32_MAX;
-                if (region_key != UINT32_MAX) __builtin_prefetch(&regions[region_key], 0, 1);
+                unsigned group = region < regions.size() && regions[region] != UINT8_MAX
+                                     ? regions[region] : unmatched;
                 comma(p, end);
                 int64_t amount = cents(p, end);
                 newline(p, end);
-                batch[count++] = Pending{id, name, note.len, amount, region_key};
+                batch[count++] = Pending{id, name, note.len, amount, group};
             } while (count < batch.size() && p < end);
             for (unsigned i = 0; i < count; ++i) {
                 const Pending &r = batch[i];
-                unsigned group = r.group < regions.size() && regions[r.group] != UINT8_MAX
-                                     ? regions[r.group] : unmatched;
-                w.groups[group].add(r.id, r.amount, r.name, r.note_len,
-                                    names.first(r.name, group));
+                w.groups[r.group].add(r.id, r.amount, r.name, r.note_len,
+                                      names.first(r.name, r.group));
             }
             if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
         }
