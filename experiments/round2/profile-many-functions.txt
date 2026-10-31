@@ -1,0 +1,21 @@
+Functions sorted by metric: Exclusive Total CPU Time
+
+Excl. Total   Incl. Total    Name
+CPU           CPU
+ sec.      %   sec.      %
+1.399 100.00  1.399 100.00   <Total>
+1.005  71.84  1.399 100.00   parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]
+0.200  14.30  0.200  14.30   <static>@0x161e67 (<libc.so.6>)
+0.133   9.51  0.133   9.51   number(char const*&, char const*)
+0.023   1.64  0.039   2.79   SharedNames::slow_first(SharedNames::Shard&, Field const&, unsigned int)
+0.022   1.57  0.022   1.57   madvise
+0.010   0.71  0.013   0.93   <static>@0x9703a (<libc.so.6>)
+0.003   0.21  0.003   0.21   <static>@0x8fc05 (<libc.so.6>)
+0.001   0.07  0.001   0.07   <static>@0x8fb89 (<libc.so.6>)
+0.001   0.07  0.002   0.14   pthread_mutex_lock
+0.001   0.07  0.001   0.07   pthread_mutex_unlock
+0.      0.    1.304  93.21   <static>@0x53086 (<libgp-collector.so>)
+0.      0.    1.304  93.21   <static>@0x9236e (<libc.so.6>)
+0.      0.    1.304  93.21   <static>@0xe1206 (<libstdc++.so.6.0.33>)
+
+Print limit set to 30
