@@ -107,3 +107,13 @@ All candidates passed exact full seed-1 SHA-256, holdout seeds, adversarial coll
 - [CI 41215678574](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41215678574): 48-byte pending-row layout 118.476 → 118.002 ms, K proxy +0.21%; 6/12 pairs faster, inconclusive.
 - [CI 41215841709](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41215841709): compact rows plus aggregate-before-name-interning 117.007 → 116.205 ms, RSS 17,084 → 16,940 KiB, K proxy +0.48%; 9/12 pairs faster. Independent [attempt 2](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41215841709/attempts/2) reversed to 94.272 → 95.432 ms, K proxy -0.54%; rejected.
 - Restored byte-identical, previously fully qualified source blob `b5e2c905648d759a15c34ea2e5bd6eed130e9386`. No redundant restoration CI. Four workers remained fastest in the available 1/2/3/4/5/6/12-worker runner profiles. Official scoring-box axes still pending through Luna.
+
+## Direct-row, cacheline, and cold-path trials (2026-10-31)
+
+Each experiment passed exact full seed-1 SHA-256, additional seeds, adversarial collision/overflow and long-name cases, offline Docker and sandbox. Paired 12-trial runner measurements compare against verified source `b5e2c905648d759a15c34ea2e5bd6eed130e9386`, not the official scoring box.
+
+- [CI 41219761977](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41219761977): direct per-row aggregation without the 32-row pending batch regressed **93.764 → 112.372 ms**, RSS 17,112 → 17,112 KiB, physical lines 458 → 442; complete-K proxy **-8.17%**. Reject: pending batches hide name-index latency.
+- [CI 41219893713](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41219893713): 64-byte aligned name slots regressed **77.709 → 80.523 ms**, RSS 17,072 → 18,516 KiB; K proxy **-3.35%**. Reject: false-sharing savings do not offset larger slot footprint.
+- [CI 41220040110](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41220040110): isolate rare name insertion/overflow in a noinline cold path, **124.352 → 120.685 ms**, RSS 17,064 → 16,984 KiB, 458 → 460 physical lines; K proxy **+1.54%**. **Provisional only:** source blob `f875b5d3d51011fe0cc710fab851b78471483cbb`, independent paired replication pending.
+
+K proxies use runner T, process RSS, physical lines and unchanged D=1. Official formatter-adjusted S, cgroup M and scoring-box K remain pending through Luna.
