@@ -51,8 +51,7 @@ struct Field {
 };
 static_assert(sizeof(Field) == 24, "name slot layout");
 
-static constexpr uint32_t FNV_OFFSET = 2166136261U;
-static constexpr uint32_t FNV_PRIME = 16777619U;
+static constexpr uint32_t HASH_OFFSET = 5381U;
 
 static Field text_field(const char *&p, const char *end, bool need_hash) {
     Field f{};
@@ -75,7 +74,7 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
                 return f;
             }
         }
-        uint32_t h = FNV_OFFSET;
+        uint32_t h = HASH_OFFSET;
         while (p < end) {
             unsigned char c = static_cast<unsigned char>(*p++);
             if (c == '"') {
@@ -87,16 +86,16 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
                 }
             }
             ++f.len;
-            if (need_hash) h = (h ^ c) * FNV_PRIME;
+            if (need_hash) h = ((h << 5) + h) ^ c;
         }
         throw std::runtime_error("unclosed quote");
     }
     f.raw = p;
-    uint32_t h = FNV_OFFSET;
+    uint32_t h = HASH_OFFSET;
     while (p < end && *p != ',' && *p != '\r' && *p != '\n') {
         unsigned char c = static_cast<unsigned char>(*p++);
         ++f.len;
-        if (need_hash) h = (h ^ c) * FNV_PRIME;
+        if (need_hash) h = ((h << 5) + h) ^ c;
     }
     f.raw_len = f.len;
     f.hash = h;
