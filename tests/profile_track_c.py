@@ -44,6 +44,7 @@ def instrument(source, workers):
 
 def main():
     source = SOURCE.read_text()
+    source = source.replace("if (threads > 1) threads = worker_budget();", "(void)worker_budget;")
     counts = (1, 2) if 'workers.size() > 2' in source else (1, 2, 3, 4, 5, 6, 12)
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)

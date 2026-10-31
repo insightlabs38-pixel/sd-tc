@@ -8,6 +8,7 @@
 #include <cstring>
 #include <exception>
 #include <memory>
+#include <sched.h>
 #include <mutex>
 #include <thread>
 #include <utility>
@@ -380,6 +381,23 @@ static std::vector<Group> merge_workers(const std::vector<Worker> &workers, unsi
     return groups;
 }
 
+static unsigned worker_budget() {
+    unsigned n = 6;
+    cpu_set_t mask;
+    if (sched_getaffinity(0, sizeof(mask), &mask) == 0) {
+        unsigned allowed = static_cast<unsigned>(CPU_COUNT(&mask));
+        if (allowed) n = std::min(n, allowed);
+    }
+    FILE *quota = fopen("/sys/fs/cgroup/cpu.max", "r");
+    if (quota) {
+        unsigned long long limit = 0, period = 0;
+        if (fscanf(quota, "%llu %llu", &limit, &period) == 2 && period)
+            n = std::min(n, static_cast<unsigned>((limit + period - 1) / period));
+        fclose(quota);
+    }
+    return std::max(1U, n);
+}
+
 int main() {
     try {
         File lookup("/data/regions.csv");
@@ -419,6 +437,7 @@ int main() {
         newline(p, end);
         const char *record_start = p;
         unsigned threads = end - p < (1 << 20) ? 1 : 4;
+        if (threads > 1) threads = worker_budget();
         std::vector<const char *> cuts(threads + 1);
         cuts[0] = record_start;
         cuts[threads] = end;
