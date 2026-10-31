@@ -109,12 +109,12 @@ struct SharedNames {
     static constexpr unsigned shard_bits = 6;
     static constexpr size_t slots_per_shard = 1 << 12;
     static uint32_t spread(uint32_t h) { return h ^ (h >> 11) ^ (h >> 22); }
-    struct Slot {
+    struct alignas(64) Slot {
         const char *raw = nullptr;
         uint32_t raw_len = 0;
         std::atomic<uint64_t> seen[4]{};
     };
-    static_assert(sizeof(Slot) == 48, "compact shared name slot");
+    static_assert(sizeof(Slot) == 64, "cacheline-isolated shared name slot");
     struct Shard {
         struct Overflow {
             Field field;
@@ -294,30 +294,46 @@ struct Worker {
 
 static void parse_range(const char *p, const char *end, const std::vector<uint8_t> &regions,
                         unsigned unmatched, Worker &w, SharedNames &names) {
+    struct Pending {
+        uint64_t id;
+        Field name;
+        uint32_t note_len;
+        int64_t amount;
+        unsigned group;
+    };
     try {
+        std::array<Pending, 32> batch;
         const char *reclaimed = p;
         while (p < end) {
-            if (static_cast<unsigned char>(*p) == 0xef) bom(p, end);
-            uint64_t id = number(p, end);
-            comma(p, end);
-            Field name = text_field(p, end, true);
-            uint32_t spread = SharedNames::spread(name.hash);
-            auto &shard = names.shards[spread & ((1 << SharedNames::shard_bits) - 1)];
-            __builtin_prefetch(&shard.index[(spread >> SharedNames::shard_bits) &
-                                            (SharedNames::slots_per_shard - 1)], 0, 1);
-            comma(p, end);
-            Field note = text_field(p, end, false);
-            comma(p, end);
-            uint64_t region = number(p, end);
-            uint32_t region_key = region < regions.size()
-                                      ? static_cast<uint32_t>(region) : UINT32_MAX;
-            if (region_key != UINT32_MAX) __builtin_prefetch(&regions[region_key], 0, 1);
-            comma(p, end);
-            int64_t amount = cents(p, end);
-            newline(p, end);
-            unsigned group = region_key < regions.size() && regions[region_key] != UINT8_MAX
-                                 ? regions[region_key] : unmatched;
-            w.groups[group].add(id, amount, name, note.len, names.first(name, group));
+            unsigned count = 0;
+            do {
+                if (static_cast<unsigned char>(*p) == 0xef) bom(p, end);
+                uint64_t id = number(p, end);
+                comma(p, end);
+                Field name = text_field(p, end, true);
+                uint32_t spread = SharedNames::spread(name.hash);
+                auto &shard = names.shards[spread & ((1 << SharedNames::shard_bits) - 1)];
+                __builtin_prefetch(&shard.index[(spread >> SharedNames::shard_bits) &
+                                                (SharedNames::slots_per_shard - 1)], 0, 1);
+                comma(p, end);
+                Field note = text_field(p, end, false);
+                comma(p, end);
+                uint64_t region = number(p, end);
+                uint32_t region_key = region < regions.size()
+                                          ? static_cast<uint32_t>(region) : UINT32_MAX;
+                if (region_key != UINT32_MAX) __builtin_prefetch(&regions[region_key], 0, 1);
+                comma(p, end);
+                int64_t amount = cents(p, end);
+                newline(p, end);
+                batch[count++] = Pending{id, name, note.len, amount, region_key};
+            } while (count < batch.size() && p < end);
+            for (unsigned i = 0; i < count; ++i) {
+                const Pending &r = batch[i];
+                unsigned group = r.group < regions.size() && regions[r.group] != UINT8_MAX
+                                     ? regions[r.group] : unmatched;
+                w.groups[group].add(r.id, r.amount, r.name, r.note_len,
+                                    names.first(r.name, group));
+            }
             if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
         }
     } catch (...) { w.error = std::current_exception(); }
