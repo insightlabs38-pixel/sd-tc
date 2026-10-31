@@ -157,3 +157,10 @@ K proxies use runner T, process RSS, physical lines and unchanged D=1. Official 
 ## Official promotion and PR #11 conflict resolution
 
 Official run `run-15adbc1f561c` passed all gates on this packed-metadata source: T=0.076727 s, M=14,487,552 B, S=552, D=1, K=20.508340, points=65.596525, improving prior BEST `run-8f98e6ec4091` (K=20.413289). The later PR-head pragma revision `78503e708dccdbf484bb5dc1223a02705cfabb81` passed all gates but scored only K=18.480714 in `run-9722acb5cb38`; it is excluded. Merge PR #11 with the tested predecessor source `59974fd6328c2fabb1154ac4cc31bda1036bc6ca`, preserving the later `main` source in the merge parent/history.
+
+## Early lookup-map reclamation on official-scored packed champion (2026-10-31)
+
+- Restored one safe `MADV_DONTNEED` after the complete `regions.csv` lookup parse, leaving the qualified official-scored baseline source blob `59974fd6328c2fabb1154ac4cc31bda1036bc6ca` recoverable. Candidate source blob `bb79a53e6956b175c65c28943d2b175eeb1f2985`.
+- [CI 41238941731](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41238941731), attempts 1 and 2, passed exact seed-1 full SHA-256, full holdout seeds 11/29, hostile/overflow cases, ASan/UBSan/TSan, offline Docker and sandbox. [Baseline repair CI 41238737277](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41238737277) also passed.
+- **Paired full-PGO runner medians**, against the actual official-scored source: **110.927 → 110.524 ms**, RSS **17,212 → 16,572 KiB** (attempt 1); **108.627 → 108.363 ms**, RSS **17,020 → 16,708 KiB** (attempt 2).
+- Estimated full-K runner proxies **+0.92% / +0.47%**, assuming one additional scored source line and unchanged D=1; source-only comparisons yielded **+1.65% / +2.17%**. Both independent PGO runs favored the candidate, but the official scoring-box cgroup M and T/M/S/D/K still require Luna validation.
