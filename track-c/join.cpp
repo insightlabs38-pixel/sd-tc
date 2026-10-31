@@ -147,7 +147,7 @@ struct SharedNames {
         char *cursor = nullptr;
         size_t remaining = 0;
         const char *keep(const Field &f) {
-            constexpr size_t block = 1 << 16;
+            constexpr size_t block = 1 << 15;
             if (!f.raw_len) return f.raw;
             if (f.raw_len > block) {
                 arena.emplace_back(new char[f.raw_len]);
