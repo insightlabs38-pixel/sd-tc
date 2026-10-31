@@ -277,7 +277,6 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 comma(p, end);
                 Field name = text_field(p, end, true);
                 __builtin_prefetch(&w.names.table[name.hash & mask], 0, 1);
-                __builtin_prefetch(&w.names.fingerprint[name.hash & mask], 0, 1);
                 comma(p, end);
                 Field note = text_field(p, end, false);
                 comma(p, end);
