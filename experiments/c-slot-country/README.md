@@ -20,3 +20,14 @@ subsequently strengthened; this initial run never reached saturation.
 Local runner variation is large; no official K projection or promotion claim.
 Pinned PGO, sanitizers, independent full seeds and canonical S pending CI.
 Default C_LAG16, C_PREFILL1(table only), C_THPOFF1, C_NAME_BITS17.
+
+CI365b8f3: https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41251416312
+All gates passed, including randomized concurrent primary/overflow cutover,
+ASan/UBSan, TSan, pinned offline GCC15 PGO/sandbox, full11/29 x3.
+FullPGO main100.237->114.803ms, RSS16,620->16,620KiB, S577->654,D1.
+Runner completeK ratio0.917 (RSS proxy for M); rejected versus main.
+OfficialBEST110.913->114.157ms, RSS16,892->16,624KiB,S552->654.
+Do not promote. Hypotheses: high occupancy creates multiple24-byte key probes;
+unlike separate compact control bytes, unsuccessful probes read full key lines.
+Next realization separates byte atomic controls from exact16-byte keys, retaining
+physical-slot bitsets and prefetching both home control and home payload.
