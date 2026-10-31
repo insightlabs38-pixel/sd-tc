@@ -6,4 +6,4 @@ No third-party runtime dependencies. Further work: benchmark full-scale seeds an
 
 ## Integration
 
-Copy this complete directory, including Dockerfile and generator.py, to preserve offline PGO. The source also declares its required x86-64-v3 target so a source-only import can compile with the rollback compiler command, but that command does not reproduce the trained PGO build.
+Copy the complete qualified context, including Dockerfile and generator.py. The CPU-target pragma trial was rejected by official scoring; the restored packet source matches CI-qualified a99ff4d and remains unscored.
