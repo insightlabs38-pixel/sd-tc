@@ -136,7 +136,12 @@ struct SharedNames {
     };
     static_assert(sizeof(Slot) == 56, "compact shared name slot");
     struct Shard {
+        struct Overflow {
+            Field field;
+            std::array<uint64_t, 4> seen{};
+        };
         std::mutex mutex;
+        std::vector<Overflow> overflow;
         std::unique_ptr<Slot[]> table{new Slot[slots_per_shard]};
         std::vector<std::unique_ptr<char[]>> arena;
         char *cursor = nullptr;
@@ -170,7 +175,7 @@ struct SharedNames {
                     return {&slot, true};
                 i = (i + 1) & (slots_per_shard - 1);
             }
-            throw std::runtime_error("name shard full");
+            return {nullptr, false};
         }
     };
     std::array<Shard, 1 << shard_bits> shards;
@@ -182,6 +187,22 @@ struct SharedNames {
             std::lock_guard<std::mutex> lock(s.mutex);
             match = s.probe(name);
             slot = match.first;
+            if (!match.second && !slot) {
+                const uint64_t bit = 1ULL << (group & 63);
+                for (auto &entry : s.overflow) {
+                    if (entry.field.hash != name.hash || !equal_field(entry.field, name)) continue;
+                    uint64_t &cell = entry.seen[group >> 6];
+                    bool fresh = !(cell & bit);
+                    cell |= bit;
+                    return fresh;
+                }
+                s.overflow.emplace_back();
+                auto &entry = s.overflow.back();
+                entry.field = name;
+                entry.field.raw = s.keep(name);
+                entry.seen[group >> 6] |= bit;
+                return true;
+            }
             if (!match.second) {
                 slot->raw = s.keep(name);
                 slot->raw_len = name.raw_len;
