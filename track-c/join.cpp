@@ -220,9 +220,7 @@ struct SharedNames {
             }
         }
         const uint64_t mask = 1ULL << (group & 63);
-        auto &seen = slot->seen[group >> 6];
-        if (seen.load(std::memory_order_relaxed) & mask) return false;
-        return !(seen.fetch_or(mask, std::memory_order_relaxed) & mask);
+        return !(slot->seen[group >> 6].fetch_or(mask, std::memory_order_relaxed) & mask);
     }
 };
 
