@@ -383,6 +383,7 @@ int main() {
             newline(p, end);
         }
         if (country.size() > 255) throw std::runtime_error("too many countries");
+        (void)madvise(const_cast<char *>(lookup.data), lookup.size, MADV_DONTNEED);
         const unsigned unmatched = static_cast<unsigned>(country.size());
         File records("/data/records.csv");
         p = records.data;
