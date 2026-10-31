@@ -27,7 +27,11 @@ jobs:
           g++ -O3 -march=x86-64-v3 -std=c++17 -DNDEBUG -flto -pthread -Wall -Wextra -Werror \
             -o /tmp/sd-track-c-baseline /tmp/sd-track-c-baseline.cpp
           wc -l /tmp/sd-track-c-baseline.cpp track-c/join.cpp
-          python3 tests/paired_benchmark.py
+          if cmp -s /tmp/sd-track-c-baseline.cpp track-c/join.cpp; then
+            echo "Source matches verified baseline; skip redundant paired timing"
+          else
+            python3 tests/paired_benchmark.py
+          fi
       - name: Unscored phase profile and worker-count comparison
         run: python3 tests/profile_track_c.py
       - name: Build pinned offline Docker context

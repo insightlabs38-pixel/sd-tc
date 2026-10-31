@@ -437,55 +437,33 @@ int main() {
         cuts[0] = record_start;
         cuts[threads] = end;
         if (threads > 1) {
-            bool anchored = false;
-            if (threads == 2) {
-                // Generated mid-file BOMs are exact record-start markers.
-                const char *q = record_start + (end - record_start) / 2;
-                const char *limit = end - q > (1 << 20) ? q + (1 << 20) : end;
-                while (q < limit) {
-                    q = static_cast<const char *>(memchr(q, '\xef', limit - q));
-                    if (!q) break;
-                    if (q > record_start && end - q >= 4 && q[-1] == '\n' &&
-                        static_cast<unsigned char>(q[1]) == 0xbb &&
-                        static_cast<unsigned char>(q[2]) == 0xbf &&
-                        q[3] >= '0' && q[3] <= '9') {
-                        cuts[1] = q;
-                        anchored = true;
-                        break;
+            std::vector<uint8_t> parity(threads);
+            std::vector<std::thread> jobs;
+            for (unsigned i = 0; i < threads; ++i) {
+                const char *a = record_start + (end - record_start) * i / threads;
+                const char *b = record_start + (end - record_start) * (i + 1) / threads;
+                jobs.emplace_back([&, i, a, b] {
+                    uint8_t x = 0;
+                    const char *reclaimed = a;
+                    for (const char *q = a; q < b;) {
+                        const char *limit = b - q > (1 << 20) ? q + (1 << 20) : b;
+                        for (; q < limit; ++q) x ^= (*q == '"');
+                        discard_consumed(reclaimed, q);
                     }
-                    ++q;
-                }
+                    parity[i] = x;
+                });
             }
-            if (!anchored) {
-                std::vector<uint8_t> parity(threads);
-                std::vector<std::thread> jobs;
-                for (unsigned i = 0; i < threads; ++i) {
-                    const char *a = record_start + (end - record_start) * i / threads;
-                    const char *b = record_start + (end - record_start) * (i + 1) / threads;
-                    jobs.emplace_back([&, i, a, b] {
-                        uint8_t x = 0;
-                        const char *reclaimed = a;
-                        for (const char *q = a; q < b;) {
-                            const char *limit = b - q > (1 << 20) ? q + (1 << 20) : b;
-                            for (; q < limit; ++q) x ^= (*q == '"');
-                            discard_consumed(reclaimed, q);
-                        }
-                        parity[i] = x;
-                    });
+            for (auto &job : jobs) job.join();
+            uint8_t in_quote = 0;
+            for (unsigned i = 1; i < threads; ++i) {
+                in_quote ^= parity[i - 1];
+                uint8_t state = in_quote;
+                const char *q = record_start + (end - record_start) * i / threads;
+                for (; q < end; ++q) {
+                    if (*q == '"') state ^= 1;
+                    if (*q == '\n' && !state) { ++q; break; }
                 }
-                for (auto &job : jobs) job.join();
-                uint8_t in_quote = 0;
-                for (unsigned i = 1; i < threads; ++i) {
-                    in_quote ^= parity[i - 1];
-                    uint8_t state = in_quote;
-                    const char *q = record_start + (end - record_start) * i / threads;
-                    for (; q < end; ++q) {
-                        if (*q == '"') state ^= 1;
-                        if (*q == '\n' && !state) { ++q; break; }
-                    }
-                    cuts[i] = q;
-                }
-
+                cuts[i] = q;
             }
         }
         std::vector<Worker> workers;
