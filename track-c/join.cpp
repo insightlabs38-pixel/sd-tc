@@ -60,33 +60,32 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
         ++p;
         f.raw = p;
         if (!need_hash) {
-            uint32_t escaped = 0;
             for (;;) {
                 const char *q = static_cast<const char *>(memchr(p, '"', end - p));
                 if (!q) throw std::runtime_error("unclosed quote");
+                f.len += static_cast<uint32_t>(q - p);
                 if (q + 1 < end && q[1] == '"') {
-                    ++escaped;
+                    ++f.len;
                     p = q + 2;
                     continue;
                 }
                 f.raw_len = static_cast<uint32_t>(q - f.raw);
-                f.len = f.raw_len - escaped;
                 p = q + 1;
                 return f;
             }
         }
-        uint32_t h = HASH_OFFSET, escaped = 0;
+        uint32_t h = HASH_OFFSET;
         while (p < end) {
             unsigned char c = static_cast<unsigned char>(*p++);
             if (c == '"') {
-                if (p < end && *p == '"') { ++p; ++escaped; }
+                if (p < end && *p == '"') ++p;
                 else {
                     f.raw_len = static_cast<uint32_t>(p - f.raw - 1);
-                    f.len = f.raw_len - escaped;
                     f.hash = h;
                     return f;
                 }
             }
+            ++f.len;
             if (need_hash) h = ((h << 5) + h) ^ c;
         }
         throw std::runtime_error("unclosed quote");
@@ -95,10 +94,10 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
     uint32_t h = HASH_OFFSET;
     while (p < end && *p != ',' && *p != '\r' && *p != '\n') {
         unsigned char c = static_cast<unsigned char>(*p++);
+        ++f.len;
         if (need_hash) h = ((h << 5) + h) ^ c;
     }
-    f.raw_len = static_cast<uint32_t>(p - f.raw);
-    f.len = f.raw_len;
+    f.raw_len = f.len;
     f.hash = h;
     return f;
 }
