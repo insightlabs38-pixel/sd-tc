@@ -142,7 +142,7 @@ struct SharedNames {
         };
         std::mutex mutex;
         std::vector<Overflow> overflow;
-        std::unique_ptr<Slot[]> table{new Slot[slots_per_shard]};
+        std::array<Slot, slots_per_shard> table{};
         std::vector<std::unique_ptr<char[]>> arena;
         char *cursor = nullptr;
         size_t remaining = 0;
@@ -408,7 +408,7 @@ int main() {
                 cuts[i] = q;
             }
         }
-        SharedNames names;
+        static SharedNames names;
         std::vector<Worker> workers;
         workers.reserve(threads);
         for (unsigned i = 0; i < threads; ++i) workers.emplace_back(unmatched + 1);
