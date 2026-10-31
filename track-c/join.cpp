@@ -2,7 +2,7 @@
 #include <array>
 #include <atomic>
 #include <cstdint>
-#include <nmmintrin.h>
+#include <immintrin.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -72,14 +72,22 @@ static uint32_t hash_bytes(const char *p, size_t n) {
 }
 
 static const char *find_quote(const char *p, const char *end) {
-    const __m128i quote = _mm_set1_epi8('"');
+    const __m256i quote32 = _mm256_set1_epi8('"');
+    while (end - p >= 32) {
+        __m256i block = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(p));
+        unsigned mask = static_cast<unsigned>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(block, quote32)));
+        if (mask) return p + __builtin_ctz(mask);
+        p += 32;
+    }
+    const __m128i quote16 = _mm_set1_epi8('"');
     while (end - p >= 16) {
         __m128i block = _mm_loadu_si128(reinterpret_cast<const __m128i *>(p));
-        unsigned mask = static_cast<unsigned>(_mm_movemask_epi8(_mm_cmpeq_epi8(block, quote)));
+        unsigned mask = static_cast<unsigned>(_mm_movemask_epi8(_mm_cmpeq_epi8(block, quote16)));
         if (mask) return p + __builtin_ctz(mask);
         p += 16;
     }
-    return static_cast<const char *>(memchr(p, '"', end - p));
+    for (; p < end; ++p) if (*p == '"') return p;
+    return nullptr;
 }
 
 static Field text_field(const char *&p, const char *end, bool need_hash) {
