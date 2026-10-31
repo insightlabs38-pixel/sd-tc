@@ -132,3 +132,10 @@ K proxies use runner T, process RSS, physical lines and unchanged D=1. Official 
 - [CI 41229565059](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41229565059) passed exact full seed-1 SHA-256, holdout seeds, adversarial collision/overflow, offline Docker and sandbox.
 - Replacing 1-byte remainder CRC steps with 4/2/1-byte hardware CRC reduced instruction count but regressed paired median **115.957 -> 116.964 ms**; RSS **17,018 -> 17,014 KiB**, physical source **460 -> 474 lines**.
 - Estimated full-K proxy **-0.87%** with T/RSS/source/D=1; reject and restore verified `f875b5d3` source. Official cgroup M, formatter S and scoring-box K remain unmeasured.
+
+## Inline SSE2 quote scanner (2026-10-31)
+
+- [CI 41229750254](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41229750254), attempts 1 and 2, passed full seed-1 SHA-256, holdout seeds, collision/overflow, long names, offline Docker and sandbox.
+- Replace repeated library `memchr` quote searches with guarded 16-byte SSE2 comparisons and scalar tail fallback; escaped quotes and decoded lengths retain existing semantics.
+- Paired 12-trial medians: **103.962 -> 100.798 ms**, RSS **17,146 -> 17,158 KiB**, estimated K proxy **+1.18%**; independent replication **140.930 -> 132.367 ms**, RSS **17,070 -> 17,112 KiB**, estimated K proxy **+2.77%** (all 12 pairs faster).
+- Source **460 -> 471 physical lines**, D=1 unchanged. Promoted source blob `4ca129b0ca9596554d052aadb9d5e751496cc754`; official cgroup M, formatter S and scoring-box K still pending.
