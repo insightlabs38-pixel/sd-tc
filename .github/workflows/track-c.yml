@@ -54,6 +54,17 @@ jobs:
           docker cp "$container_id":/join /tmp/sd-track-c
           docker rm "$container_id"
           python3 tests/paired_benchmark.py
+      - name: Paired full-PGO numeric architecture comparison
+        if: contains(github.ref_name, 'fused-numeric')
+        run: |
+          staging=$(mktemp -d)
+          git show b7bb0d5c32b2aa06cd1d046d4dabf31d65cd0389:track-c/join.cpp > "$staging/join.cpp"
+          cp track-c/Dockerfile track-c/generator.py "$staging/"
+          docker build --network=none -t sd-track-c:previous-pgo "$staging"
+          container_id=$(docker create sd-track-c:previous-pgo)
+          docker cp "$container_id":/join /tmp/sd-track-c-baseline
+          docker rm "$container_id"
+          python3 tests/paired_benchmark.py
       - name: Independent full references for the final PGO binary
         if: hashFiles('track-c/generator.py') != ''
         run: python3 tests/check_binary_seeds.py --binary /tmp/sd-track-c --seeds 11 29
