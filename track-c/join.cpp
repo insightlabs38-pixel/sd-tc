@@ -267,7 +267,7 @@ struct Group {
     uint64_t count = 0, id_sum = 0, name_bytes = 0, note_bytes = 0;
     int64_t sum = 0, min = 0, max = 0;
     uint32_t distinct = 0;
-    void add(uint64_t id, int64_t amount, const Field &name, uint32_t note_len, bool first) {
+    void add(uint64_t id, int64_t amount, const Field &name, uint32_t note_len) {
         if (!count || amount < min) min = amount;
         if (!count || amount > max) max = amount;
         ++count;
@@ -275,7 +275,6 @@ struct Group {
         sum += amount;
         name_bytes += name.len;
         note_bytes += note_len;
-        distinct += first;
     }
 };
 static std::string money(int64_t n) {
@@ -332,8 +331,9 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 const Pending &r = batch[i];
                 unsigned group = r.group < regions.size() && regions[r.group] != UINT8_MAX
                                      ? regions[r.group] : unmatched;
-                w.groups[group].add(r.id, r.amount, r.name, r.note_len,
-                                    names.first(r.name, group));
+                Group &g = w.groups[group];
+                g.add(r.id, r.amount, r.name, r.note_len);
+                g.distinct += names.first(r.name, group);
             }
             if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
         }
