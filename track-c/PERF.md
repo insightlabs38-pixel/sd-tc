@@ -28,3 +28,17 @@ No official board submission or measured scoring-box T/M/S/D yet. Local correctn
 - Complete-K development proxy **+7.28%** from T/M/source-line S, unchanged D=1; official scoring-box T/M and formatter S remain unmeasured.
 - [CI 41188845400](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41188845400): lazy zero-page slot variant passed correctness but regressed **155.743 → 163.149 ms** with unchanged RSS; reverted to verified champion.
 - [CI 41188708497](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41188708497) tested static eager slots (119.690 → 117.552 ms); [CI 41189003933](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41189003933) tested 32 KiB arenas (185.604 → 182.034 ms), both paired runner results subject to noise.
+
+## Compact name-table probe variants (2026-10-31)
+
+All times are 12-trial paired GitHub-runner medians against source-identical verified baseline `6dc125e`, not official box measurements. Each CI passed full seed-1 hash, holdout seeds, adversarial cases, offline Docker and sandbox.
+
+| Variant | CI | Baseline -> candidate ms | Baseline -> candidate KiB RSS | Physical lines | K proxy |
+|---|---|---|---|---|---|
+| 32-bit fingerprint index, 56-byte slots | [41192746039](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41192746039) | 148.206 -> 152.037 | 19222 -> 19858 | 452 -> 456 | -2.04% |
+| 32-bit fingerprint index, 48-byte slots | [41192875572](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41192875572) | 88.597 -> 84.398 | 19600 -> 19112 | 452 -> 455 | +2.87% |
+| 16-bit index, direct exact comparison | [41192980216](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41192980216) | 149.869 -> 149.106 | 19344 -> 18646 | 452 -> 451 | +1.03% |
+| 16-bit index, packed 8-bit fingerprint | [41193152399](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41193152399) | 116.597 -> 117.756 | 19324 -> 18788 | 452 -> 453 | +0.03% |
+| 16-bit index, packed 16-bit fingerprint | [41193302355](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41193302355) | 147.452 -> 147.367 | 19496 -> 18710 | 452 -> 453 | +0.85% |
+
+**Selected:** 32-bit indexed fingerprints with full-length 48-byte slots, `26836f7` source blob. This removes redundant per-slot hashes without compromising bytewise collision checks. Packed variants additionally passed a 16 MiB logical-name regression. K proxy uses T^0.5, M^0.2 and physical-line S^0.15; D unchanged. CI runner speeds varied materially; verify selection with an independent paired run. Official box T/M/S/D and K remain pending.

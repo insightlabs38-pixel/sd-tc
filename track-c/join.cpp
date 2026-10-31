@@ -129,8 +129,7 @@ struct SharedNames {
         const char *raw = nullptr;
         uint32_t raw_len : 31;
         uint32_t quoted : 1;
-        uint32_t len : 16;
-        uint32_t fp : 16;
+        uint32_t len = 0;
         std::atomic<uint64_t> seen[4]{};
     };
     static_assert(sizeof(Slot) == 48, "compact shared name slot");
@@ -141,7 +140,7 @@ struct SharedNames {
         };
         std::mutex mutex;
         std::vector<Overflow> overflow;
-        std::array<std::atomic<uint16_t>, slots_per_shard> index{};
+        std::array<std::atomic<uint32_t>, slots_per_shard> index{};
         Slot *pool = nullptr;
         uint16_t used = 0;
         std::vector<std::unique_ptr<char[]>> arena;
@@ -169,14 +168,17 @@ struct SharedNames {
         std::pair<Slot *, bool> probe(const Field &f, size_t *empty = nullptr) {
             size_t i = (spread(f.hash) >> shard_bits) & (slots_per_shard - 1);
             for (size_t n = 0; n < slots_per_shard; ++n) {
-                uint16_t id = index[i].load(std::memory_order_acquire);
+                uint32_t entry = index[i].load(std::memory_order_acquire);
+                uint16_t id = static_cast<uint16_t>(entry);
                 if (!id) {
                     if (empty) *empty = i;
                     return {nullptr, false};
                 }
-                Slot &slot = pool[id - 1];
-                if (slot.fp == (f.hash >> 16) && equal_field(slot, f))
-                    return {&slot, true};
+                if ((entry & 0xffff0000U) == (f.hash & 0xffff0000U)) {
+                    Slot &slot = pool[id - 1];
+                    if (equal_field(slot, f))
+                        return {&slot, true};
+                }
                 i = (i + 1) & (slots_per_shard - 1);
             }
             return {nullptr, false};
@@ -197,7 +199,7 @@ struct SharedNames {
             size_t empty = slots_per_shard;
             match = s.probe(name, &empty);
             slot = match.first;
-            if (!match.second && (empty == slots_per_shard || name.len >= (1U << 16))) {
+            if (!match.second && empty == slots_per_shard) {
                 const uint64_t bit = 1ULL << (group & 63);
                 for (auto &entry : s.overflow) {
                     if (entry.field.hash != name.hash || !equal_field(entry.field, name)) continue;
@@ -219,8 +221,8 @@ struct SharedNames {
                 slot->raw_len = name.raw_len;
                 slot->quoted = name.quoted;
                 slot->len = name.len;
-                slot->fp = name.hash >> 16;
-                s.index[empty].store(++s.used, std::memory_order_release);
+                s.index[empty].store((name.hash & 0xffff0000U) | ++s.used,
+                                     std::memory_order_release);
             }
         }
         const uint64_t mask = 1ULL << (group & 63);
