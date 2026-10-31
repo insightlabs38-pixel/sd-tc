@@ -139,3 +139,9 @@ K proxies use runner T, process RSS, physical lines and unchanged D=1. Official 
 - Replace repeated library `memchr` quote searches with guarded 16-byte SSE2 comparisons and scalar tail fallback; escaped quotes and decoded lengths retain existing semantics.
 - Paired 12-trial medians: **103.962 -> 100.798 ms**, RSS **17,146 -> 17,158 KiB**, estimated K proxy **+1.18%**; independent replication **140.930 -> 132.367 ms**, RSS **17,070 -> 17,112 KiB**, estimated K proxy **+2.77%** (all 12 pairs faster).
 - Source **460 -> 471 physical lines**, D=1 unchanged. Promoted source blob `4ca129b0ca9596554d052aadb9d5e751496cc754`; official cgroup M, formatter S and scoring-box K still pending.
+
+## 256-shard name-index locality trial (2026-10-31)
+
+- [CI 41230207274](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41230207274) passed exact full seed-1 hash, holdouts, SIMD quote-boundary regression, concentrated-shard overflow, offline Docker and sandbox.
+- Increasing shards **64 -> 256** while reducing index slots/shard **4096 -> 1024** retained the same total index/pool capacity but regressed paired median **93.916 -> 95.517 ms**, RSS **17,108 -> 18,356 KiB**.
+- Estimated complete-K proxy **-2.23%**, unchanged physical source lines and D=1; rejected and restored SSE2 champion `4ca129b0`. Official cgroup M, formatter S and scoring-box K remain pending.

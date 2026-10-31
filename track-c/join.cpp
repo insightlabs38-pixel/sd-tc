@@ -117,8 +117,8 @@ static bool equal_field(const A &f, const B &g) {
 }
 
 struct SharedNames {
-    static constexpr unsigned shard_bits = 8;
-    static constexpr size_t slots_per_shard = 1 << 10;
+    static constexpr unsigned shard_bits = 6;
+    static constexpr size_t slots_per_shard = 1 << 12;
     static uint32_t spread(uint32_t h) { return h ^ (h >> 11) ^ (h >> 22); }
     struct Slot {
         const char *raw = nullptr;
