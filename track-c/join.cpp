@@ -15,6 +15,7 @@
 #include <stdexcept>
 #include <string>
 #include <sys/mman.h>
+#include <sys/prctl.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <vector>
@@ -410,6 +411,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
 
 int main() {
     try {
+        (void)prctl(PR_SET_THP_DISABLE, 1, 0, 0, 0);
         File lookup("/data/regions.csv");
         const char *p = lookup.data, *end = p + lookup.size;
         const char *header = "region_id,country\n";
