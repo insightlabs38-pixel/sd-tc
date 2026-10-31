@@ -44,3 +44,15 @@ All times are 12-trial paired GitHub-runner medians against source-identical ver
 **Selected:** 32-bit indexed fingerprints with full-length 48-byte slots, `26836f7` source blob. This removes redundant per-slot hashes without compromising bytewise collision checks. Packed variants additionally passed a 16 MiB logical-name regression. K proxy uses T^0.5, M^0.2 and physical-line S^0.15; D unchanged. CI runner speeds varied materially; verify selection with an independent paired run. Official box T/M/S/D and K remain pending.
 
 - **Independent restoration/replication:** [CI 41193433512](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41193433512) passed all gates, including a 16 MiB logical-name regression; paired baseline **147.544 ms / 19,286 KiB** vs selected **141.674 ms / 19,108 KiB** (12 trials). Approximate complete-K proxy **+2.2%**, using physical lines 452 -> 455 and unchanged D. This independently supports promotion but is not an official scoring-box receipt. Source blob `4e5e22a28ca0efb4884975d925fc204903cf21c6` is the CI-verified champion.
+
+## Reclamation and parser trials (2026-10-31)
+
+All listed CI runs passed exact seed-1 SHA-256, holdout seeds, adversarial cases, offline Docker and sandbox. The benchmark workflow now compares directly against verified source `b2cd31a`.
+
+- [41197026344](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41197026344): 64-record batches were effectively neutral after normalization against the earlier benchmark baseline; reverted.
+- [41197198393](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41197198393): quote-segment `memchr` hashing, 148.716 → 149.391 ms and 19,112 → 19,038 KiB; estimated K proxy -0.28%, reverted.
+- [41197343487](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41197343487): reclaim lookup pages plus 256 KiB record-page threshold, 142.311 → 145.831 ms, 18,956 → 16,636 KiB; K proxy +1.37%.
+- [41197476950](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41197476950): **selected** reclaim lookup pages only, 148.067 → 147.923 ms, 18,980 → 16,920 KiB; K proxy **+2.34%**.
+- [41197613662](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41197613662): lookup reclamation plus 512 KiB threshold, 140.949 → 143.511 ms, 18,984 → 16,744 KiB; K proxy +1.59%, rejected.
+
+The selected source blob is `3cecd2945c284b4ae1684f9f1779bb0607cc1e33`, byte-identical to the fully CI-verified implementation; original 1 MiB record-page reclamation threshold retained. K proxies use paired runner T, process RSS, physical source lines 455 → 456 and unchanged D=1. Official cgroup M, formatter-adjusted S and scoring-box T/K remain unmeasured.
