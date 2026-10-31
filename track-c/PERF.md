@@ -88,3 +88,11 @@ Guarded-BOM CRC source blob `efcc37be6d82c3e341eaa3d66f2e7af82338ee07` restored 
 - Paired 12-trial median: **134.364 → 125.213 ms** (6.81% faster), peak RSS **16,792 → 16,920 KiB**, physical source **454 → 440 lines**. All 12 paired trials favored the candidate.
 - Complete-K proxy **+3.92%** using runner T/RSS, physical lines and unchanged D=1; official formatter S, cgroup M and scoring-box T/K remain pending.
 - Champion source blob: `820ff763699cb5c662fed388e49e3998f49e094e`; no official submission.
+
+## Guarded eight-digit SWAR numeric parsing (2026-10-31)
+
+- [CI 41210692166](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41210692166) passed full seed-1 SHA-256, holdout seeds, collision/overflow/long-integer regressions, offline Docker and sandbox. Paired medians **129.784 → 123.745 ms**, RSS **16,902 → 17,070 KiB**; 10/12 pairs faster.
+- [CI 41210875048](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41210875048) independently passed all gates including a new eight-digit-id fixture. Paired medians **79.544 → 77.514 ms**, RSS **17,094 → 17,172 KiB**; 9/12 pairs faster.
+- The SWAR fast path validates 1–8 ASCII digits, folds 2/4/8-digit values and retains scalar parsing for longer tokens. Source grows **440 → 458 physical lines**, D remains 1.
+- Complete-K proxy **+1.60%** first run and **+0.60%** replication, accounting for runtime, RSS and physical source lines. Official scoring-box T/M/S/D and K remain unmeasured.
+- Promoted champion source blob `b5e2c905648d759a15c34ea2e5bd6eed130e9386`; no official submission.
