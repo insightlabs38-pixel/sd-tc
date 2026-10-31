@@ -129,10 +129,10 @@ struct SharedNames {
         const char *raw = nullptr;
         uint32_t raw_len : 31;
         uint32_t quoted : 1;
-        uint32_t len = 0, hash = 0;
+        uint32_t len = 0;
         std::atomic<uint64_t> seen[4]{};
     };
-    static_assert(sizeof(Slot) == 56, "compact shared name slot");
+    static_assert(sizeof(Slot) == 48, "compact shared name slot");
     struct Shard {
         struct Overflow {
             Field field;
@@ -176,7 +176,7 @@ struct SharedNames {
                 }
                 if ((entry & 0xffff0000U) == (f.hash & 0xffff0000U)) {
                     Slot &slot = pool[id - 1];
-                    if (slot.hash == f.hash && equal_field(slot, f))
+                    if (equal_field(slot, f))
                         return {&slot, true};
                 }
                 i = (i + 1) & (slots_per_shard - 1);
@@ -221,7 +221,6 @@ struct SharedNames {
                 slot->raw_len = name.raw_len;
                 slot->quoted = name.quoted;
                 slot->len = name.len;
-                slot->hash = name.hash;
                 s.index[empty].store((name.hash & 0xffff0000U) | ++s.used,
                                      std::memory_order_release);
             }
