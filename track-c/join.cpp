@@ -211,7 +211,7 @@ struct SharedNames {
 };
 
 static uint64_t number(const char *&p, const char *end) {
-    if (end - p >= 8) {
+    if (end - p >= 8) { // SWAR ASCII fast path, with scalar fallback for long integers.
         uint64_t w;
         std::memcpy(&w, p, 8);
         const uint64_t bad = ((w + 0x4646464646464646ULL) |

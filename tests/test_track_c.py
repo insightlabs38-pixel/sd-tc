@@ -111,6 +111,13 @@ def handwritten():
         b'2,"wrapped","",4294967303,-0.05\n'
     )
     check_case("wide-unknown-region-id")
+    DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n")
+    DATA.joinpath("records.csv").write_bytes(
+        b"id,name,note,region_id,amount\n"
+        b'12345678,"eight","",7,1.00\n'
+        b'12345679,"eight",,7,-0.01\r\n'
+    )
+    check_case("eight-digit-id-fast-path")
 
 
 
