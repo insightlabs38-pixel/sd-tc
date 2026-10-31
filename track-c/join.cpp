@@ -253,10 +253,11 @@ struct Worker {
     std::vector<Group> groups;
     Names names;
     std::exception_ptr error;
+    const char *stopped = nullptr;
     explicit Worker(size_t group_count) : groups(group_count), names(1 << 17, true) { }
 };
 
-static void parse_range(const char *p, const char *end, const std::vector<uint8_t> &regions,
+static void parse_range(const char *p, const char *stop, const char *end, const std::vector<uint8_t> &regions,
                         unsigned unmatched, Worker &w) {
     struct Pending {
         uint64_t id;
@@ -268,7 +269,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
     try {
         std::array<Pending, 32> batch;
         const char *reclaimed = p;
-        while (p < end) {
+        while (p < stop) {
             unsigned count = 0;
             const size_t mask = w.names.table.size() - 1;
             do {
@@ -288,7 +289,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 int64_t amount = cents(p, end);
                 newline(p, end);
                 batch[count++] = Pending{id, name, note.len, amount, region_key};
-            } while (count < batch.size() && p < end);
+            } while (count < batch.size() && p < stop);
             for (unsigned i = 0; i < count; ++i) {
                 const Pending &r = batch[i];
                 uint32_t name_id = w.names.intern(r.name);
@@ -299,6 +300,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
             }
             if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
         }
+        w.stopped = p;
     } catch (...) { w.error = std::current_exception(); }
 }
 
@@ -405,42 +407,22 @@ int main() {
         cuts[0] = record_start;
         cuts[threads] = end;
         if (threads > 1) {
-            std::vector<uint8_t> parity(threads);
-            std::vector<std::thread> jobs;
-            for (unsigned i = 0; i < threads; ++i) {
-                const char *a = record_start + (end - record_start) * i / threads;
-                const char *b = record_start + (end - record_start) * (i + 1) / threads;
-                jobs.emplace_back([&, i, a, b] {
-                    uint8_t x = 0;
-                    const char *reclaimed = a;
-                    for (const char *q = a; q < b;) {
-                        const char *limit = b - q > (1 << 20) ? q + (1 << 20) : b;
-                        for (; q < limit; ++q) x ^= (*q == '"');
-                        discard_consumed(reclaimed, q);
-                    }
-                    parity[i] = x;
-                });
-            }
-            for (auto &job : jobs) job.join();
-            uint8_t in_quote = 0;
-            for (unsigned i = 1; i < threads; ++i) {
-                in_quote ^= parity[i - 1];
-                uint8_t state = in_quote;
-                const char *q = record_start + (end - record_start) * i / threads;
-                for (; q < end; ++q) {
-                    if (*q == '"') state ^= 1;
-                    if (*q == '\n' && !state) { ++q; break; }
-                }
-                cuts[i] = q;
-            }
+            const char *mid = record_start + (end - record_start) / 2;
+            const char *lf = static_cast<const char *>(memchr(mid, '\n', end - mid));
+            cuts[1] = lf ? lf + 1 : end;
         }
         std::vector<Worker> workers;
         workers.reserve(threads);
         for (unsigned i = 0; i < threads; ++i) workers.emplace_back(unmatched + 1);
         std::vector<std::thread> jobs;
         for (unsigned i = 0; i < threads; ++i)
-            jobs.emplace_back([&, i] { parse_range(cuts[i], cuts[i + 1], regions, unmatched, workers[i]); });
+            jobs.emplace_back([&, i] { parse_range(cuts[i], cuts[i + 1], end, regions, unmatched, workers[i]); });
         for (auto &job : jobs) job.join();
+        if (threads > 1 && !workers[0].error &&
+            (workers[1].error || workers[0].stopped != cuts[1])) {
+            workers[1] = Worker(unmatched + 1);
+            parse_range(workers[0].stopped, end, end, regions, unmatched, workers[1]);
+        }
         for (const auto &w : workers) if (w.error) std::rethrow_exception(w.error);
         std::vector<Group> groups = merge_workers(workers, unmatched + 1);
         std::vector<unsigned> order;
