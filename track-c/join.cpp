@@ -224,7 +224,20 @@ struct SharedNames {
     }
 };
 
-static uint64_t number(const char *&p, const char *end) {
+__attribute__((noinline, cold)) static uint64_t slow_number(const char *&p, const char *end) {
+    const char *start = p;
+    uint64_t n = 0;
+    while (p < end) {
+        unsigned digit = static_cast<unsigned char>(*p) - '0';
+        if (digit > 9) break;
+        n = n * 10 + digit;
+        ++p;
+    }
+    if (p == start) throw std::runtime_error("missing integer");
+    return n;
+}
+
+__attribute__((always_inline)) static inline uint64_t number(const char *&p, const char *end) {
     if (end - p >= 8) { // SWAR ASCII fast path, with scalar fallback for long integers.
         uint64_t w;
         std::memcpy(&w, p, 8);
@@ -243,16 +256,7 @@ static uint64_t number(const char *&p, const char *end) {
             return x;
         }
     }
-    const char *start = p;
-    uint64_t n = 0;
-    while (p < end) {
-        unsigned digit = static_cast<unsigned char>(*p) - '0';
-        if (digit > 9) break;
-        n = n * 10 + digit;
-        ++p;
-    }
-    if (p == start) throw std::runtime_error("missing integer");
-    return n;
+    return slow_number(p, end);
 }
 static int64_t cents(const char *&p, const char *end) {
     bool neg = p < end && *p == '-';
