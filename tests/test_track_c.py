@@ -96,6 +96,17 @@ def handwritten():
     DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n")
     DATA.joinpath("records.csv").write_bytes(
         b"id,name,note,region_id,amount\n"
+        b'1,plain,"",7,1.00\n'
+        b'2,"plain",,7,2.00\n'
+        b'3,"a""b","",7,3.00\n'
+        b'4,"a""b",,7,4.00\n'
+        b'5,"comma,inside","",7,5.00\n'
+        b'6,"comma,inside",,7,6.00\n'
+    )
+    check_case("canonical-raw-name-equivalence")
+    DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n")
+    DATA.joinpath("records.csv").write_bytes(
+        b"id,name,note,region_id,amount\n"
         b'1,"known","",7,1.00\n'
         b'2,"wrapped","",4294967303,-0.05\n'
     )

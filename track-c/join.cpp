@@ -101,18 +101,8 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
 
 template <class A, class B>
 static bool equal_field(const A &f, const B &g) {
-    if (f.len != g.len) return false;
-    if (f.raw_len == f.len && g.raw_len == g.len)
-        return std::memcmp(f.raw, g.raw, f.len) == 0;
-    const char *a = f.raw, *b = g.raw;
-    const char *ae = a + f.raw_len, *be = b + g.raw_len;
-    while (a < ae && b < be) {
-        unsigned char x = *a++, y = *b++;
-        if (f.quoted && x == '"' && a < ae && *a == '"') ++a;
-        if (g.quoted && y == '"' && b < be && *b == '"') ++b;
-        if (x != y) return false;
-    }
-    return a == ae && b == be;
+    // Valid CSV has a unique raw spelling for each logical value.
+    return f.raw_len == g.raw_len && std::memcmp(f.raw, g.raw, f.raw_len) == 0;
 }
 
 struct SharedNames {
@@ -121,9 +111,7 @@ struct SharedNames {
     static uint32_t spread(uint32_t h) { return h ^ (h >> 11) ^ (h >> 22); }
     struct Slot {
         const char *raw = nullptr;
-        uint32_t raw_len : 31;
-        uint32_t quoted : 1;
-        uint32_t len = 0;
+        uint32_t raw_len = 0;
         std::atomic<uint64_t> seen[4]{};
     };
     static_assert(sizeof(Slot) == 48, "compact shared name slot");
@@ -213,8 +201,6 @@ struct SharedNames {
                 slot = &s.pool[s.used];
                 slot->raw = s.keep(name);
                 slot->raw_len = name.raw_len;
-                slot->quoted = name.quoted;
-                slot->len = name.len;
                 s.index[empty].store((name.hash & 0xffff0000U) | ++s.used,
                                      std::memory_order_release);
             }
