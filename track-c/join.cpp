@@ -318,9 +318,10 @@ static std::vector<Group> merge_workers(const std::vector<Worker> &workers, unsi
         for (unsigned shard = 0; shard < shards; ++shard) {
             jobs.emplace_back([&, shard] {
                 const size_t mask = left.table.size() - 1;
-                for (const Field &slot : right.table) {
-                    if (slot.id == UINT32_MAX || ((slot.hash >> 16) & (shards - 1)) != shard)
-                        continue;
+                for (size_t k = right.table.size() * shard / shards;
+                     k < right.table.size() * (shard + 1) / shards; ++k) {
+                    const Field &slot = right.table[k];
+                    if (slot.id == UINT32_MAX) continue;
                     size_t i = slot.hash & mask;
                     while (left.table[i].id != UINT32_MAX) {
                         const Field &candidate = left.table[i];
