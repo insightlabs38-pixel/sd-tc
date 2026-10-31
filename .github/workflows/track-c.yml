@@ -27,15 +27,7 @@ jobs:
           g++ -O3 -march=x86-64-v3 -std=c++17 -DNDEBUG -flto -pthread -Wall -Wextra -Werror \
             -o /tmp/sd-track-c-baseline /tmp/sd-track-c-baseline.cpp
           wc -l /tmp/sd-track-c-baseline.cpp track-c/join.cpp
-          for trial in 1 2 3 4 5; do
-            if [ "$((trial % 2))" -eq 0 ]; then variants="current baseline"; else variants="baseline current"; fi
-            for variant in $variants; do
-              if [ "$variant" = "current" ]; then bin=/tmp/sd-track-c; else bin=/tmp/sd-track-c-baseline; fi
-              /usr/bin/time -f "$variant trial=$trial elapsed_s=%e peak_rss_kib=%M" "$bin"
-              test "$(sha256sum /out/aggregates.txt | cut -d' ' -f1)" = \
-                "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
-            done
-          done
+          python3 tests/paired_benchmark.py
       - name: Unscored phase profile and worker-count comparison
         run: python3 tests/profile_track_c.py
       - name: Build pinned offline Docker context

@@ -114,7 +114,7 @@ def split_boundary_stress():
     rows.extend(b'24001,"long","' + b'alpha\nbeta,said ""no""\n' * 5500
                 + b'omega",8,-0.05\r\n')
     long_end = len(rows)
-    rows.extend(bom)
+    # No mid-file BOM: exercise parity fallback across the long quoted record.
     for i in range(24002, 48002):
         rows.extend(f'{i},"name {i % 10}","short",7,1.00'.encode())
         rows.extend(b"\r\n" if i % 2 else b"\n")
