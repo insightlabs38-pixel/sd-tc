@@ -68,7 +68,7 @@ static uint32_t hash_bytes(const char *p, size_t n) {
         n -= 8;
     }
     while (n--) h = _mm_crc32_u8(h, static_cast<unsigned char>(*p++));
-    return h;
+    return h ^ (h >> 11) ^ (h >> 22);
 }
 
 static Field text_field(const char *&p, const char *end, bool need_hash) {
@@ -108,7 +108,6 @@ static bool equal_field(const A &f, const B &g) {
 struct SharedNames {
     static constexpr unsigned shard_bits = 6;
     static constexpr size_t slots_per_shard = 1 << 12;
-    static uint32_t spread(uint32_t h) { return h ^ (h >> 11) ^ (h >> 22); }
     struct Slot {
         const char *raw = nullptr;
         uint32_t raw_len = 0;
@@ -148,7 +147,7 @@ struct SharedNames {
             return dst;
         }
         std::pair<Slot *, bool> probe(const Field &f, size_t *empty = nullptr) {
-            size_t i = (spread(f.hash) >> shard_bits) & (slots_per_shard - 1);
+            size_t i = (f.hash >> shard_bits) & (slots_per_shard - 1);
             for (size_t n = 0; n < slots_per_shard; ++n) {
                 uint32_t entry = index[i].load(std::memory_order_acquire);
                 uint16_t id = static_cast<uint16_t>(entry);
@@ -173,7 +172,7 @@ struct SharedNames {
             shards[i].pool = storage + i * slots_per_shard;
     }
     bool first(const Field &name, unsigned group) {
-        Shard &s = shards[spread(name.hash) & (shards.size() - 1)];
+        Shard &s = shards[name.hash & (shards.size() - 1)];
         auto match = s.probe(name);
         Slot *slot = match.first;
         if (!match.second) {
@@ -311,7 +310,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 uint64_t id = number(p, end);
                 comma(p, end);
                 Field name = text_field(p, end, true);
-                uint32_t spread = SharedNames::spread(name.hash);
+                uint32_t spread = name.hash;
                 auto &shard = names.shards[spread & ((1 << SharedNames::shard_bits) - 1)];
                 __builtin_prefetch(&shard.index[(spread >> SharedNames::shard_bits) &
                                                 (SharedNames::slots_per_shard - 1)], 0, 1);
