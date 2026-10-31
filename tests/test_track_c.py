@@ -167,10 +167,10 @@ def concentrated_shard_stress():
             if len(names) == 4200:
                 break
     assert len(names) == 4200
-    DATA.joinpath("regions.csv").write_bytes(b"region_id,country\\n7,AAA\\n")
-    rows = bytearray(b"id,name,note,region_id,amount\\n")
+    DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n")
+    rows = bytearray(b"id,name,note,region_id,amount\n")
     for i in range(42000):
-        rows.extend(f'{i + 1},"{names[i % len(names)]}","",7,1.00\\n'.encode())
+        rows.extend(f'{i + 1},"{names[i % len(names)]}","",7,1.00\n'.encode())
     DATA.joinpath("records.csv").write_bytes(rows)
     check_case("concentrated-name-shard-overflow")
 
