@@ -2,6 +2,7 @@
 #include <array>
 #include <atomic>
 #include <cstdint>
+#include <nmmintrin.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -56,52 +57,45 @@ static_assert(sizeof(Field) == 24, "name slot layout");
 
 static constexpr uint32_t HASH_OFFSET = 5381U;
 
+// Quoted text has a unique CSV spelling, so raw-byte hashes preserve logical equality.
+static uint32_t hash_bytes(const char *p, size_t n) {
+    uint32_t h = HASH_OFFSET;
+    while (n >= 8) {
+        uint64_t word;
+        std::memcpy(&word, p, 8);
+        h = static_cast<uint32_t>(_mm_crc32_u64(h, word));
+        p += 8;
+        n -= 8;
+    }
+    while (n--) h = _mm_crc32_u8(h, static_cast<unsigned char>(*p++));
+    return h;
+}
+
 static Field text_field(const char *&p, const char *end, bool need_hash) {
     Field f{};
     f.quoted = p < end && *p == '"';
     if (f.quoted) {
         ++p;
         f.raw = p;
-        if (!need_hash) {
-            for (;;) {
-                const char *q = static_cast<const char *>(memchr(p, '"', end - p));
-                if (!q) throw std::runtime_error("unclosed quote");
-                f.len += static_cast<uint32_t>(q - p);
-                if (q + 1 < end && q[1] == '"') {
-                    ++f.len;
-                    p = q + 2;
-                    continue;
-                }
-                f.raw_len = static_cast<uint32_t>(q - f.raw);
-                p = q + 1;
-                return f;
+        for (;;) {
+            const char *q = static_cast<const char *>(memchr(p, '"', end - p));
+            if (!q) throw std::runtime_error("unclosed quote");
+            f.len += static_cast<uint32_t>(q - p);
+            if (q + 1 < end && q[1] == '"') {
+                ++f.len;
+                p = q + 2;
+                continue;
             }
+            f.raw_len = static_cast<uint32_t>(q - f.raw);
+            p = q + 1;
+            f.hash = need_hash ? hash_bytes(f.raw, f.raw_len) : HASH_OFFSET;
+            return f;
         }
-        uint32_t h = HASH_OFFSET;
-        while (p < end) {
-            unsigned char c = static_cast<unsigned char>(*p++);
-            if (c == '"') {
-                if (p < end && *p == '"') ++p;
-                else {
-                    f.raw_len = static_cast<uint32_t>(p - f.raw - 1);
-                    f.hash = h;
-                    return f;
-                }
-            }
-            ++f.len;
-            if (need_hash) h = ((h << 5) + h) ^ c;
-        }
-        throw std::runtime_error("unclosed quote");
     }
     f.raw = p;
-    uint32_t h = HASH_OFFSET;
-    while (p < end && *p != ',' && *p != '\r' && *p != '\n') {
-        unsigned char c = static_cast<unsigned char>(*p++);
-        ++f.len;
-        if (need_hash) h = ((h << 5) + h) ^ c;
-    }
-    f.raw_len = f.len;
-    f.hash = h;
+    while (p < end && *p != ',' && *p != '\r' && *p != '\n') ++p;
+    f.raw_len = f.len = static_cast<uint32_t>(p - f.raw);
+    f.hash = need_hash ? hash_bytes(f.raw, f.len) : HASH_OFFSET;
     return f;
 }
 
@@ -304,7 +298,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
         unsigned group;
     };
     try {
-        std::array<Pending, 8> batch;
+        std::array<Pending, 32> batch;
         const char *reclaimed = p;
         while (p < end) {
             unsigned count = 0;
