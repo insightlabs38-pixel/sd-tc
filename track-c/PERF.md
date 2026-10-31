@@ -164,3 +164,11 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - [CI 41238941731](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41238941731), attempts 1 and 2, passed exact seed-1 full SHA-256, full holdout seeds 11/29, hostile/overflow cases, ASan/UBSan/TSan, offline Docker and sandbox. [Baseline repair CI 41238737277](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41238737277) also passed.
 - **Paired full-PGO runner medians**, against the actual official-scored source: **110.927 → 110.524 ms**, RSS **17,212 → 16,572 KiB** (attempt 1); **108.627 → 108.363 ms**, RSS **17,020 → 16,708 KiB** (attempt 2).
 - Estimated full-K runner proxies **+0.92% / +0.47%**, assuming one additional scored source line and unchanged D=1; source-only comparisons yielded **+1.65% / +2.17%**. Both independent PGO runs favored the candidate, but the official scoring-box cgroup M and T/M/S/D/K still require Luna validation.
+
+## AVX2 quote scanning on packed-name PGO champion (2026-10-31)
+
+- [CI 41243264138](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41243264138) passed seed-1 full SHA-256, holdout full seeds 11/29, hostile parser tests, ASan/UBSan/TSan, pinned offline Docker and sandbox checks.
+- Transplanted the previously qualified guarded AVX2/SSE2 quote scanner onto the official-scored packed-name architecture; the scalar tail handles short fields and vector boundaries.
+- Paired 12-trial **full-PGO** medians versus the official-scored baseline: **109.171 → 104.134 ms**, peak process RSS **16,892 → 16,592 KiB**. Pinned-compiler PGO vs untrained binary: **107.836 → 103.797 ms**.
+- Physical source lines **469 → 488**, D=1 unchanged. Estimated complete-K runner proxy **+2.15%** using T^0.5, RSS^0.2, source lines^0.15; formatter S and official cgroup M/K still require Luna scoring.
+- Source blob `6b3f574b308b97bab15a23930ec9a09f6d18a666` is the qualified candidate; independent replication pending. No official submission by Track C.
