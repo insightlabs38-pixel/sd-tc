@@ -66,3 +66,14 @@ All trials passed full seed-1 SHA-256, holdout seeds, hostile cases, offline Doc
 - [CI 41201618354](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41201618354): per-thread exact-name cache 139.972 → 153.091 ms, 16,850 → 19,544 KiB; 460 → 469 lines, K proxy **-7.44%**. Rejected.
 
 Final `join.cpp` is byte-identical to the fully verified early-index-prefetch champion `b29de1927e809a2d0bf89ea0d6e236dcef3d2e85` (blob `dad49158dad5f90d32ab5eb307eb9a62e138723e`). Restoring that verified source requires no redundant CI. K proxies use physical source lines and process RSS; official formatter S and cgroup M remain unmeasured.
+
+## CSV hot-path trials (2026-10-31)
+
+All four experimental CI runs passed full seed-1 SHA-256, holdout seeds, hostile cases, offline Docker and sandbox checks. Medians are paired GitHub-runner measurements against verified source `b29de192`, not official scoring-box values.
+
+- [41205457751](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41205457751): 8-row batches, 139.613 → 144.153 ms; RSS 16,982 → 16,896 KiB; estimated complete-K proxy -1.5%. Rejected.
+- [41205606558](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41205606558): canonical raw-name CRC32C hashing, 92.524 → 92.687 ms; RSS 17,144 → 17,094 KiB; source 460 → 454 lines; K proxy +0.17%, inconclusive alone.
+- [41205739218](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41205739218): CRC32C plus guarded BOM fast path, 137.582 → 134.553 ms; RSS 16,856 → 16,984 KiB; 460 → 454 lines; K proxy +1.17%. Ten of twelve paired trials favored candidate.
+- [41205896010](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41205896010): adding a relaxed seen-bit load, 135.936 → 135.775 ms; RSS 16,994 → 16,856 KiB; 460 → 456 lines; K proxy +0.35% total. Rejected versus the guarded-BOM candidate.
+
+Guarded-BOM CRC source blob `efcc37be6d82c3e341eaa3d66f2e7af82338ee07` restored byte-for-byte. Independent paired replication pending. All K proxies use process RSS and physical source lines; official cgroup M, formatter S and scoring-box K remain unmeasured.
