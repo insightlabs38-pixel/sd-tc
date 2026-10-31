@@ -178,3 +178,11 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - [CI 41248226794](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41248226794) passed full seed-1 SHA-256, holdout seeds, adversarial cases, sanitizers, offline Docker and sandbox.
 - Trialed 256 KiB record-page reclamation and final-tail discard. Full-PGO runner comparison against the older official-scored baseline: 74.346 -> 75.236 ms, RSS 16,924 -> 16,436 KiB. The baseline also predates AVX2, so this does not isolate the reclamation change.
 - No robust complete-K gain established; restored the previously twice-qualified AVX2 champion before the next architecture trial. Future CI comparisons use that champion as baseline.
+
+## Lower-load 128-shard name index (2026-10-31)
+
+- Increased shards 64 -> 128 at 2,048 slots/shard, preserving exact CRC32C and byte comparisons. The workflow now compares directly with the twice-qualified AVX2 source blob `6b3f574b308b97bab15a23930ec9a09f6d18a666`.
+- [CI 41248440108](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41248440108), attempts 1 and 2: exact full seed-1 SHA-256, full holdout seeds 11/29, adversarial overflow/collisions, sanitizers, pinned offline Docker and sandbox all passed.
+- Paired 12-trial **full-PGO** runner medians: **105.302 -> 101.869 ms**, RSS **16,496 -> 16,496 KiB**, estimated complete-K proxy **+1.67%**; independent attempt 2: **105.087 -> 100.343 ms**, RSS **16,756 -> 16,756 KiB**, proxy **+2.34%**.
+- Source-only trials: 113.357 -> 109.195 ms, RSS 17,500 -> 18,504 KiB (K +0.76%); replication 109.487 -> 107.327 ms, RSS 17,244 -> 18,684 KiB (K -0.61%). Release uses full-PGO, not source-only. Scored source lines unchanged, D=1.
+- **Promoted** source blob `a9b2c765efe2a5fedec7671d9df9be77a700c853`. Official scoring-box T/M/S/D/K still pending through Luna; runner RSS is not cgroup memory. Preserve AVX2 predecessor as rollback.
