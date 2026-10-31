@@ -142,7 +142,7 @@ struct SharedNames {
         };
         std::mutex mutex;
         std::vector<Overflow> overflow;
-        Slot *table = nullptr;
+        std::array<Slot, slots_per_shard> table{};
         std::vector<std::unique_ptr<char[]>> arena;
         char *cursor = nullptr;
         size_t remaining = 0;
@@ -179,11 +179,6 @@ struct SharedNames {
         }
     };
     std::array<Shard, 1 << shard_bits> shards;
-    SharedNames() {
-        static Slot storage[(1 << shard_bits) * slots_per_shard]{};
-        for (size_t i = 0; i < shards.size(); ++i)
-            shards[i].table = storage + i * slots_per_shard;
-    }
     bool first(const Field &name, unsigned group) {
         Shard &s = shards[spread(name.hash) & (shards.size() - 1)];
         auto match = s.probe(name);
