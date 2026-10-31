@@ -110,12 +110,11 @@ struct SharedNames {
     static constexpr size_t slots_per_shard = 1 << 12;
     static uint32_t spread(uint32_t h) { return h ^ (h >> 11) ^ (h >> 22); }
     struct Slot {
-        std::atomic<uint32_t> state{0};
-        uint32_t raw_len = 0;
         const char *raw = nullptr;
+        uint32_t raw_len = 0;
         std::atomic<uint64_t> seen[4]{};
     };
-    static_assert(sizeof(Slot) == 48, "compact direct name slot");
+    static_assert(sizeof(Slot) == 48, "compact shared name slot");
     struct Shard {
         struct Overflow {
             Field field;
@@ -123,7 +122,9 @@ struct SharedNames {
         };
         std::mutex mutex;
         std::vector<Overflow> overflow;
+        std::array<std::atomic<uint32_t>, slots_per_shard> index{};
         Slot *pool = nullptr;
+        uint16_t used = 0;
         std::vector<std::unique_ptr<char[]>> arena;
         char *cursor = nullptr;
         size_t remaining = 0;
@@ -148,16 +149,18 @@ struct SharedNames {
         }
         std::pair<Slot *, bool> probe(const Field &f, size_t *empty = nullptr) {
             size_t i = (spread(f.hash) >> shard_bits) & (slots_per_shard - 1);
-            uint32_t tag = f.hash | 1U;
             for (size_t n = 0; n < slots_per_shard; ++n) {
-                Slot &slot = pool[i];
-                uint32_t state = slot.state.load(std::memory_order_acquire);
-                if (!state) {
+                uint32_t entry = index[i].load(std::memory_order_acquire);
+                uint16_t id = static_cast<uint16_t>(entry);
+                if (!id) {
                     if (empty) *empty = i;
                     return {nullptr, false};
                 }
-                if (state == tag && slot.raw_len == f.raw_len && equal_field(slot, f))
-                    return {&slot, true};
+                if ((entry & 0xffff0000U) == (f.hash & 0xffff0000U)) {
+                    Slot &slot = pool[id - 1];
+                    if (equal_field(slot, f))
+                        return {&slot, true};
+                }
                 i = (i + 1) & (slots_per_shard - 1);
             }
             return {nullptr, false};
@@ -191,10 +194,11 @@ struct SharedNames {
             return true;
         }
         if (!match.second) {
-            slot = &s.pool[empty];
+            slot = &s.pool[s.used];
             slot->raw = s.keep(name);
             slot->raw_len = name.raw_len;
-            slot->state.store(name.hash | 1U, std::memory_order_release);
+            s.index[empty].store((name.hash & 0xffff0000U) | ++s.used,
+                                 std::memory_order_release);
         }
         const uint64_t mask = 1ULL << (group & 63);
         return !(slot->seen[group >> 6].fetch_or(mask, std::memory_order_relaxed) & mask);
@@ -311,7 +315,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 Field name = text_field(p, end, true);
                 uint32_t spread = SharedNames::spread(name.hash);
                 auto &shard = names.shards[spread & ((1 << SharedNames::shard_bits) - 1)];
-                __builtin_prefetch(&shard.pool[(spread >> SharedNames::shard_bits) &
+                __builtin_prefetch(&shard.index[(spread >> SharedNames::shard_bits) &
                                                 (SharedNames::slots_per_shard - 1)], 0, 1);
                 comma(p, end);
                 Field note = text_field(p, end, false);
