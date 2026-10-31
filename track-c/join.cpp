@@ -140,7 +140,7 @@ struct SharedNames {
         };
         std::mutex mutex;
         std::vector<Overflow> overflow;
-        std::array<std::atomic<uint32_t>, slots_per_shard> index{};
+        std::array<std::atomic<uint16_t>, slots_per_shard> index{};
         Slot *pool = nullptr;
         uint16_t used = 0;
         std::vector<std::unique_ptr<char[]>> arena;
@@ -168,17 +168,14 @@ struct SharedNames {
         std::pair<Slot *, bool> probe(const Field &f, size_t *empty = nullptr) {
             size_t i = (spread(f.hash) >> shard_bits) & (slots_per_shard - 1);
             for (size_t n = 0; n < slots_per_shard; ++n) {
-                uint32_t entry = index[i].load(std::memory_order_acquire);
-                uint16_t id = static_cast<uint16_t>(entry);
+                uint16_t id = index[i].load(std::memory_order_acquire);
                 if (!id) {
                     if (empty) *empty = i;
                     return {nullptr, false};
                 }
-                if ((entry & 0xffff0000U) == (f.hash & 0xffff0000U)) {
-                    Slot &slot = pool[id - 1];
-                    if (equal_field(slot, f))
-                        return {&slot, true};
-                }
+                Slot &slot = pool[id - 1];
+                if (equal_field(slot, f))
+                    return {&slot, true};
                 i = (i + 1) & (slots_per_shard - 1);
             }
             return {nullptr, false};
@@ -221,8 +218,7 @@ struct SharedNames {
                 slot->raw_len = name.raw_len;
                 slot->quoted = name.quoted;
                 slot->len = name.len;
-                s.index[empty].store((name.hash & 0xffff0000U) | ++s.used,
-                                     std::memory_order_release);
+                s.index[empty].store(++s.used, std::memory_order_release);
             }
         }
         const uint64_t mask = 1ULL << (group & 63);
