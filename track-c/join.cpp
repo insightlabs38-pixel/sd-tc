@@ -6,6 +6,7 @@
 #include <cstring>
 #include <exception>
 #include <memory>
+#include <immintrin.h>
 #include <thread>
 #include <fcntl.h>
 #include <stdexcept>
@@ -447,6 +448,14 @@ int main() {
                     const char *reclaimed = a;
                     for (const char *q = a; q < b;) {
                         const char *limit = b - q > (1 << 20) ? q + (1 << 20) : b;
+                        const __m256i quotes = _mm256_set1_epi8('"');
+                        unsigned masks = 0;
+                        while (limit - q >= 32) {
+                            const __m256i block = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(q));
+                            masks ^= static_cast<unsigned>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(block, quotes)));
+                            q += 32;
+                        }
+                        x ^= __builtin_parity(masks);
                         for (; q < limit; ++q) x ^= (*q == '"');
                         discard_consumed(reclaimed, q);
                     }
