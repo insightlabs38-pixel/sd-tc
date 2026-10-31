@@ -79,21 +79,17 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
         }
         uint32_t h = HASH_OFFSET;
         while (p < end) {
-            const char *q = static_cast<const char *>(memchr(p, '"', end - p));
-            if (!q) throw std::runtime_error("unclosed quote");
-            for (const char *a = p; a != q; ++a)
-                h = ((h << 5) + h) ^ static_cast<unsigned char>(*a);
-            f.len += static_cast<uint32_t>(q - p);
-            if (q + 1 < end && q[1] == '"') {
-                h = ((h << 5) + h) ^ static_cast<unsigned char>('"');
-                ++f.len;
-                p = q + 2;
-                continue;
+            unsigned char c = static_cast<unsigned char>(*p++);
+            if (c == '"') {
+                if (p < end && *p == '"') ++p;
+                else {
+                    f.raw_len = static_cast<uint32_t>(p - f.raw - 1);
+                    f.hash = h;
+                    return f;
+                }
             }
-            f.raw_len = static_cast<uint32_t>(q - f.raw);
-            f.hash = h;
-            p = q + 1;
-            return f;
+            ++f.len;
+            if (need_hash) h = ((h << 5) + h) ^ c;
         }
         throw std::runtime_error("unclosed quote");
     }
@@ -336,7 +332,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 w.groups[group].add(r.id, r.amount, r.name, r.note_len,
                                     names.first(r.name, group));
             }
-            if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
+            if (p - reclaimed >= (1 << 18)) discard_consumed(reclaimed, p);
         }
     } catch (...) { w.error = std::current_exception(); }
 }
@@ -388,6 +384,7 @@ int main() {
             newline(p, end);
         }
         if (country.size() > 255) throw std::runtime_error("too many countries");
+        (void)madvise(const_cast<char *>(lookup.data), lookup.size, MADV_DONTNEED);
         const unsigned unmatched = static_cast<unsigned>(country.size());
         File records("/data/records.csv");
         p = records.data;
