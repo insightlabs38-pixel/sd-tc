@@ -72,6 +72,13 @@ def handwritten():
         b'3,"kawjkkxlukqs","",7,3.00\r\n'
     )
     check_case("colliding-name-hashes")
+    DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n")
+    DATA.joinpath("records.csv").write_bytes(
+        b"id,name,note,region_id,amount\n"
+        b'1,"known","",7,1.00\n'
+        b'2,"wrapped","",4294967303,-0.05\n'
+    )
+    check_case("wide-unknown-region-id")
 
 
 

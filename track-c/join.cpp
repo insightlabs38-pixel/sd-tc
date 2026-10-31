@@ -269,11 +269,13 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 Field note = text_field(p, end, false);
                 comma(p, end);
                 uint64_t region = number(p, end);
-                if (region < regions.size()) __builtin_prefetch(&regions[region], 0, 1);
+                uint32_t region_key = region < regions.size()
+                                          ? static_cast<uint32_t>(region) : UINT32_MAX;
+                if (region_key != UINT32_MAX) __builtin_prefetch(&regions[region_key], 0, 1);
                 comma(p, end);
                 int64_t amount = cents(p, end);
                 newline(p, end);
-                batch[count++] = Pending{id, name, note.len, amount, static_cast<uint32_t>(region)};
+                batch[count++] = Pending{id, name, note.len, amount, region_key};
             } while (count < batch.size() && p < end);
             for (unsigned i = 0; i < count; ++i) {
                 const Pending &r = batch[i];
