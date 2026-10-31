@@ -71,6 +71,17 @@ static uint32_t hash_bytes(const char *p, size_t n) {
     return h;
 }
 
+static const char *find_quote(const char *p, const char *end) {
+    const __m128i quote = _mm_set1_epi8('"');
+    while (end - p >= 16) {
+        __m128i block = _mm_loadu_si128(reinterpret_cast<const __m128i *>(p));
+        unsigned mask = static_cast<unsigned>(_mm_movemask_epi8(_mm_cmpeq_epi8(block, quote)));
+        if (mask) return p + __builtin_ctz(mask);
+        p += 16;
+    }
+    return static_cast<const char *>(memchr(p, '"', end - p));
+}
+
 static Field text_field(const char *&p, const char *end, bool need_hash) {
     Field f{};
     f.quoted = p < end && *p == '"';
@@ -78,7 +89,7 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
         ++p;
         f.raw = p;
         for (;;) {
-            const char *q = static_cast<const char *>(memchr(p, '"', end - p));
+            const char *q = find_quote(p, end);
             if (!q) throw std::runtime_error("unclosed quote");
             f.len += static_cast<uint32_t>(q - p);
             if (q + 1 < end && q[1] == '"') {
