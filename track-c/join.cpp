@@ -19,6 +19,8 @@
 #include <unistd.h>
 #include <vector>
 
+#pragma GCC target("arch=x86-64-v3")
+
 struct File {
     const char *data;
     size_t size;
