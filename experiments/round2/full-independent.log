@@ -1,0 +1,18 @@
+{"seed": 11, "scale": "full", "variant": "champion", "repeats": 3, "sha256": "53d4497e7b196e175e9ec6848c43f813317d83ece3914cfc63aab410fae20057", "source_sha256": "e50d6b5eb20d41f2b759206e67b94c6931de92bc9106f06c5a78033ee4186656"}
+{"seed": 11, "scale": "full", "variant": "crc", "repeats": 3, "sha256": "53d4497e7b196e175e9ec6848c43f813317d83ece3914cfc63aab410fae20057", "source_sha256": "5d4efd4503fb8ad64b026fc06a5073a5020b18a578f6d94ca181a1089600c4e6"}
+{"seed": 11, "scale": "full", "variant": "tail", "repeats": 3, "sha256": "53d4497e7b196e175e9ec6848c43f813317d83ece3914cfc63aab410fae20057", "source_sha256": "dcb9248a2ffd167376c79408cbf52ca849f93e5a5e43d773b49e3d1b7ce0f943"}
+{"seed": 11, "scale": "full", "variant": "denseswar", "repeats": 3, "sha256": "53d4497e7b196e175e9ec6848c43f813317d83ece3914cfc63aab410fae20057", "source_sha256": "a9f7ff9186a75c29fe781c3c398a96d136c8555083cd9f4a64759a8917e4a1e7"}
+{"seed": 11, "scale": "full", "variant": "densequote", "repeats": 3, "sha256": "53d4497e7b196e175e9ec6848c43f813317d83ece3914cfc63aab410fae20057", "source_sha256": "78cd787c91ac3f9ab28e374a1052a51720c09919272bb1b06ab0260ca9bedc41"}
+{"seed": 11, "scale": "full", "variant": "structswar", "repeats": 3, "sha256": "53d4497e7b196e175e9ec6848c43f813317d83ece3914cfc63aab410fae20057", "source_sha256": "64b8d754ea00d976ceb14f3a6664ff5e275fbe35db3a18f3fa1c01c2c33fa651"}
+{"seed": 11, "scale": "full", "variant": "radixcompact", "repeats": 3, "sha256": "53d4497e7b196e175e9ec6848c43f813317d83ece3914cfc63aab410fae20057", "source_sha256": "bd0714bcfee44df2842015d9f5da653cb8b20c50c55e4ae7a139ad646005b9f4"}
+{"seed": 11, "scale": "full", "variant": "ownerinline", "repeats": 3, "sha256": "53d4497e7b196e175e9ec6848c43f813317d83ece3914cfc63aab410fae20057", "source_sha256": "f82afc81574925c1c61cb66e6152f75b4b592568fff3f2387432a1dbedf90a19"}
+PGO full independent seed 11 exact
+{"seed": 29, "scale": "full", "variant": "champion", "repeats": 3, "sha256": "67daeb210797eaa56e70ae2ea36885339c96a9f6f2800ea8b3bf3dd9da1cc8c4", "source_sha256": "e50d6b5eb20d41f2b759206e67b94c6931de92bc9106f06c5a78033ee4186656"}
+{"seed": 29, "scale": "full", "variant": "crc", "repeats": 3, "sha256": "67daeb210797eaa56e70ae2ea36885339c96a9f6f2800ea8b3bf3dd9da1cc8c4", "source_sha256": "5d4efd4503fb8ad64b026fc06a5073a5020b18a578f6d94ca181a1089600c4e6"}
+{"seed": 29, "scale": "full", "variant": "tail", "repeats": 3, "sha256": "67daeb210797eaa56e70ae2ea36885339c96a9f6f2800ea8b3bf3dd9da1cc8c4", "source_sha256": "dcb9248a2ffd167376c79408cbf52ca849f93e5a5e43d773b49e3d1b7ce0f943"}
+{"seed": 29, "scale": "full", "variant": "denseswar", "repeats": 3, "sha256": "67daeb210797eaa56e70ae2ea36885339c96a9f6f2800ea8b3bf3dd9da1cc8c4", "source_sha256": "a9f7ff9186a75c29fe781c3c398a96d136c8555083cd9f4a64759a8917e4a1e7"}
+{"seed": 29, "scale": "full", "variant": "densequote", "repeats": 3, "sha256": "67daeb210797eaa56e70ae2ea36885339c96a9f6f2800ea8b3bf3dd9da1cc8c4", "source_sha256": "78cd787c91ac3f9ab28e374a1052a51720c09919272bb1b06ab0260ca9bedc41"}
+{"seed": 29, "scale": "full", "variant": "structswar", "repeats": 3, "sha256": "67daeb210797eaa56e70ae2ea36885339c96a9f6f2800ea8b3bf3dd9da1cc8c4", "source_sha256": "64b8d754ea00d976ceb14f3a6664ff5e275fbe35db3a18f3fa1c01c2c33fa651"}
+{"seed": 29, "scale": "full", "variant": "radixcompact", "repeats": 3, "sha256": "67daeb210797eaa56e70ae2ea36885339c96a9f6f2800ea8b3bf3dd9da1cc8c4", "source_sha256": "bd0714bcfee44df2842015d9f5da653cb8b20c50c55e4ae7a139ad646005b9f4"}
+{"seed": 29, "scale": "full", "variant": "ownerinline", "repeats": 3, "sha256": "67daeb210797eaa56e70ae2ea36885339c96a9f6f2800ea8b3bf3dd9da1cc8c4", "source_sha256": "f82afc81574925c1c61cb66e6152f75b4b592568fff3f2387432a1dbedf90a19"}
+PGO full independent seed 29 exact
