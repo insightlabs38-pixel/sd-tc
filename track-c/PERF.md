@@ -79,3 +79,12 @@ All four experimental CI runs passed full seed-1 SHA-256, holdout seeds, hostile
 Guarded-BOM CRC source blob `efcc37be6d82c3e341eaa3d66f2e7af82338ee07` restored byte-for-byte. Independent paired replication pending. All K proxies use process RSS and physical source lines; official cgroup M, formatter S and scoring-box K remain unmeasured.
 
 - **Independent replication:** [CI 41206065495](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41206065495) passed all gates with identical source blob; paired median 136.822 → 134.671 ms, RSS 16,920 → 16,852 KiB, physical source 460 → 454 lines. Complete-K proxy **+1.08%** (first run +1.17%). Eight of twelve pairs favored candidate; keep the guarded-BOM CRC champion. Official T/M/S/D remains pending through Luna.
+
+## Canonical raw-name equality (2026-10-31)
+
+- [CI 41210233565](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41210233565) verified corrected CRC32C collision and concurrent 4,200-name shard-overflow regressions; previous hash-specific fixtures did not exercise these paths.
+- [CI 41210377543](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41210377543) passed exact full seed-1 SHA-256, other seeds, canonical quoted/unquoted names, long names, adversarial tests, offline Docker and sandbox.
+- Under the frozen valid CSV grammar, raw bytes inside the delimiters uniquely encode logical names. Exact raw comparison replaces decoded equality and removes unused slot metadata.
+- Paired 12-trial median: **134.364 → 125.213 ms** (6.81% faster), peak RSS **16,792 → 16,920 KiB**, physical source **454 → 440 lines**. All 12 paired trials favored the candidate.
+- Complete-K proxy **+3.92%** using runner T/RSS, physical lines and unchanged D=1; official formatter S, cgroup M and scoring-box T/K remain pending.
+- Champion source blob: `820ff763699cb5c662fed388e49e3998f49e094e`; no official submission.
