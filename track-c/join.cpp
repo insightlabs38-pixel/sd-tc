@@ -101,8 +101,12 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
 
 template <class A, class B>
 static bool equal_field(const A &f, const B &g) {
-    // Valid CSV has a unique raw spelling for each logical value.
-    return f.raw_len == g.raw_len && std::memcmp(f.raw, g.raw, f.raw_len) == 0;
+    if (f.raw_len != g.raw_len) return false;
+    size_t n = f.raw_len;
+    if (n >= 8 && n <= 16)
+        return !std::memcmp(f.raw, g.raw, 8) &&
+               !std::memcmp(f.raw + n - 8, g.raw + n - 8, 8);
+    return std::memcmp(f.raw, g.raw, n) == 0;
 }
 
 struct SharedNames {
