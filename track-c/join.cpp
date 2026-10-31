@@ -318,81 +318,49 @@ static std::vector<Group> merge_workers(const std::vector<Worker> &workers, unsi
             dst.note_bytes += src.note_bytes;
         }
     }
-    if (workers.size() <= 2) {
-        for (unsigned g = 0; g < group_count; ++g) {
-            groups[g].distinct = workers[0].groups[g].distinct;
-            if (workers.size() == 2) groups[g].distinct += workers[1].groups[g].distinct;
-        }
-        if (workers.size() == 1) return groups;
-        // Subtract only name/group intersections; neither table needs rebuilding.
-        constexpr unsigned shards = 4;
-        std::array<std::array<uint32_t, 256>, shards> overlap{};
-        const Names &left = workers[0].names, &right = workers[1].names;
-        std::vector<std::thread> jobs;
-        for (unsigned shard = 0; shard < shards; ++shard) {
-            jobs.emplace_back([&, shard] {
-                const size_t mask = left.table.size() - 1;
-                for (size_t k = right.table.size() * shard / shards;
-                     k < right.table.size() * (shard + 1) / shards; ++k) {
-                    const Field &slot = right.table[k];
-                    if (slot.id == UINT32_MAX) continue;
-                    size_t i = slot.hash & mask;
-                    while (left.table[i].id != UINT32_MAX) {
-                        const Field &candidate = left.table[i];
-                        if (candidate.hash == slot.hash && equal_field(candidate, slot)) {
-                            for (unsigned word = 0; word < 4; ++word) {
-                                uint64_t shared = left.seen[candidate.id][word] &
-                                                  right.seen[slot.id][word];
-                                while (shared) {
-                                    ++overlap[shard][word * 64 + __builtin_ctzll(shared)];
-                                    shared &= shared - 1;
-                                }
-                            }
-                            break;
-                        }
-                        i = (i + 1) & mask;
-                    }
-                }
-            });
-        }
-        for (auto &job : jobs) job.join();
-        for (unsigned shard = 0; shard < shards; ++shard)
-            for (unsigned g = 0; g < group_count; ++g)
-                groups[g].distinct -= overlap[shard][g];
-        return groups;
+    if (workers.empty() || workers.size() > 2) throw std::runtime_error("worker count");
+    for (unsigned g = 0; g < group_count; ++g) {
+        groups[g].distinct = workers[0].groups[g].distinct;
+        if (workers.size() == 2) groups[g].distinct += workers[1].groups[g].distinct;
     }
+    if (workers.size() == 1) return groups;
+    // Subtract only name/group intersections; neither table needs rebuilding.
     constexpr unsigned shards = 4;
-    std::array<std::array<uint32_t, 256>, shards> distinct{};
-    std::array<std::exception_ptr, shards> errors{};
+    std::array<std::array<uint32_t, 256>, shards> overlap{};
+    const Names &left = workers[0].names, &right = workers[1].names;
     std::vector<std::thread> jobs;
-    jobs.reserve(shards);
     for (unsigned shard = 0; shard < shards; ++shard) {
         jobs.emplace_back([&, shard] {
-            try {
-                Names merged(1 << 15);
-                for (const Worker &w : workers) {
-                    for (const Field &slot : w.names.table) {
-                        if (slot.id == UINT32_MAX || ((slot.hash >> 16) % shards) != shard) continue;
-                        uint32_t id = merged.intern(slot);
+            const size_t mask = left.table.size() - 1;
+            for (size_t k = right.table.size() * shard / shards;
+                 k < right.table.size() * (shard + 1) / shards; ++k) {
+                const Field &slot = right.table[k];
+                if (slot.id == UINT32_MAX) continue;
+                size_t i = slot.hash & mask;
+                while (left.table[i].id != UINT32_MAX) {
+                    const Field &candidate = left.table[i];
+                    if (candidate.hash == slot.hash && equal_field(candidate, slot)) {
                         for (unsigned word = 0; word < 4; ++word) {
-                            uint64_t &dst = merged.seen[id][word];
-                            uint64_t fresh = w.names.seen[slot.id][word] & ~dst;
-                            dst |= fresh;
-                            while (fresh) {
-                                ++distinct[shard][word * 64 + __builtin_ctzll(fresh)];
-                                fresh &= fresh - 1;
+                            uint64_t shared = left.seen[candidate.id][word] &
+                                              right.seen[slot.id][word];
+                            while (shared) {
+                                ++overlap[shard][word * 64 + __builtin_ctzll(shared)];
+                                shared &= shared - 1;
                             }
                         }
+                        break;
                     }
+                    i = (i + 1) & mask;
                 }
-            } catch (...) { errors[shard] = std::current_exception(); }
+            }
         });
     }
     for (auto &job : jobs) job.join();
-    for (const auto &error : errors) if (error) std::rethrow_exception(error);
     for (unsigned shard = 0; shard < shards; ++shard)
-        for (unsigned g = 0; g < group_count; ++g) groups[g].distinct += distinct[shard][g];
+        for (unsigned g = 0; g < group_count; ++g)
+            groups[g].distinct -= overlap[shard][g];
     return groups;
+
 }
 
 int main() {
