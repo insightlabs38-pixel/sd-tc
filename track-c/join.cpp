@@ -155,12 +155,13 @@ struct NameArena {
         cursor += f.raw_len; remaining -= f.raw_len; return out;
     }
 };
-struct NameSlot {
-    std::atomic<uint64_t> control;
-    char key[16];
-    constexpr NameSlot() noexcept : control(0), key{} {}
+struct NameSlot { char key[16]; };
+static_assert(sizeof(NameSlot) == 16, "exact key");
+struct NameControl {
+    std::atomic<uint8_t> value;
+    constexpr NameControl() noexcept : value(0) {}
 };
-static_assert(sizeof(NameSlot) == 24, "exact slot");
+
 struct ZeroWord {
     std::atomic<uint64_t> value;
     constexpr ZeroWord() noexcept : value(0) {}
@@ -179,20 +180,25 @@ struct CountryBits {
 };
 struct SharedNames {
     static constexpr uint32_t capacity = CountryBits::capacity, limit = capacity / 8 * 7;
-    static constexpr uint64_t busy = 2;
+    static constexpr uint8_t busy = 1;
     alignas(4096) inline static NameSlot slots[capacity]{};
+    alignas(4096) inline static NameControl controls[capacity]{};
     std::atomic<uint64_t> used{0};
     struct Overflow { Field field; std::array<uint64_t, 4> seen{}; };
     struct Shard { std::mutex mutex; std::vector<Overflow> overflow; };
     std::array<Shard, 64> shards;
     static uint32_t spread(uint32_t h) { return h ^ (h >> 11) ^ (h >> 22); }
-    static uint64_t tag(const Field &f) { return (static_cast<uint64_t>(f.hash) << 32) | (static_cast<uint64_t>(f.raw_len) << 1) | 1; }
+    static uint8_t tag(const Field &f) { return static_cast<uint8_t>(((f.raw_len <= 16 ? f.raw_len + 1 : 31) << 3) | (f.hash >> 29)); }
     static bool matches(const NameSlot &s, const Field &f) {
         if (f.raw_len <= 16) return std::memcmp(s.key, f.raw, f.raw_len) == 0;
-        const char *saved; std::memcpy(&saved, s.key, sizeof(saved));
-        return std::memcmp(s.key + 8, f.raw, 8) == 0 && std::memcmp(saved + 8, f.raw + 8, f.raw_len - 8) == 0;
+        const char *saved; uint32_t length; std::memcpy(&saved, s.key, sizeof(saved));
+        std::memcpy(&length, s.key + 8, 4);
+        return length == f.raw_len && std::memcmp(s.key + 12, f.raw, 4) == 0 && std::memcmp(saved + 4, f.raw + 4, f.raw_len - 4) == 0;
     }
-    static void prefetch(const Field &f) { __builtin_prefetch(&slots[spread(f.hash) & (capacity - 1)], 0, 3); }
+    static void prefetch(const Field &f) {
+        uint32_t i = spread(f.hash) & (capacity - 1);
+        __builtin_prefetch(&controls[i], 0, 3); __builtin_prefetch(&slots[i], 0, 3);
+    }
     __attribute__((noinline, cold)) uint32_t overflow(const Field &f, unsigned group, uint32_t &distinct, NameArena &arena) {
         Shard &s = shards[spread(f.hash) & 63]; std::lock_guard<std::mutex> lock(s.mutex);
         uint64_t bit = 1ULL << (group & 63);
@@ -206,37 +212,39 @@ struct SharedNames {
     __attribute__((noinline, cold)) uint32_t full_lookup(const Field &f, unsigned group, uint32_t &distinct, NameArena &arena) {
         uint32_t i = spread(f.hash) & (capacity - 1);
         for (uint32_t n = 0; n < capacity; ++n, i = (i + 1) & (capacity - 1)) {
-            uint64_t control = slots[i].control.load(std::memory_order_acquire);
-            while (control == busy) { _mm_pause(); control = slots[i].control.load(std::memory_order_acquire); }
+            uint8_t control = controls[i].value.load(std::memory_order_acquire);
+            while (control == busy) { _mm_pause(); control = controls[i].value.load(std::memory_order_acquire); }
             if (!control) break;
             if (control == tag(f) && matches(slots[i], f)) return i;
         }
         return overflow(f, group, distinct, arena);
     }
     uint32_t intern(const Field &f, unsigned group, uint32_t &distinct, NameArena &arena) {
-        const uint64_t signature = tag(f);
+        const uint8_t signature = tag(f);
         const char *saved = nullptr;
         uint32_t i = spread(f.hash) & (capacity - 1);
         for (uint32_t n = 0; n < capacity; ++n, i = (i + 1) & (capacity - 1)) {
             NameSlot &s = slots[i];
-            uint64_t control = s.control.load(std::memory_order_acquire);
-            while (control == busy) { _mm_pause(); control = s.control.load(std::memory_order_acquire); }
+            auto &cell = controls[i].value;
+            uint8_t control = cell.load(std::memory_order_acquire);
+            while (control == busy) { _mm_pause(); control = cell.load(std::memory_order_acquire); }
             if (!control) {
                 // Reprobe after the acquire: all accepted insertions have already claimed their slots.
                 if (used.load(std::memory_order_acquire) >= limit) return full_lookup(f, group, distinct, arena);
                 if (f.raw_len > 16 && !saved) saved = arena.keep(f);
-                uint64_t expected = 0;
-                if (!s.control.compare_exchange_strong(expected, busy, std::memory_order_acquire)) { --n; i = (i - 1) & (capacity - 1); continue; }
+                uint8_t expected = 0;
+                if (!cell.compare_exchange_strong(expected, busy, std::memory_order_acquire)) { --n; i = (i - 1) & (capacity - 1); continue; }
                 if (used.fetch_add(1, std::memory_order_acq_rel) >= limit) {
                     // Every reader waits on busy; nobody can probe through the restored empty slot.
-                    s.control.store(0, std::memory_order_release); return full_lookup(f, group, distinct, arena);
+                    cell.store(0, std::memory_order_release); return full_lookup(f, group, distinct, arena);
                 }
                 if (f.raw_len <= 16) std::memcpy(s.key, f.raw, f.raw_len);
                 else {
                     std::memcpy(s.key, &saved, sizeof(saved));
-                    std::memcpy(s.key + 8, f.raw, 8);
+                    uint32_t length = f.raw_len; std::memcpy(s.key + 8, &length, 4);
+                    std::memcpy(s.key + 12, f.raw, 4);
                 }
-                s.control.store(signature, std::memory_order_release); return i;
+                cell.store(signature, std::memory_order_release); return i;
             }
             if (control == signature && matches(s, f)) return i;
         }
@@ -439,6 +447,7 @@ int main() {
         static SharedNames shared;
         if (C_PREFILL) {
             (void)madvise(SharedNames::slots, sizeof(SharedNames::slots), MADV_POPULATE_WRITE);
+            (void)madvise(SharedNames::controls, sizeof(SharedNames::controls), MADV_POPULATE_WRITE);
             if (C_PREFILL > 1) (void)madvise(CountryBits::bits, (unmatched + 1) * CountryBits::words * sizeof(ZeroWord), MADV_POPULATE_WRITE);
         }
         std::vector<Worker> workers;
