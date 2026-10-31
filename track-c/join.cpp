@@ -6,6 +6,7 @@
 #include <cstring>
 #include <exception>
 #include <memory>
+#include <nmmintrin.h>
 #include <thread>
 #include <fcntl.h>
 #include <stdexcept>
@@ -53,6 +54,18 @@ static_assert(sizeof(Field) == 24, "name slot layout");
 
 static constexpr uint32_t HASH_OFFSET = 5381U;
 
+static uint32_t hash_span(uint32_t h, const char *p, size_t n) {
+    while (n >= 8) {
+        uint64_t word;
+        std::memcpy(&word, p, 8);
+        h = static_cast<uint32_t>(_mm_crc32_u64(h, word));
+        p += 8;
+        n -= 8;
+    }
+    while (n--) h = _mm_crc32_u8(h, static_cast<unsigned char>(*p++));
+    return h;
+}
+
 static Field text_field(const char *&p, const char *end, bool need_hash) {
     Field f{};
     f.quoted = p < end && *p == '"';
@@ -76,17 +89,21 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
         }
         uint32_t h = HASH_OFFSET;
         while (p < end) {
-            unsigned char c = static_cast<unsigned char>(*p++);
-            if (c == '"') {
-                if (p < end && *p == '"') ++p;
-                else {
-                    f.raw_len = static_cast<uint32_t>(p - f.raw - 1);
-                    f.hash = h;
-                    return f;
-                }
+            const char *q = static_cast<const char *>(memchr(p, '"', end - p));
+            if (!q) throw std::runtime_error("unclosed quote");
+            size_t span = static_cast<size_t>(q - p);
+            f.len += static_cast<uint32_t>(span);
+            h = hash_span(h, p, span);
+            if (q + 1 < end && q[1] == '"') {
+                ++f.len;
+                h = _mm_crc32_u8(h, '"');
+                p = q + 2;
+                continue;
             }
-            ++f.len;
-            if (need_hash) h = ((h << 5) + h) ^ c;
+            f.raw_len = static_cast<uint32_t>(q - f.raw);
+            f.hash = h;
+            p = q + 1;
+            return f;
         }
         throw std::runtime_error("unclosed quote");
     }
@@ -95,7 +112,7 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
     while (p < end && *p != ',' && *p != '\r' && *p != '\n') {
         unsigned char c = static_cast<unsigned char>(*p++);
         ++f.len;
-        if (need_hash) h = ((h << 5) + h) ^ c;
+        if (need_hash) h = _mm_crc32_u8(h, c);
     }
     f.raw_len = f.len;
     f.hash = h;
