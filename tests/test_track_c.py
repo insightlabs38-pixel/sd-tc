@@ -249,6 +249,19 @@ def concentrated_shard_stress():
     check_case("concentrated-name-shard-overflow")
 
 
+
+def capacity_cutover_stress():
+    import random
+    rng = random.Random(911)
+    DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n8,BBB\n")
+    rows = bytearray(b"id,name,note,region_id,amount\n")
+    for i in range(450000):
+        name = rng.randrange(150000)
+        rows.extend(f'{i + 1},"capacity name {name}","",{7 + (name & 1)},-1.01\n'.encode())
+    DATA.joinpath("records.csv").write_bytes(rows)
+    check_case("concurrent-primary-overflow-cutover")
+
+
 def main():
     DATA.mkdir(exist_ok=True)
     OUT.mkdir(exist_ok=True)
@@ -261,6 +274,7 @@ def main():
     huge_name_arena_stress()
     grow_stress()
     concentrated_shard_stress()
+    capacity_cutover_stress()
     merge_collision_stress()
     for seed, scale in [(1, "tiny"), (2, "tiny"), (3, "tiny"),
                         (2, "sample"), (1, "sample"), (1, "full")]:
