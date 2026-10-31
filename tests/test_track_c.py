@@ -83,23 +83,23 @@ def handwritten():
 
 
 def huge_name_arena_stress():
-    # The Python CSV reference has a 128 KiB default field limit; check this
-    # valid larger record against independently computed exact output bytes.
+    # Both large-arena storage and >24-bit logical lengths must remain exact.
     bom = b"\xef\xbb\xbf"
-    name = b'"' + b"A" * ((1 << 20) + 17) + b'""B"'
     DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n8,BBB\n")
-    DATA.joinpath("records.csv").write_bytes(
-        bom + b"id,name,note,region_id,amount\r\n"
-        + b'1,' + name + b',"note",7,1.00\n'
-        + bom + b'2,' + name + b',"",7,-0.05\r\n'
-        + b'3,"",,8,0.00\n'
-    )
-    command("/tmp/sd-track-c")
-    expected = (b"AAA 2 3 0.95 -0.05 1.00 1 2097190 4\n"
-                b"BBB 1 3 0.00 0.00 0.00 1 0 0\n")
-    if (OUT / "aggregates.txt").read_bytes() != expected:
-        raise AssertionError("huge-name-arena: output differs from hand-computed bytes")
-    print("huge-name-arena: exact, long quoted name crosses worker boundaries", flush=True)
+    for width in ((1 << 20) + 17, (1 << 24) + 17):
+        name = b'"' + b"A" * width + b'""B"'
+        DATA.joinpath("records.csv").write_bytes(
+            bom + b"id,name,note,region_id,amount\r\n"
+            + b'1,' + name + b',"note",7,1.00\n'
+            + bom + b'2,' + name + b',"",7,-0.05\r\n'
+            + b'3,"",,8,0.00\n'
+        )
+        command("/tmp/sd-track-c")
+        expected = (f"AAA 2 3 0.95 -0.05 1.00 1 {2 * (width + 2)} 4\n".encode()
+                    + b"BBB 1 3 0.00 0.00 0.00 1 0 0\n")
+        if (OUT / "aggregates.txt").read_bytes() != expected:
+            raise AssertionError(f"huge-name-arena-{width}: output differs from exact bytes")
+        print(f"huge-name-arena-{width}: exact, long name and worker boundaries", flush=True)
 
 
 def split_boundary_stress():

@@ -129,7 +129,8 @@ struct SharedNames {
         const char *raw = nullptr;
         uint32_t raw_len : 31;
         uint32_t quoted : 1;
-        uint32_t len = 0;
+        uint32_t len : 24;
+        uint32_t fp : 8;
         std::atomic<uint64_t> seen[4]{};
     };
     static_assert(sizeof(Slot) == 48, "compact shared name slot");
@@ -174,7 +175,7 @@ struct SharedNames {
                     return {nullptr, false};
                 }
                 Slot &slot = pool[id - 1];
-                if (equal_field(slot, f))
+                if (slot.fp == (f.hash >> 24) && equal_field(slot, f))
                     return {&slot, true};
                 i = (i + 1) & (slots_per_shard - 1);
             }
@@ -196,7 +197,7 @@ struct SharedNames {
             size_t empty = slots_per_shard;
             match = s.probe(name, &empty);
             slot = match.first;
-            if (!match.second && empty == slots_per_shard) {
+            if (!match.second && (empty == slots_per_shard || name.len >= (1U << 24))) {
                 const uint64_t bit = 1ULL << (group & 63);
                 for (auto &entry : s.overflow) {
                     if (entry.field.hash != name.hash || !equal_field(entry.field, name)) continue;
@@ -218,6 +219,7 @@ struct SharedNames {
                 slot->raw_len = name.raw_len;
                 slot->quoted = name.quoted;
                 slot->len = name.len;
+                slot->fp = name.hash >> 24;
                 s.index[empty].store(++s.used, std::memory_order_release);
             }
         }
