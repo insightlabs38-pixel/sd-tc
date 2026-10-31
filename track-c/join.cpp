@@ -125,13 +125,11 @@ struct SharedNames {
     static constexpr unsigned shard_bits = 6;
     static constexpr size_t slots_per_shard = 1 << 12;
     static uint32_t spread(uint32_t h) { return h ^ (h >> 11) ^ (h >> 22); }
-    static uint32_t tag(uint32_t h) { return (h >> 25) + 1; }
     struct Slot {
         const char *raw = nullptr;
         uint32_t raw_len : 31;
         uint32_t quoted : 1;
         uint32_t len = 0, hash = 0;
-        std::atomic<uint32_t> ready{0};
         std::atomic<uint64_t> seen[4]{};
     };
     static_assert(sizeof(Slot) == 56, "compact shared name slot");
@@ -142,7 +140,9 @@ struct SharedNames {
         };
         std::mutex mutex;
         std::vector<Overflow> overflow;
-        std::array<Slot, slots_per_shard> table{};
+        std::array<std::atomic<uint16_t>, slots_per_shard> index{};
+        Slot *pool = nullptr;
+        uint16_t used = 0;
         std::vector<std::unique_ptr<char[]>> arena;
         char *cursor = nullptr;
         size_t remaining = 0;
@@ -165,13 +165,16 @@ struct SharedNames {
             remaining -= f.raw_len;
             return dst;
         }
-        std::pair<Slot *, bool> probe(const Field &f) {
+        std::pair<Slot *, bool> probe(const Field &f, size_t *empty = nullptr) {
             size_t i = (spread(f.hash) >> shard_bits) & (slots_per_shard - 1);
             for (size_t n = 0; n < slots_per_shard; ++n) {
-                Slot &slot = table[i];
-                uint32_t state = slot.ready.load(std::memory_order_acquire);
-                if (!state) return {&slot, false};
-                if (state == tag(f.hash) && slot.hash == f.hash && equal_field(slot, f))
+                uint16_t id = index[i].load(std::memory_order_acquire);
+                if (!id) {
+                    if (empty) *empty = i;
+                    return {nullptr, false};
+                }
+                Slot &slot = pool[id - 1];
+                if (slot.hash == f.hash && equal_field(slot, f))
                     return {&slot, true};
                 i = (i + 1) & (slots_per_shard - 1);
             }
@@ -179,15 +182,21 @@ struct SharedNames {
         }
     };
     std::array<Shard, 1 << shard_bits> shards;
+    SharedNames() {
+        static Slot storage[(1 << shard_bits) * slots_per_shard]{};
+        for (size_t i = 0; i < shards.size(); ++i)
+            shards[i].pool = storage + i * slots_per_shard;
+    }
     bool first(const Field &name, unsigned group) {
         Shard &s = shards[spread(name.hash) & (shards.size() - 1)];
         auto match = s.probe(name);
         Slot *slot = match.first;
         if (!match.second) {
             std::lock_guard<std::mutex> lock(s.mutex);
-            match = s.probe(name);
+            size_t empty = slots_per_shard;
+            match = s.probe(name, &empty);
             slot = match.first;
-            if (!match.second && !slot) {
+            if (!match.second && empty == slots_per_shard) {
                 const uint64_t bit = 1ULL << (group & 63);
                 for (auto &entry : s.overflow) {
                     if (entry.field.hash != name.hash || !equal_field(entry.field, name)) continue;
@@ -204,12 +213,13 @@ struct SharedNames {
                 return true;
             }
             if (!match.second) {
+                slot = &s.pool[s.used];
                 slot->raw = s.keep(name);
                 slot->raw_len = name.raw_len;
                 slot->quoted = name.quoted;
                 slot->len = name.len;
                 slot->hash = name.hash;
-                slot->ready.store(tag(name.hash), std::memory_order_release);
+                s.index[empty].store(++s.used, std::memory_order_release);
             }
         }
         const uint64_t mask = 1ULL << (group & 63);
