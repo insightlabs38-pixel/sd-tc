@@ -15,6 +15,7 @@ for trial in range(12):
     order = tuple(BINS) if trial % 2 == 0 else tuple(reversed(BINS))
     for variant in order:
         path = BINS[variant]
+        Path("/out/aggregates.txt").unlink(missing_ok=True)
         start = time.perf_counter_ns()
         pid = os.posix_spawn(path, [path], os.environ)
         _, status, usage = os.wait4(pid, 0)

@@ -152,3 +152,8 @@ K proxies use runner T, process RSS, physical lines and unchanged D=1. Official 
 - [Independent attempt 2](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41233936842/attempts/2) passed all gates again; paired median **143.111 -> 139.654 ms**, RSS **17,026 -> 17,076 KiB**, K proxy **+0.92%** (10/12 faster). **Promote** qualified AVX2 source blob `54308da7af86c24c7695963f7762d28368f94367`.
 - [CI 41234316750](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41234316750) tested dynamic workers capped at six by Linux affinity and cgroup CPU quota. All gates passed. On the 4-vCPU runner, paired median **72.914 -> 72.822 ms**, RSS **17,112 -> 17,170 KiB**, source **479 -> 498 lines**, estimated K proxy **-0.59%**. **Not promoted** without official six-P-core timing; candidate remains recoverable as commit `3b297da` for Luna to evaluate. Runner profiling: four workers 72.736 ms, six 73.724 ms.
 - Official scoring-box T/M/S/D and K remain unmeasured. All proxy comparisons use runner wall/RSS and physical source lines, not cgroup peak or formatter-adjusted S.
+
+
+## Official promotion and PR #11 conflict resolution
+
+Official run `run-15adbc1f561c` passed all gates on this packed-metadata source: T=0.076727 s, M=14,487,552 B, S=552, D=1, K=20.508340, points=65.596525, improving prior BEST `run-8f98e6ec4091` (K=20.413289). The later PR-head pragma revision `78503e708dccdbf484bb5dc1223a02705cfabb81` passed all gates but scored only K=18.480714 in `run-9722acb5cb38`; it is excluded. Merge PR #11 with the tested predecessor source `59974fd6328c2fabb1154ac4cc31bda1036bc6ca`, preserving the later `main` source in the merge parent/history.

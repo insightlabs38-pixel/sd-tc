@@ -1,7 +1,7 @@
 name: Track C correctness and container
 on:
   push:
-    branches: [main]
+    branches: [main, "frontier/round2-**"]
     paths:
       - "track-c/**"
       - "tests/**"
@@ -10,7 +10,7 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,7 +23,7 @@ jobs:
         run: python3 tests/test_track_c.py
       - name: Paired full-scale runtime and RSS comparison
         run: |
-          git show 393a1360eaef4958eab7683a2bad5690f17ab023:track-c/join.cpp > /tmp/sd-track-c-baseline.cpp
+          git show d1189c62ac6d6e56ba034e57919f0de3dc0f5128:track-c/join.cpp > /tmp/sd-track-c-baseline.cpp
           g++ -O3 -march=x86-64-v3 -std=c++17 -DNDEBUG -flto -pthread -Wall -Wextra -Werror \
             -o /tmp/sd-track-c-baseline /tmp/sd-track-c-baseline.cpp
           wc -l /tmp/sd-track-c-baseline.cpp track-c/join.cpp
@@ -32,6 +32,12 @@ jobs:
           else
             python3 tests/paired_benchmark.py
           fi
+      - name: Verify source-only default compiler compatibility
+        run: |
+          g++ -O3 -std=c++17 -DNDEBUG -flto -pthread -static -o /tmp/sd-track-c-default track-c/join.cpp
+          python3 -c 'from pathlib import Path; Path("/out/aggregates.txt").unlink(missing_ok=True)'
+          /tmp/sd-track-c-default
+          test "$(sha256sum /out/aggregates.txt | cut -d' ' -f1)" = "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
       - name: Unscored phase profile and worker-count comparison
         run: python3 tests/profile_track_c.py
       - name: Build pinned offline Docker context
@@ -45,3 +51,40 @@ jobs:
           test "$(sha256sum /out/aggregates.txt | cut -d' ' -f1)" = \
             "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
           test "$(find /out -maxdepth 1 -type f | wc -l)" -eq 1
+      - name: Paired pinned-compiler PGO comparison
+        if: hashFiles('track-c/generator.py') != ''
+        run: |
+          docker build --network=none --target build -t sd-track-c:pgo-build track-c
+          container_id=$(docker create sd-track-c:pgo-build /bin/true)
+          docker cp "$container_id":/join-baseline /tmp/sd-track-c-baseline
+          docker cp "$container_id":/join /tmp/sd-track-c
+          docker rm "$container_id"
+          python3 tests/paired_benchmark.py
+      - name: Paired full-PGO architecture comparison
+        run: |
+          staging=$(mktemp -d)
+          git show b7bb0d5c32b2aa06cd1d046d4dabf31d65cd0389:track-c/join.cpp > "$staging/join.cpp"
+          cp track-c/Dockerfile track-c/generator.py "$staging/"
+          docker build --network=none -t sd-track-c:previous-pgo "$staging"
+          container_id=$(docker create sd-track-c:previous-pgo)
+          docker cp "$container_id":/join /tmp/sd-track-c-baseline
+          docker rm "$container_id"
+          python3 tests/paired_benchmark.py
+      - name: Independent full references for the final PGO binary
+        if: hashFiles('track-c/generator.py') != ''
+        run: python3 tests/check_binary_seeds.py --binary /tmp/sd-track-c --seeds 11 29
+  sanitizers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        sanitizer: ["address,undefined", "thread"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare sandbox paths and sanitizer address space
+        run: |
+          sudo mkdir -p /data /out
+          sudo chown "$(id -u):$(id -g)" /data /out
+          sudo sysctl -w vm.mmap_rnd_bits=28
+      - name: Independent references and hostile cases
+        run: python3 tests/qualify_frontier.py --sanitizer='${{ matrix.sanitizer }}'
