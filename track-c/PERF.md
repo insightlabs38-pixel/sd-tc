@@ -126,3 +126,9 @@ K proxies use runner T, process RSS, physical lines and unchanged D=1. Official 
 - [CI 41224409235](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41224409235): 2,048-entry bounded pools per shard passed all exactness, seed, hostile, Docker and sandbox gates. Paired baseline 93.845 -> 94.001 ms, RSS 17,106 -> 17,108 KiB; K proxy -0.18%. Sparse pool pages were already nonresident; rejected.
 - [CI 41224625062](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41224625062): direct 48-byte atomic slots passed all gates, but paired baseline 118.604 -> 118.601 ms and RSS 16,930 -> 23,286 KiB, source 458 -> 456 lines; K proxy -6.11%. The direct table touches many otherwise cold pages; rejected.
 - Restored verified cold-insertion champion source blob `f875b5d3d51011fe0cc710fab851b78471483cbb`, independently qualified in [CI 41220204312](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41220204312). The workflow's comparison baseline now points to that champion instead of an older pre-promotion source. Official scoring-box T/M/S/D still pending.
+
+## CRC32C remainder packing trial (2026-10-31)
+
+- [CI 41229565059](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41229565059) passed exact full seed-1 SHA-256, holdout seeds, adversarial collision/overflow, offline Docker and sandbox.
+- Replacing 1-byte remainder CRC steps with 4/2/1-byte hardware CRC reduced instruction count but regressed paired median **115.957 -> 116.964 ms**; RSS **17,018 -> 17,014 KiB**, physical source **460 -> 474 lines**.
+- Estimated full-K proxy **-0.87%** with T/RSS/source/D=1; reject and restore verified `f875b5d3` source. Official cgroup M, formatter S and scoring-box K remain unmeasured.
