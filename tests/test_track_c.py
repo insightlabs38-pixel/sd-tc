@@ -133,6 +133,30 @@ def quote_vector_boundary_stress():
     check_case("quote-vector-boundary-and-escaped-pairs")
 
 
+def packed_metadata_stress():
+    prefix = b"A" * 32
+    left, right = prefix + b"HWIGCKWZQ", prefix + b"BUBZVTFQS"
+    assert crc32c(left) == crc32c(right)
+    short = b"A" * 17
+    target = crc32c(short) & 0xfffe0000
+    longer = None
+    for i in range(300000):
+        candidate = short + str(i).encode()
+        if crc32c(candidate) & 0xfffe0000 == target:
+            longer = candidate
+            break
+    assert longer is not None
+    names = [left, right, short, longer] + [b"Z" * n for n in range(34)]
+    DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n8,BBB\n")
+    rows = bytearray(b"id,name,note,region_id,amount\n")
+    for i in range(70000):
+        name = names[i % len(names)]
+        rows.extend(str(i + 1).encode() + b',"' + name + b'","x",' +
+                    (b"7" if i % 3 else b"8") + b",-0.05\r\n")
+    DATA.joinpath("records.csv").write_bytes(rows)
+    check_case("packed-metadata-lengths-and-full-hash-collisions")
+
+
 def huge_name_arena_stress():
     # Both large-arena storage and >24-bit logical lengths must remain exact.
     bom = b"\xef\xbb\xbf"
@@ -232,6 +256,7 @@ def main():
             "-Werror", "-o", "/tmp/sd-track-c", str(BIN))
     handwritten()
     quote_vector_boundary_stress()
+    packed_metadata_stress()
     split_boundary_stress()
     huge_name_arena_stress()
     grow_stress()
