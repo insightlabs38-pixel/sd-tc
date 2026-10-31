@@ -60,3 +60,14 @@ was officially rejected (K11.387223). Neither is a stronger baseline.
 
 Runtime SHA256: 709031335ef0d445c510bddca94e596004b74140a0ae64eff8ad7a1271ff65b4
 Runtime git blob: ce1ad13e2bf957474337b6114ede8338929171c6
+
+## Qualification result, 3c5e2f0
+
+CI https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41250735862 passed
+all gates: ASan/UBSan, TSan, adversarial oracle, pinned offline GCC15 Docker,
+unprivileged sandbox and final PGO full seeds11/29 x3.
+Paired full-PGO vs f294a88: 77.180 ->78.224ms, RSS16,636->16,572KiB.
+Vs official BEST59e47: 84.010->76.668ms, RSS16,922->16,824KiB.
+These are runner observations, not official T/M; source cost remains to be counted.
+No PR: loses runtime to qualified main and adds source; investigate cheaper
+exact lookup and collision handling before considering an official trial.
