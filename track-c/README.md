@@ -6,4 +6,4 @@ No third-party runtime dependencies. Further work: benchmark full-scale seeds an
 
 ## Integration
 
-Copy this complete directory, including Dockerfile and generator.py, to preserve offline PGO. The source also declares its required x86-64-v3 target so a source-only import can compile with the rollback compiler command, but that command does not reproduce the trained PGO build.
+Copy the entire qualified track-c directory, including Dockerfile and generator.py. CRC32C requires the Dockerfile's explicit CPU flag, and PGO requires its complete training stage. Source-only imports using the rollback Dockerfile fail to compile. The CPU-target pragma trial regressed on the official board and was removed; source matches tested revision 59e47be.
