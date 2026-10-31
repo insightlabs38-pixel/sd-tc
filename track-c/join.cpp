@@ -313,6 +313,10 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 uint64_t id = number(p, end);
                 comma(p, end);
                 Field name = text_field(p, end, true);
+                uint32_t spread = SharedNames::spread(name.hash);
+                auto &shard = names.shards[spread & ((1 << SharedNames::shard_bits) - 1)];
+                __builtin_prefetch(&shard.index[(spread >> SharedNames::shard_bits) &
+                                                (SharedNames::slots_per_shard - 1)], 0, 1);
                 comma(p, end);
                 Field note = text_field(p, end, false);
                 comma(p, end);
