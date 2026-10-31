@@ -296,11 +296,12 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                         unsigned unmatched, Worker &w, SharedNames &names) {
     struct Pending {
         uint64_t id;
+        int64_t amount;
         Field name;
         uint32_t note_len;
-        int64_t amount;
         unsigned group;
     };
+    static_assert(sizeof(Pending) == 48, "compact pending row");
     try {
         std::array<Pending, 32> batch;
         const char *reclaimed = p;
@@ -325,7 +326,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 comma(p, end);
                 int64_t amount = cents(p, end);
                 newline(p, end);
-                batch[count++] = Pending{id, name, note.len, amount, region_key};
+                batch[count++] = Pending{id, amount, name, note.len, region_key};
             } while (count < batch.size() && p < end);
             for (unsigned i = 0; i < count; ++i) {
                 const Pending &r = batch[i];
