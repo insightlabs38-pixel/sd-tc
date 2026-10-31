@@ -54,68 +54,45 @@ static_assert(sizeof(Field) == 24, "name slot layout");
 
 static constexpr uint32_t HASH_OFFSET = 5381U;
 
+static uint32_t raw_hash(const char *p, uint32_t len) {
+    uint32_t h = HASH_OFFSET;
+    for (uint32_t i = 0; i < len; ++i) h = ((h << 5) + h) ^ static_cast<uint8_t>(p[i]);
+    return h;
+}
+
 static Field text_field(const char *&p, const char *end, bool need_hash) {
     Field f{};
     f.quoted = p < end && *p == '"';
     if (f.quoted) {
         ++p;
         f.raw = p;
-        if (!need_hash) {
-            for (;;) {
-                const char *q = static_cast<const char *>(memchr(p, '"', end - p));
-                if (!q) throw std::runtime_error("unclosed quote");
-                f.len += static_cast<uint32_t>(q - p);
-                if (q + 1 < end && q[1] == '"') {
-                    ++f.len;
-                    p = q + 2;
-                    continue;
-                }
-                f.raw_len = static_cast<uint32_t>(q - f.raw);
-                p = q + 1;
-                return f;
+        for (;;) {
+            const char *q = static_cast<const char *>(memchr(p, '"', end - p));
+            if (!q) throw std::runtime_error("unclosed quote");
+            f.len += static_cast<uint32_t>(q - p);
+            if (q + 1 < end && q[1] == '"') {
+                ++f.len;
+                p = q + 2;
+                continue;
             }
+            f.raw_len = static_cast<uint32_t>(q - f.raw);
+            f.hash = need_hash ? raw_hash(f.raw, f.raw_len) : HASH_OFFSET;
+            p = q + 1;
+            return f;
         }
-        uint32_t h = HASH_OFFSET;
-        while (p < end) {
-            unsigned char c = static_cast<unsigned char>(*p++);
-            if (c == '"') {
-                if (p < end && *p == '"') ++p;
-                else {
-                    f.raw_len = static_cast<uint32_t>(p - f.raw - 1);
-                    f.hash = h;
-                    return f;
-                }
-            }
-            ++f.len;
-            if (need_hash) h = ((h << 5) + h) ^ c;
-        }
-        throw std::runtime_error("unclosed quote");
     }
     f.raw = p;
-    uint32_t h = HASH_OFFSET;
     while (p < end && *p != ',' && *p != '\r' && *p != '\n') {
-        unsigned char c = static_cast<unsigned char>(*p++);
+        ++p;
         ++f.len;
-        if (need_hash) h = ((h << 5) + h) ^ c;
     }
     f.raw_len = f.len;
-    f.hash = h;
+    f.hash = need_hash ? raw_hash(f.raw, f.raw_len) : HASH_OFFSET;
     return f;
 }
 
 static bool equal_field(const Field &f, const Field &g) {
-    if (f.len != g.len) return false;
-    if (f.raw_len == f.len && g.raw_len == g.len)
-        return std::memcmp(f.raw, g.raw, f.len) == 0;
-    const char *a = f.raw, *b = g.raw;
-    const char *ae = a + f.raw_len, *be = b + g.raw_len;
-    while (a < ae && b < be) {
-        unsigned char x = *a++, y = *b++;
-        if (f.quoted && x == '"' && a < ae && *a == '"') ++a;
-        if (g.quoted && y == '"' && b < be && *b == '"') ++b;
-        if (x != y) return false;
-    }
-    return a == ae && b == be;
+    return f.raw_len == g.raw_len && std::memcmp(f.raw, g.raw, f.raw_len) == 0;
 }
 
 struct Arena {
