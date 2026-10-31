@@ -56,3 +56,13 @@ All listed CI runs passed exact seed-1 SHA-256, holdout seeds, adversarial cases
 - [41197613662](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41197613662): lookup reclamation plus 512 KiB threshold, 140.949 → 143.511 ms, 18,984 → 16,744 KiB; K proxy +1.59%, rejected.
 
 The selected source blob is `3cecd2945c284b4ae1684f9f1779bb0607cc1e33`, byte-identical to the fully CI-verified implementation; original 1 MiB record-page reclamation threshold retained. K proxies use paired runner T, process RSS, physical source lines 455 → 456 and unchanged D=1. Official cgroup M, formatter-adjusted S and scoring-box T/K remain unmeasured.
+
+## Name-probe locality trials (2026-10-31)
+
+All trials passed full seed-1 SHA-256, holdout seeds, hostile cases, offline Docker and sandbox checks. Measurements are 12-trial paired GitHub-runner medians, not official scoring-box T/M/S/D.
+
+- [CI 41201287339](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41201287339): **promoted early name-index prefetch**, verified against `eb1ab4a`: 146.629 → 140.258 ms, 16,918 → 16,916 KiB RSS; 456 → 460 physical source lines. Complete-K proxy **+2.11%**.
+- [CI 41201447448](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41201447448): early name-slot prefetch 138.429 → 139.197 ms, 16,856 → 16,902 KiB; 460 → 463 lines, K proxy **-0.43%**. Rejected.
+- [CI 41201618354](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41201618354): per-thread exact-name cache 139.972 → 153.091 ms, 16,850 → 19,544 KiB; 460 → 469 lines, K proxy **-7.44%**. Rejected.
+
+Final `join.cpp` is byte-identical to the fully verified early-index-prefetch champion `b29de1927e809a2d0bf89ea0d6e236dcef3d2e85` (blob `dad49158dad5f90d32ab5eb307eb9a62e138723e`). Restoring that verified source requires no redundant CI. K proxies use physical source lines and process RSS; official formatter S and cgroup M remain unmeasured.

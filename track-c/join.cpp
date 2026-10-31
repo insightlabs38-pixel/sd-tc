@@ -191,48 +191,39 @@ struct SharedNames {
             shards[i].pool = storage + i * slots_per_shard;
     }
     bool first(const Field &name, unsigned group) {
-        struct Cache { uint32_t hash = 0; Slot *slot = nullptr; };
-        static thread_local std::array<Cache, 1 << 15> cache{};
-        Cache &cached = cache[spread(name.hash) & (cache.size() - 1)];
-        Slot *slot = nullptr;
-        if (cached.slot && cached.hash == name.hash && equal_field(*cached.slot, name)) {
-            slot = cached.slot;
-        } else {
-            Shard &s = shards[spread(name.hash) & (shards.size() - 1)];
-            auto match = s.probe(name);
+        Shard &s = shards[spread(name.hash) & (shards.size() - 1)];
+        auto match = s.probe(name);
+        Slot *slot = match.first;
+        if (!match.second) {
+            std::lock_guard<std::mutex> lock(s.mutex);
+            size_t empty = slots_per_shard;
+            match = s.probe(name, &empty);
             slot = match.first;
-            if (!match.second) {
-                std::lock_guard<std::mutex> lock(s.mutex);
-                size_t empty = slots_per_shard;
-                match = s.probe(name, &empty);
-                slot = match.first;
-                if (!match.second && empty == slots_per_shard) {
-                    const uint64_t bit = 1ULL << (group & 63);
-                    for (auto &entry : s.overflow) {
-                        if (entry.field.hash != name.hash || !equal_field(entry.field, name)) continue;
-                        uint64_t &cell = entry.seen[group >> 6];
-                        bool fresh = !(cell & bit);
-                        cell |= bit;
-                        return fresh;
-                    }
-                    s.overflow.emplace_back();
-                    auto &entry = s.overflow.back();
-                    entry.field = name;
-                    entry.field.raw = s.keep(name);
-                    entry.seen[group >> 6] |= bit;
-                    return true;
+            if (!match.second && empty == slots_per_shard) {
+                const uint64_t bit = 1ULL << (group & 63);
+                for (auto &entry : s.overflow) {
+                    if (entry.field.hash != name.hash || !equal_field(entry.field, name)) continue;
+                    uint64_t &cell = entry.seen[group >> 6];
+                    bool fresh = !(cell & bit);
+                    cell |= bit;
+                    return fresh;
                 }
-                if (!match.second) {
-                    slot = &s.pool[s.used];
-                    slot->raw = s.keep(name);
-                    slot->raw_len = name.raw_len;
-                    slot->quoted = name.quoted;
-                    slot->len = name.len;
-                    s.index[empty].store((name.hash & 0xffff0000U) | ++s.used,
-                                         std::memory_order_release);
-                }
+                s.overflow.emplace_back();
+                auto &entry = s.overflow.back();
+                entry.field = name;
+                entry.field.raw = s.keep(name);
+                entry.seen[group >> 6] |= bit;
+                return true;
             }
-            cached = {name.hash, slot};
+            if (!match.second) {
+                slot = &s.pool[s.used];
+                slot->raw = s.keep(name);
+                slot->raw_len = name.raw_len;
+                slot->quoted = name.quoted;
+                slot->len = name.len;
+                s.index[empty].store((name.hash & 0xffff0000U) | ++s.used,
+                                     std::memory_order_release);
+            }
         }
         const uint64_t mask = 1ULL << (group & 63);
         return !(slot->seen[group >> 6].fetch_or(mask, std::memory_order_relaxed) & mask);
