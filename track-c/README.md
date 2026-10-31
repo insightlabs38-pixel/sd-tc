@@ -6,4 +6,4 @@ No third-party runtime dependencies. Further work: benchmark full-scale seeds an
 
 ## Integration
 
-Copy this complete directory, including Dockerfile and generator.py, to preserve offline PGO. The source also declares its required x86-64-v3 target so a source-only import can compile with the rollback compiler command, but that command does not reproduce the trained PGO build.
+Copy this complete directory, including Dockerfile and generator.py, to preserve offline PGO. Source-only builds require `-march=x86-64-v3` for CRC32C intrinsics, as in the pinned Dockerfile and CI; an unmodified baseline x86-64 compile fails. Source-only builds do not reproduce the trained PGO binary.
