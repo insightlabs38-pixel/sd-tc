@@ -303,7 +303,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
         while (p < end) {
             unsigned count = 0;
             do {
-                bom(p, end);
+                if (static_cast<unsigned char>(*p) == 0xef) bom(p, end);
                 uint64_t id = number(p, end);
                 comma(p, end);
                 Field name = text_field(p, end, true);
