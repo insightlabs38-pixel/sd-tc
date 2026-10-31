@@ -96,3 +96,14 @@ Guarded-BOM CRC source blob `efcc37be6d82c3e341eaa3d66f2e7af82338ee07` restored 
 - The SWAR fast path validates 1–8 ASCII digits, folds 2/4/8-digit values and retains scalar parsing for longer tokens. Source grows **440 → 458 physical lines**, D remains 1.
 - Complete-K proxy **+1.60%** first run and **+0.60%** replication, accounting for runtime, RSS and physical source lines. Official scoring-box T/M/S/D and K remain unmeasured.
 - Promoted champion source blob `b5e2c905648d759a15c34ea2e5bd6eed130e9386`; no official submission.
+
+## Name lookup and scheduling experiments (2026-10-31)
+
+All candidates passed exact full seed-1 SHA-256, holdout seeds, adversarial collisions/overflow, offline Docker and sandbox checks. Paired medians are 12-trial GitHub-runner results against the verified `b5e2c905` source, not official scoring-box T/M/S/D. K proxies use T^0.5, process RSS^0.2, physical source lines^0.15 and unchanged D.
+
+- [CI 41215190991](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41215190991): inline 8–16-byte name comparisons regressed 77.786 → 79.835 ms, K proxy -1.43%; reverted.
+- [CI 41215326526](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41215326526): pre-spread CRC32C hashes 121.780 → 121.673 ms, RSS 17,028 → 16,890 KiB, K proxy +0.24%; 6/12 pairs faster, inconclusive.
+- [CI 41215515777](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41215515777): pre-spread hash plus early region classification 93.141 → 94.474 ms, K proxy -0.45%; reverted.
+- [CI 41215678574](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41215678574): 48-byte pending-row layout 118.476 → 118.002 ms, K proxy +0.21%; 6/12 pairs faster, inconclusive.
+- [CI 41215841709](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41215841709): compact rows plus aggregate-before-name-interning 117.007 → 116.205 ms, RSS 17,084 → 16,940 KiB, K proxy +0.48%; 9/12 pairs faster. Independent [attempt 2](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41215841709/attempts/2) reversed to 94.272 → 95.432 ms, K proxy -0.54%; rejected.
+- Restored byte-identical, previously fully qualified source blob `b5e2c905648d759a15c34ea2e5bd6eed130e9386`. No redundant restoration CI. Four workers remained fastest in the available 1/2/3/4/5/6/12-worker runner profiles. Official scoring-box axes still pending through Luna.
