@@ -260,8 +260,6 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
     };
     try {
         std::array<Pending, 32> batch;
-        std::array<uint32_t, 32> name_ids;
-        std::array<unsigned, 32> group_ids;
         const char *reclaimed = p;
         while (p < end) {
             unsigned count = 0;
@@ -286,17 +284,11 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
             } while (count < batch.size() && p < end);
             for (unsigned i = 0; i < count; ++i) {
                 const Pending &r = batch[i];
-                name_ids[i] = w.names.intern(r.name);
-                group_ids[i] = r.group < regions.size() && regions[r.group] != UINT8_MAX
-                                   ? regions[r.group] : unmatched;
-            }
-            for (unsigned i = 0; i < count; ++i)
-                __builtin_prefetch(&w.names.seen[name_ids[i]][group_ids[i] >> 6], 1, 1);
-            for (unsigned i = 0; i < count; ++i) {
-                const Pending &r = batch[i];
-                unsigned group = group_ids[i];
+                uint32_t name_id = w.names.intern(r.name);
+                unsigned group = r.group < regions.size() && regions[r.group] != UINT8_MAX
+                                     ? regions[r.group] : unmatched;
                 w.groups[group].add(r.id, r.amount, r.name, r.note_len,
-                                    w.names.first_in_group(name_ids[i], group));
+                                    w.names.first_in_group(name_id, group));
             }
             if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
         }
