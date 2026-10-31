@@ -45,3 +45,18 @@ jobs:
           test "$(sha256sum /out/aggregates.txt | cut -d' ' -f1)" = \
             "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
           test "$(find /out -maxdepth 1 -type f | wc -l)" -eq 1
+  sanitizers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        sanitizer: ["address,undefined", "thread"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare sandbox paths and sanitizer address space
+        run: |
+          sudo mkdir -p /data /out
+          sudo chown "$(id -u):$(id -g)" /data /out
+          sudo sysctl -w vm.mmap_rnd_bits=28
+      - name: Independent references and hostile cases
+        run: python3 tests/qualify_frontier.py --sanitizer='${{ matrix.sanitizer }}'
