@@ -77,3 +77,5 @@ All four experimental CI runs passed full seed-1 SHA-256, holdout seeds, hostile
 - [41205896010](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41205896010): adding a relaxed seen-bit load, 135.936 → 135.775 ms; RSS 16,994 → 16,856 KiB; 460 → 456 lines; K proxy +0.35% total. Rejected versus the guarded-BOM candidate.
 
 Guarded-BOM CRC source blob `efcc37be6d82c3e341eaa3d66f2e7af82338ee07` restored byte-for-byte. Independent paired replication pending. All K proxies use process RSS and physical source lines; official cgroup M, formatter S and scoring-box K remain unmeasured.
+
+- **Independent replication:** [CI 41206065495](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41206065495) passed all gates with identical source blob; paired median 136.822 → 134.671 ms, RSS 16,920 → 16,852 KiB, physical source 460 → 454 lines. Complete-K proxy **+1.08%** (first run +1.17%). Eight of twelve pairs favored candidate; keep the guarded-BOM CRC champion. Official T/M/S/D remains pending through Luna.
