@@ -334,8 +334,8 @@ static std::vector<Group> merge_workers(const std::vector<Worker> &workers, unsi
             const size_t mask = left.table.size() - 1;
             for (size_t k = right.table.size() * shard / shards;
                  k < right.table.size() * (shard + 1) / shards; ++k) {
+                if (right.fingerprint[k] == UINT8_MAX) continue;
                 const Field &slot = right.table[k];
-                if (slot.id == UINT32_MAX) continue;
                 size_t i = slot.hash & mask;
                 const uint8_t fp = static_cast<uint8_t>(slot.hash >> 25);
                 while (left.fingerprint[i] != UINT8_MAX) {
