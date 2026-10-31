@@ -32,9 +32,9 @@ jobs:
           else
             python3 tests/paired_benchmark.py
           fi
-      - name: Verify source-only default compiler compatibility
+      - name: Verify source-only x86-64-v3 compiler compatibility
         run: |
-          g++ -O3 -std=c++17 -DNDEBUG -flto -pthread -static -o /tmp/sd-track-c-default track-c/join.cpp
+          g++ -O3 -march=x86-64-v3 -std=c++17 -DNDEBUG -flto -pthread -static -o /tmp/sd-track-c-default track-c/join.cpp
           python3 -c 'from pathlib import Path; Path("/out/aggregates.txt").unlink(missing_ok=True)'
           /tmp/sd-track-c-default
           test "$(sha256sum /out/aggregates.txt | cut -d' ' -f1)" = "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
