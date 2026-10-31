@@ -105,7 +105,8 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
     return f;
 }
 
-static bool equal_field(const Field &f, const Field &g) {
+template <class A, class B>
+static bool equal_field(const A &f, const B &g) {
     if (f.len != g.len) return false;
     if (f.raw_len == f.len && g.raw_len == g.len)
         return std::memcmp(f.raw, g.raw, f.len) == 0;
@@ -124,11 +125,16 @@ struct SharedNames {
     static constexpr unsigned shard_bits = 6;
     static constexpr size_t slots_per_shard = 1 << 12;
     static uint32_t spread(uint32_t h) { return h ^ (h >> 11) ^ (h >> 22); }
+    static uint32_t tag(uint32_t h) { return (h >> 25) + 1; }
     struct Slot {
-        Field field{};
+        const char *raw = nullptr;
+        uint32_t raw_len : 31;
+        uint32_t quoted : 1;
+        uint32_t len = 0, hash = 0;
+        std::atomic<uint32_t> ready{0};
         std::atomic<uint64_t> seen[4]{};
-        std::atomic<uint8_t> ready{0};
     };
+    static_assert(sizeof(Slot) == 56, "compact shared name slot");
     struct Shard {
         std::mutex mutex;
         std::unique_ptr<Slot[]> table{new Slot[slots_per_shard]};
@@ -158,8 +164,10 @@ struct SharedNames {
             size_t i = (spread(f.hash) >> shard_bits) & (slots_per_shard - 1);
             for (size_t n = 0; n < slots_per_shard; ++n) {
                 Slot &slot = table[i];
-                if (!slot.ready.load(std::memory_order_acquire)) return {&slot, false};
-                if (slot.field.hash == f.hash && equal_field(slot.field, f)) return {&slot, true};
+                uint32_t state = slot.ready.load(std::memory_order_acquire);
+                if (!state) return {&slot, false};
+                if (state == tag(f.hash) && slot.hash == f.hash && equal_field(slot, f))
+                    return {&slot, true};
                 i = (i + 1) & (slots_per_shard - 1);
             }
             throw std::runtime_error("name shard full");
@@ -175,9 +183,12 @@ struct SharedNames {
             match = s.probe(name);
             slot = match.first;
             if (!match.second) {
-                slot->field = name;
-                slot->field.raw = s.keep(name);
-                slot->ready.store(1, std::memory_order_release);
+                slot->raw = s.keep(name);
+                slot->raw_len = name.raw_len;
+                slot->quoted = name.quoted;
+                slot->len = name.len;
+                slot->hash = name.hash;
+                slot->ready.store(tag(name.hash), std::memory_order_release);
             }
         }
         const uint64_t mask = 1ULL << (group & 63);
