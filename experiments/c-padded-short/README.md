@@ -16,3 +16,10 @@ All full seed1 hashes exact. PGO/sanitizer/independent gates pending.
 Multiworker initial mask caching and padding-only did not win; see raw receipts.
 The full structural-mask scanner separately lost substantially; an exact guard
 and fixed short-key realization is a new hypothesis, not a tokenizer benchmark.
+
+Second12-pair single-worker run: control292.400/290.104CPUms,
+combined256.762/254.155, guardedquotes254.216/251.953,
+guardedquotes+money241.357/240.909. All outputs exact.
+Current candidate uses guarded quote scanner and one-fold SWAR money path
+for whole parts1..5 digits; larger amounts preserve original int64 fallback.
+Page-aligned EOF tests exercise empty names and amounts without a final LF.

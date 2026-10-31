@@ -249,12 +249,23 @@ def concentrated_shard_stress():
     check_case("concentrated-name-shard-overflow")
 
 
+
+def page_tail_stress():
+    DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n")
+    prefix = b'id,name,note,region_id,amount\n1,"x","'
+    suffix = b'",7,1.00\n2,,,7,0.00'
+    for size in (4095, 4096, 4097, 8192):
+        DATA.joinpath("records.csv").write_bytes(prefix + b'x' * (size - len(prefix) - len(suffix)) + suffix)
+        check_case(f"page-tail-empty-name-{size}")
+
+
 def main():
     DATA.mkdir(exist_ok=True)
     OUT.mkdir(exist_ok=True)
     command("g++", "-O3", "-march=x86-64-v3", "-std=c++17", "-DNDEBUG", "-flto", "-Wall", "-Wextra",
             "-Werror", "-o", "/tmp/sd-track-c", str(BIN))
     handwritten()
+    page_tail_stress()
     quote_vector_boundary_stress()
     packed_metadata_stress()
     split_boundary_stress()

@@ -87,13 +87,21 @@ static uint32_t raw_hash(const char *p, size_t n) {
 }
 
 static const char *find_quote(const char *p, const char *end) {
-    const __m256i quote = _mm256_set1_epi8('"');
-    while (p < end) {
+    const __m256i quote32 = _mm256_set1_epi8('"');
+    while (end - p >= 32) {
         __m256i block = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(p));
-        unsigned mask = static_cast<unsigned>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(block, quote)));
-        if (mask) { const char *q = p + __builtin_ctz(mask); return q < end ? q : nullptr; }
+        unsigned mask = static_cast<unsigned>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(block, quote32)));
+        if (mask) return p + __builtin_ctz(mask);
         p += 32;
     }
+    const __m128i quote16 = _mm_set1_epi8('"');
+    while (end - p >= 16) {
+        __m128i block = _mm_loadu_si128(reinterpret_cast<const __m128i *>(p));
+        unsigned mask = static_cast<unsigned>(_mm_movemask_epi8(_mm_cmpeq_epi8(block, quote16)));
+        if (mask) return p + __builtin_ctz(mask);
+        p += 16;
+    }
+    for (; p < end; ++p) if (*p == '"') return p;
     return nullptr;
 }
 
@@ -292,6 +300,19 @@ static uint64_t number(const char *&p, const char *end) {
 static int64_t cents(const char *&p, const char *end) {
     bool neg = p < end && *p == '-';
     if (neg) ++p;
+    uint64_t word; std::memcpy(&word, p, 8);
+    uint64_t dots = word ^ 0x2e2e2e2e2e2e2e2eULL;
+    dots = (dots - 0x0101010101010101ULL) & ~dots & 0x8080808080808080ULL;
+    unsigned dot = dots ? __builtin_ctzll(dots) / 8 : 8;
+    if (dot && dot <= 5 && end - p >= dot + 3) {
+        uint64_t lower = (1ULL << (dot * 8)) - 1;
+        uint64_t x = ((word & lower) | ((word >> 8) & ~lower)) << ((6 - dot) * 8);
+        x &= 0x0f0f0f0f0f0f0f0fULL;
+        x = (x * 10 + (x >> 8)) & 0x00ff00ff00ff00ffULL;
+        x = (x * 100 + (x >> 16)) & 0x0000ffff0000ffffULL;
+        int64_t value = static_cast<int64_t>((x * 10000 + (x >> 32)) & 0xffffffffULL);
+        p += dot + 3; return neg ? -value : value;
+    }
     int64_t n = static_cast<int64_t>(number(p, end));
     if (p + 2 >= end || *p++ != '.') throw std::runtime_error("bad decimal");
     int64_t fraction = (p[0] - '0') * 10 + (p[1] - '0');
