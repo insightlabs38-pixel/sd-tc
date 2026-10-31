@@ -1,3 +1,4 @@
+#include <immintrin.h>
 #include <nmmintrin.h>
 #include <algorithm>
 #include <array>
@@ -76,29 +77,45 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
     Field f{};
     f.quoted = p < end && *p == '"';
     if (f.quoted) {
-        ++p;
-        f.raw = p;
+        f.raw = ++p;
+        uint32_t escaped = 0;
         for (;;) {
-            const char *q = static_cast<const char *>(memchr(p, '"', end - p));
-            if (!q) throw std::runtime_error("unclosed quote");
-            f.len += static_cast<uint32_t>(q - p);
-            if (q + 1 < end && q[1] == '"') {
-                ++f.len;
-                p = q + 2;
-                continue;
+            if (end - p >= 32) {
+                const char *base = p;
+                uint32_t mask = static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(
+                    _mm256_loadu_si256(reinterpret_cast<const __m256i *>(base)), _mm256_set1_epi8('"'))));
+                p = base + 32;
+                while (mask) {
+                    unsigned bit = __builtin_ctz(mask);
+                    const char *q = base + bit;
+                    if (q + 1 < end && q[1] == '"') {
+                        ++escaped;
+                        unsigned consumed = bit + 2;
+                        if (consumed >= 32) { p = q + 2; break; }
+                        mask &= UINT32_MAX << consumed;
+                    } else {
+                        f.raw_len = static_cast<uint32_t>(q - f.raw);
+                        f.len = f.raw_len - escaped;
+                        f.hash = need_hash ? raw_hash(f.raw, f.raw_len) : HASH_OFFSET;
+                        p = q + 1;
+                        return f;
+                    }
+                }
+            } else {
+                const char *q = static_cast<const char *>(memchr(p, '"', end - p));
+                if (!q) throw std::runtime_error("unclosed quote");
+                if (q + 1 < end && q[1] == '"') { ++escaped; p = q + 2; continue; }
+                f.raw_len = static_cast<uint32_t>(q - f.raw);
+                f.len = f.raw_len - escaped;
+                f.hash = need_hash ? raw_hash(f.raw, f.raw_len) : HASH_OFFSET;
+                p = q + 1;
+                return f;
             }
-            f.raw_len = static_cast<uint32_t>(q - f.raw);
-            f.hash = need_hash ? raw_hash(f.raw, f.raw_len) : HASH_OFFSET;
-            p = q + 1;
-            return f;
         }
     }
     f.raw = p;
-    while (p < end && *p != ',' && *p != '\r' && *p != '\n') {
-        ++p;
-        ++f.len;
-    }
-    f.raw_len = f.len;
+    while (p < end && *p != ',' && *p != '\r' && *p != '\n') ++p;
+    f.raw_len = f.len = static_cast<uint32_t>(p - f.raw);
     f.hash = need_hash ? raw_hash(f.raw, f.raw_len) : HASH_OFFSET;
     return f;
 }
