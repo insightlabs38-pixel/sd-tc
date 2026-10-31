@@ -82,10 +82,10 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
         }
     }
     f.raw = p;
-    while (p < end && *p != ',' && *p != '\r' && *p != '\n') {
-        ++p;
-        ++f.len;
-    }
+    const char *q = static_cast<const char *>(memchr(p, ',', end - p));
+    if (!q) throw std::runtime_error("unterminated field");
+    f.len = static_cast<uint32_t>(q - p);
+    p = q;
     f.raw_len = f.len;
     f.hash = need_hash ? raw_hash(f.raw, f.raw_len) : HASH_OFFSET;
     return f;
