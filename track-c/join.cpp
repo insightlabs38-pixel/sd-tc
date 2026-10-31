@@ -72,6 +72,17 @@ static uint32_t raw_hash(const char *p, size_t n) {
     return h;
 }
 
+static const char *find_quote(const char *p, const char *end) {
+    const __m128i quote = _mm_set1_epi8('"');
+    while (end - p >= 16) {
+        __m128i block = _mm_loadu_si128(reinterpret_cast<const __m128i *>(p));
+        unsigned mask = static_cast<unsigned>(_mm_movemask_epi8(_mm_cmpeq_epi8(block, quote)));
+        if (mask) return p + __builtin_ctz(mask);
+        p += 16;
+    }
+    return find_quote(p, end);
+}
+
 static Field text_field(const char *&p, const char *end, bool need_hash) {
     Field f{};
     f.quoted = p < end && *p == '"';

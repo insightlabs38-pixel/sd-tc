@@ -20,6 +20,7 @@ def main():
     cases.DATA.mkdir(exist_ok=True)
     cases.OUT.mkdir(exist_ok=True)
     cases.handwritten()
+    cases.quote_vector_boundary_stress()
     cases.split_boundary_stress()
     cases.huge_name_arena_stress()
     cases.grow_stress()

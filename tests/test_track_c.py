@@ -121,6 +121,18 @@ def handwritten():
 
 
 
+def quote_vector_boundary_stress():
+    DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n8,BBB\n")
+    rows = bytearray(b"id,name,note,region_id,amount\n")
+    for i, width in enumerate((0, 1, 14, 15, 16, 17, 30, 31, 32, 33, 46, 47, 48, 49), 1):
+        name = b'"' + b"A" * width + b'""Z"'
+        note = b'"' + b"B" * width + b'""Q\nR"'
+        rows.extend(str(i).encode() + b"," + name + b"," + note + b",7,-0.05\r\n")
+        rows.extend(str(i + 100).encode() + b"," + name + b"," + note + b",8,1.00\n")
+    DATA.joinpath("records.csv").write_bytes(rows)
+    check_case("quote-vector-boundary-and-escaped-pairs")
+
+
 def huge_name_arena_stress():
     # Both large-arena storage and >24-bit logical lengths must remain exact.
     bom = b"\xef\xbb\xbf"
@@ -219,6 +231,7 @@ def main():
     command("g++", "-O3", "-march=x86-64-v3", "-std=c++17", "-DNDEBUG", "-flto", "-Wall", "-Wextra",
             "-Werror", "-o", "/tmp/sd-track-c", str(BIN))
     handwritten()
+    quote_vector_boundary_stress()
     split_boundary_stress()
     huge_name_arena_stress()
     grow_stress()
