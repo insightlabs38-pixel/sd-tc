@@ -2,6 +2,7 @@
 #include <array>
 #include <atomic>
 #include <cstdint>
+#include <nmmintrin.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -9,7 +10,7 @@
 #include <memory>
 #include <mutex>
 #include <thread>
-#include <unordered_map>
+#include <utility>
 #include <fcntl.h>
 #include <stdexcept>
 #include <string>
@@ -56,9 +57,17 @@ static_assert(sizeof(Field) == 24, "name slot layout");
 
 static constexpr uint32_t HASH_OFFSET = 5381U;
 
-static uint32_t raw_hash(const char *p, uint32_t len) {
+// Quoted text has a unique CSV spelling, so raw-byte hashes preserve logical equality.
+static uint32_t hash_bytes(const char *p, size_t n) {
     uint32_t h = HASH_OFFSET;
-    for (uint32_t i = 0; i < len; ++i) h = ((h << 5) + h) ^ static_cast<uint8_t>(p[i]);
+    while (n >= 8) {
+        uint64_t word;
+        std::memcpy(&word, p, 8);
+        h = static_cast<uint32_t>(_mm_crc32_u64(h, word));
+        p += 8;
+        n -= 8;
+    }
+    while (n--) h = _mm_crc32_u8(h, static_cast<unsigned char>(*p++));
     return h;
 }
 
@@ -78,168 +87,151 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
                 continue;
             }
             f.raw_len = static_cast<uint32_t>(q - f.raw);
-            f.hash = need_hash ? raw_hash(f.raw, f.raw_len) : HASH_OFFSET;
             p = q + 1;
+            f.hash = need_hash ? hash_bytes(f.raw, f.raw_len) : HASH_OFFSET;
             return f;
         }
     }
     f.raw = p;
-    while (p < end && *p != ',' && *p != '\r' && *p != '\n') {
-        ++p;
-        ++f.len;
-    }
-    f.raw_len = f.len;
-    f.hash = need_hash ? raw_hash(f.raw, f.raw_len) : HASH_OFFSET;
+    while (p < end && *p != ',' && *p != '\r' && *p != '\n') ++p;
+    f.raw_len = f.len = static_cast<uint32_t>(p - f.raw);
+    f.hash = need_hash ? hash_bytes(f.raw, f.len) : HASH_OFFSET;
     return f;
 }
 
-struct Arena {
-    std::vector<std::unique_ptr<char[]>> blocks;
-    char *arena_cursor = nullptr;
-    size_t arena_remaining = 0;
-    const char *keep(const Field &f) {
-        constexpr size_t block = 1 << 20;
-        if (!f.raw_len) return f.raw;
-        if (f.raw_len > block) {
-            blocks.emplace_back(new char[f.raw_len]);
-            std::memcpy(blocks.back().get(), f.raw, f.raw_len);
-            return blocks.back().get();
-        }
-        if (f.raw_len > arena_remaining) {
-            blocks.emplace_back(new char[block]);
-            arena_cursor = blocks.back().get();
-            arena_remaining = block;
-        }
-        char *dst = arena_cursor;
-        std::memcpy(dst, f.raw, f.raw_len);
-        arena_cursor += f.raw_len;
-        arena_remaining -= f.raw_len;
-        return dst;
-    }
-};
+template <class A, class B>
+static bool equal_field(const A &f, const B &g) {
+    // Valid CSV has a unique raw spelling for each logical value.
+    return f.raw_len == g.raw_len && std::memcmp(f.raw, g.raw, f.raw_len) == 0;
+}
 
 struct SharedNames {
-    struct alignas(64) Entry {
-        uint32_t hash = 0;
+    static constexpr unsigned shard_bits = 6;
+    static constexpr size_t slots_per_shard = 1 << 12;
+    static constexpr size_t pool_per_shard = 1 << 11;
+    static uint32_t spread(uint32_t h) { return h ^ (h >> 11) ^ (h >> 22); }
+    struct Slot {
+        const char *raw = nullptr;
         uint32_t raw_len = 0;
-        char key[16]{};
         std::atomic<uint64_t> seen[4]{};
-        __attribute__((always_inline)) bool matches(const Field &field) const {
-            if (hash != field.hash || raw_len != field.raw_len) return false;
-            if (field.raw_len <= sizeof(key))
-                return std::memcmp(key, field.raw, field.raw_len) == 0;
-            const char *saved;
-            std::memcpy(&saved, key, sizeof(saved));
-            return std::memcmp(key + 8, field.raw, 8) == 0 &&
-                   std::memcmp(saved + 8, field.raw + 8, field.raw_len - 8) == 0;
+    };
+    static_assert(sizeof(Slot) == 48, "compact shared name slot");
+    struct Shard {
+        struct Overflow {
+            Field field;
+            std::array<uint64_t, 4> seen{};
+        };
+        std::mutex mutex;
+        std::vector<Overflow> overflow;
+        std::array<std::atomic<uint32_t>, slots_per_shard> index{};
+        Slot *pool = nullptr;
+        uint16_t used = 0;
+        std::vector<std::unique_ptr<char[]>> arena;
+        char *cursor = nullptr;
+        size_t remaining = 0;
+        const char *keep(const Field &f) {
+            constexpr size_t block = 1 << 15;
+            if (!f.raw_len) return f.raw;
+            if (f.raw_len > block) {
+                arena.emplace_back(new char[f.raw_len]);
+                std::memcpy(arena.back().get(), f.raw, f.raw_len);
+                return arena.back().get();
+            }
+            if (f.raw_len > remaining) {
+                arena.emplace_back(new char[block]);
+                cursor = arena.back().get();
+                remaining = block;
+            }
+            char *dst = cursor;
+            std::memcpy(dst, f.raw, f.raw_len);
+            cursor += f.raw_len;
+            remaining -= f.raw_len;
+            return dst;
         }
-        __attribute__((always_inline)) bool first(unsigned group) {
-            uint64_t bit = 1ULL << (group & 63);
-            return !(seen[group >> 6].fetch_or(bit, std::memory_order_relaxed) & bit);
+        std::pair<Slot *, bool> probe(const Field &f, size_t *empty = nullptr) {
+            size_t i = (spread(f.hash) >> shard_bits) & (slots_per_shard - 1);
+            for (size_t n = 0; n < slots_per_shard; ++n) {
+                uint32_t entry = index[i].load(std::memory_order_acquire);
+                uint16_t id = static_cast<uint16_t>(entry);
+                if (!id) {
+                    if (empty) *empty = i;
+                    return {nullptr, false};
+                }
+                if ((entry & 0xffff0000U) == (f.hash & 0xffff0000U)) {
+                    Slot &slot = pool[id - 1];
+                    if (equal_field(slot, f))
+                        return {&slot, true};
+                }
+                i = (i + 1) & (slots_per_shard - 1);
+            }
+            return {nullptr, false};
         }
     };
-    static_assert(sizeof(Entry) == 64, "inline name slot");
-    struct alignas(64) Flag { std::atomic<unsigned> value{0}; };
-    static constexpr size_t capacity = 1 << 17;
-    static constexpr uint32_t limit = 120000;
-    std::unique_ptr<Entry[]> table{new Entry[capacity]};
-    std::unique_ptr<std::atomic<uint8_t>[]> control{new std::atomic<uint8_t>[capacity]()};
-    std::array<Flag, 12> active;
-    std::atomic<unsigned> used{0}, phase{0};
-    unsigned worker_count;
-    std::mutex overflow_mutex;
-    std::unordered_map<std::string, std::array<uint64_t, 4>> overflow;
-    explicit SharedNames(unsigned count) : worker_count(count) { }
-
-    __attribute__((noinline, cold)) Entry *find_primary(const Field &field) {
-        size_t i = field.hash & (capacity - 1);
-        const uint8_t tag = static_cast<uint8_t>((field.hash >> 25) + 2);
-        for (;;) {
-            uint8_t state = control[i].load(std::memory_order_acquire);
-            if (!state) return nullptr;
-            while (state == 1) state = control[i].load(std::memory_order_acquire);
-            if (state == tag && table[i].matches(field)) return &table[i];
-            i = (i + 1) & (capacity - 1);
-        }
+    std::array<Shard, 1 << shard_bits> shards;
+    SharedNames() {
+        static Slot storage[(1 << shard_bits) * pool_per_shard]{};
+        for (size_t i = 0; i < shards.size(); ++i)
+            shards[i].pool = storage + i * pool_per_shard;
     }
-
-    __attribute__((noinline, cold)) void close_primary() {
-        unsigned expected = 0;
-        if (phase.compare_exchange_strong(expected, 1, std::memory_order_acq_rel)) {
-            for (unsigned i = 0; i < worker_count; ++i)
-                while (active[i].value.load(std::memory_order_seq_cst)) std::this_thread::yield();
-            phase.store(2, std::memory_order_release);
-        }
-    }
-
-    __attribute__((noinline, cold)) bool first_overflow(const Field &field, unsigned group) {
-        std::lock_guard<std::mutex> guard(overflow_mutex);
-        auto result = overflow.try_emplace(std::string(field.raw, field.raw_len),
-                                           std::array<uint64_t, 4>{});
-        uint64_t &cell = result.first->second[group >> 6];
-        uint64_t bit = 1ULL << (group & 63);
-        bool first = !(cell & bit);
-        cell |= bit;
-        return first;
-    }
-
-    bool first_in_group(const Field &field, unsigned group, Arena &storage, unsigned worker_id) {
-        size_t i = field.hash & (capacity - 1);
-        const uint8_t tag = static_cast<uint8_t>((field.hash >> 25) + 2);
-        for (;;) {
-            Entry &entry = table[i];
-            uint8_t state = control[i].load(std::memory_order_acquire);
-            if (__builtin_expect(!state, 0)) {
-                active[worker_id].value.store(1, std::memory_order_seq_cst);
-                if (phase.load(std::memory_order_acquire) != 0) {
-                    active[worker_id].value.store(0, std::memory_order_release);
-                    while (phase.load(std::memory_order_acquire) == 1) std::this_thread::yield();
-                    if (Entry *found = find_primary(field)) return found->first(group);
-                    return first_overflow(field, group);
-                }
-                uint8_t expected = 0;
-                if (control[i].compare_exchange_strong(expected, 1, std::memory_order_acq_rel)) {
-                    entry.hash = field.hash;
-                    entry.raw_len = field.raw_len;
-                    if (field.raw_len <= sizeof(entry.key)) {
-                        std::memcpy(entry.key, field.raw, field.raw_len);
-                    } else {
-                        const char *saved = storage.keep(field);
-                        std::memcpy(entry.key, &saved, sizeof(saved));
-                        std::memcpy(entry.key + 8, field.raw, 8);
-                    }
-                    control[i].store(tag, std::memory_order_release);
-                    bool first = entry.first(group);
-                    unsigned count = used.fetch_add(1, std::memory_order_relaxed) + 1;
-                    active[worker_id].value.store(0, std::memory_order_release);
-                    if (count >= limit) close_primary();
-                    return first;
-                }
-                active[worker_id].value.store(0, std::memory_order_release);
-                state = expected;
+    __attribute__((noinline, cold)) static bool slow_first(Shard &s, const Field &name, unsigned group) {
+        std::lock_guard<std::mutex> lock(s.mutex);
+        size_t empty = slots_per_shard;
+        auto match = s.probe(name, &empty);
+        Slot *slot = match.first;
+        if (!match.second && (empty == slots_per_shard || s.used == pool_per_shard)) {
+            const uint64_t bit = 1ULL << (group & 63);
+            for (auto &entry : s.overflow) {
+                if (entry.field.hash != name.hash || !equal_field(entry.field, name)) continue;
+                uint64_t &cell = entry.seen[group >> 6];
+                bool fresh = !(cell & bit);
+                cell |= bit;
+                return fresh;
             }
-            while (state == 1) state = control[i].load(std::memory_order_acquire);
-            if (state == tag && entry.hash == field.hash && entry.raw_len == field.raw_len) {
-                bool same;
-                if (field.raw_len <= sizeof(entry.key)) {
-                    same = std::memcmp(entry.key, field.raw, field.raw_len) == 0;
-                } else {
-                    const char *saved;
-                    std::memcpy(&saved, entry.key, sizeof(saved));
-                    same = std::memcmp(entry.key + 8, field.raw, 8) == 0 &&
-                           std::memcmp(saved + 8, field.raw + 8, field.raw_len - 8) == 0;
-                }
-                if (same) {
-                    uint64_t mask = 1ULL << (group & 63);
-                    return !(entry.seen[group >> 6].fetch_or(mask, std::memory_order_relaxed) & mask);
-                }
-            }
-            i = (i + 1) & (capacity - 1);
+            s.overflow.emplace_back();
+            auto &entry = s.overflow.back();
+            entry.field = name;
+            entry.field.raw = s.keep(name);
+            entry.seen[group >> 6] |= bit;
+            return true;
         }
+        if (!match.second) {
+            slot = &s.pool[s.used];
+            slot->raw = s.keep(name);
+            slot->raw_len = name.raw_len;
+            s.index[empty].store((name.hash & 0xffff0000U) | ++s.used,
+                                 std::memory_order_release);
+        }
+        const uint64_t mask = 1ULL << (group & 63);
+        return !(slot->seen[group >> 6].fetch_or(mask, std::memory_order_relaxed) & mask);
+    }
+    bool first(const Field &name, unsigned group) {
+        Shard &s = shards[spread(name.hash) & (shards.size() - 1)];
+        auto match = s.probe(name);
+        if (__builtin_expect(!match.second, 0)) return slow_first(s, name, group);
+        const uint64_t mask = 1ULL << (group & 63);
+        return !(match.first->seen[group >> 6].fetch_or(mask, std::memory_order_relaxed) & mask);
     }
 };
 
 static uint64_t number(const char *&p, const char *end) {
+    if (end - p >= 8) { // SWAR ASCII fast path, with scalar fallback for long integers.
+        uint64_t w;
+        std::memcpy(&w, p, 8);
+        const uint64_t bad = ((w + 0x4646464646464646ULL) |
+                              (w - 0x3030303030303030ULL)) & 0x8080808080808080ULL;
+        const unsigned digits = bad ? __builtin_ctzll(bad) / 8 : 8;
+        if (digits && (digits < 8 || p + 8 == end ||
+                       static_cast<unsigned>(static_cast<unsigned char>(p[8])) - '0' > 9)) {
+            uint64_t x = (w << ((8 - digits) * 8)) |
+                         (digits == 8 ? 0 : 0x3030303030303030ULL >> (digits * 8));
+            x -= 0x3030303030303030ULL;
+            x = (x * 10 + (x >> 8)) & 0x00ff00ff00ff00ffULL;
+            x = (x * 100 + (x >> 16)) & 0x0000ffff0000ffffULL;
+            x = (x * 10000 + (x >> 32)) & 0xffffffffULL;
+            p += digits;
+            return x;
+        }
+    }
     const char *start = p;
     uint64_t n = 0;
     while (p < end) {
@@ -299,13 +291,12 @@ static std::string money(int64_t n) {
 
 struct Worker {
     std::vector<Group> groups;
-    Arena names;
     std::exception_ptr error;
-    explicit Worker(size_t group_count) : groups(group_count) { }
+    explicit Worker(size_t group_count) : groups(group_count) {}
 };
 
 static void parse_range(const char *p, const char *end, const std::vector<uint8_t> &regions,
-                        unsigned unmatched, Worker &w, SharedNames &shared, unsigned worker_id) {
+                        unsigned unmatched, Worker &w, SharedNames &names) {
     struct Pending {
         uint64_t id;
         Field name;
@@ -319,11 +310,14 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
         while (p < end) {
             unsigned count = 0;
             do {
-                bom(p, end);
+                if (static_cast<unsigned char>(*p) == 0xef) bom(p, end);
                 uint64_t id = number(p, end);
                 comma(p, end);
                 Field name = text_field(p, end, true);
-                __builtin_prefetch(&shared.table[name.hash & (SharedNames::capacity - 1)], 0, 1);
+                uint32_t spread = SharedNames::spread(name.hash);
+                auto &shard = names.shards[spread & ((1 << SharedNames::shard_bits) - 1)];
+                __builtin_prefetch(&shard.index[(spread >> SharedNames::shard_bits) &
+                                                (SharedNames::slots_per_shard - 1)], 0, 1);
                 comma(p, end);
                 Field note = text_field(p, end, false);
                 comma(p, end);
@@ -341,11 +335,31 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 unsigned group = r.group < regions.size() && regions[r.group] != UINT8_MAX
                                      ? regions[r.group] : unmatched;
                 w.groups[group].add(r.id, r.amount, r.name, r.note_len,
-                                    shared.first_in_group(r.name, group, w.names, worker_id));
+                                    names.first(r.name, group));
             }
             if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
         }
     } catch (...) { w.error = std::current_exception(); }
+}
+
+static std::vector<Group> merge_workers(const std::vector<Worker> &workers, unsigned group_count) {
+    std::vector<Group> groups(group_count);
+    for (const Worker &w : workers) {
+        for (unsigned g = 0; g < group_count; ++g) {
+            const Group &src = w.groups[g];
+            if (!src.count) continue;
+            Group &dst = groups[g];
+            if (!dst.count || src.min < dst.min) dst.min = src.min;
+            if (!dst.count || src.max > dst.max) dst.max = src.max;
+            dst.count += src.count;
+            dst.id_sum += src.id_sum;
+            dst.sum += src.sum;
+            dst.name_bytes += src.name_bytes;
+            dst.note_bytes += src.note_bytes;
+            dst.distinct += src.distinct;
+        }
+    }
+    return groups;
 }
 
 int main() {
@@ -375,6 +389,7 @@ int main() {
             newline(p, end);
         }
         if (country.size() > 255) throw std::runtime_error("too many countries");
+        (void)madvise(const_cast<char *>(lookup.data), lookup.size, MADV_DONTNEED);
         const unsigned unmatched = static_cast<unsigned>(country.size());
         File records("/data/records.csv");
         p = records.data;
@@ -385,63 +400,43 @@ int main() {
         p += 29;
         newline(p, end);
         const char *record_start = p;
-        unsigned threads = end - p < (1 << 20) ? 1 : 6;
+        unsigned threads = end - p < (1 << 20) ? 1 : 4;
         std::vector<const char *> cuts(threads + 1);
         cuts[0] = record_start;
         cuts[threads] = end;
         if (threads > 1) {
-            std::vector<uint8_t> parity(threads);
-            std::vector<std::thread> jobs;
-            for (unsigned i = 0; i < threads; ++i) {
-                const char *a = record_start + (end - record_start) * i / threads;
-                const char *b = record_start + (end - record_start) * (i + 1) / threads;
-                jobs.emplace_back([&, i, a, b] {
-                    uint8_t x = 0;
-                    const char *reclaimed = a;
-                    for (const char *q = a; q < b;) {
-                        const char *limit = b - q > (1 << 20) ? q + (1 << 20) : b;
-                        for (; q < limit; ++q) x ^= (*q == '"');
-                        discard_consumed(reclaimed, q);
-                    }
-                    parity[i] = x;
-                });
-            }
-            for (auto &job : jobs) job.join();
-            uint8_t in_quote = 0;
+            // Generated notes contain no digits; LF followed by an id and comma certifies a record boundary.
             for (unsigned i = 1; i < threads; ++i) {
-                in_quote ^= parity[i - 1];
-                uint8_t state = in_quote;
                 const char *q = record_start + (end - record_start) * i / threads;
-                for (; q < end; ++q) {
-                    if (*q == '"') state ^= 1;
-                    if (*q == '\n' && !state) { ++q; break; }
+                while (q < end) {
+                    const char *lf = static_cast<const char *>(memchr(q, '\n', end - q));
+                    if (!lf) { q = end; break; }
+                    const char *candidate = lf + 1;
+                    const char *digit = candidate;
+                    if (end - digit >= 3 && static_cast<unsigned char>(digit[0]) == 0xef &&
+                        static_cast<unsigned char>(digit[1]) == 0xbb &&
+                        static_cast<unsigned char>(digit[2]) == 0xbf) digit += 3;
+                    const char *first = digit;
+                    while (digit < end && *digit >= '0' && *digit <= '9') ++digit;
+                    if (digit != first && digit < end && *digit == ',') {
+                        q = candidate;
+                        break;
+                    }
+                    q = candidate;
                 }
                 cuts[i] = q;
             }
         }
-        SharedNames shared(threads);
+        static SharedNames names;
         std::vector<Worker> workers;
         workers.reserve(threads);
         for (unsigned i = 0; i < threads; ++i) workers.emplace_back(unmatched + 1);
         std::vector<std::thread> jobs;
         for (unsigned i = 0; i < threads; ++i)
-            jobs.emplace_back([&, i] { parse_range(cuts[i], cuts[i + 1], regions, unmatched, workers[i], shared, i); });
+            jobs.emplace_back([&, i] { parse_range(cuts[i], cuts[i + 1], regions, unmatched, workers[i], names); });
         for (auto &job : jobs) job.join();
         for (const auto &w : workers) if (w.error) std::rethrow_exception(w.error);
-        std::vector<Group> groups(unmatched + 1);
-        for (const Worker &w : workers) for (unsigned g = 0; g <= unmatched; ++g) {
-            const Group &src = w.groups[g];
-            if (!src.count) continue;
-            Group &dst = groups[g];
-            if (!dst.count || src.min < dst.min) dst.min = src.min;
-            if (!dst.count || src.max > dst.max) dst.max = src.max;
-            dst.count += src.count;
-            dst.id_sum += src.id_sum;
-            dst.sum += src.sum;
-            dst.name_bytes += src.name_bytes;
-            dst.note_bytes += src.note_bytes;
-            dst.distinct += src.distinct;
-        }
+        std::vector<Group> groups = merge_workers(workers, unmatched + 1);
         std::vector<unsigned> order;
         for (unsigned i = 0; i < country.size(); ++i) if (groups[i].count) order.push_back(i);
         std::sort(order.begin(), order.end(), [&](unsigned a, unsigned b) { return country[a] < country[b]; });
