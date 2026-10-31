@@ -6,7 +6,6 @@
 #include <cstring>
 #include <exception>
 #include <memory>
-#include <nmmintrin.h>
 #include <thread>
 #include <fcntl.h>
 #include <stdexcept>
@@ -54,18 +53,6 @@ static_assert(sizeof(Field) == 24, "name slot layout");
 
 static constexpr uint32_t HASH_OFFSET = 5381U;
 
-static uint32_t hash_span(uint32_t h, const char *p, size_t n) {
-    while (n >= 8) {
-        uint64_t word;
-        std::memcpy(&word, p, 8);
-        h = static_cast<uint32_t>(_mm_crc32_u64(h, word));
-        p += 8;
-        n -= 8;
-    }
-    while (n--) h = _mm_crc32_u8(h, static_cast<unsigned char>(*p++));
-    return h;
-}
-
 static Field text_field(const char *&p, const char *end, bool need_hash) {
     Field f{};
     f.quoted = p < end && *p == '"';
@@ -89,21 +76,17 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
         }
         uint32_t h = HASH_OFFSET;
         while (p < end) {
-            const char *q = static_cast<const char *>(memchr(p, '"', end - p));
-            if (!q) throw std::runtime_error("unclosed quote");
-            size_t span = static_cast<size_t>(q - p);
-            f.len += static_cast<uint32_t>(span);
-            h = hash_span(h, p, span);
-            if (q + 1 < end && q[1] == '"') {
-                ++f.len;
-                h = _mm_crc32_u8(h, '"');
-                p = q + 2;
-                continue;
+            unsigned char c = static_cast<unsigned char>(*p++);
+            if (c == '"') {
+                if (p < end && *p == '"') ++p;
+                else {
+                    f.raw_len = static_cast<uint32_t>(p - f.raw - 1);
+                    f.hash = h;
+                    return f;
+                }
             }
-            f.raw_len = static_cast<uint32_t>(q - f.raw);
-            f.hash = h;
-            p = q + 1;
-            return f;
+            ++f.len;
+            if (need_hash) h = ((h << 5) + h) ^ c;
         }
         throw std::runtime_error("unclosed quote");
     }
@@ -112,7 +95,7 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
     while (p < end && *p != ',' && *p != '\r' && *p != '\n') {
         unsigned char c = static_cast<unsigned char>(*p++);
         ++f.len;
-        if (need_hash) h = _mm_crc32_u8(h, c);
+        if (need_hash) h = ((h << 5) + h) ^ c;
     }
     f.raw_len = f.len;
     f.hash = h;
@@ -136,6 +119,7 @@ static bool equal_field(const Field &f, const Field &g) {
 
 struct Names {
     std::vector<Field> table;
+    std::vector<uint8_t> fingerprint;
     std::vector<std::array<uint64_t, 4>> seen;
     size_t used = 0;
     bool own_names;
@@ -143,7 +127,7 @@ struct Names {
     char *arena_cursor = nullptr;
     size_t arena_remaining = 0;
     explicit Names(size_t capacity = 1 << 18, bool own = false)
-        : table(capacity), own_names(own) { seen.reserve(capacity); }
+        : table(capacity), fingerprint(capacity, UINT8_MAX), own_names(own) { seen.reserve(capacity); }
     const char *keep(const Field &f) {
         constexpr size_t block = 1 << 20;
         if (!f.raw_len) return f.raw;
@@ -165,29 +149,35 @@ struct Names {
     }
     void grow() {
         std::vector<Field> next(table.size() * 2);
+        std::vector<uint8_t> next_fp(next.size(), UINT8_MAX);
         for (const auto &slot : table) {
             if (slot.id == UINT32_MAX) continue;
             size_t i = slot.hash & (next.size() - 1);
-            while (next[i].id != UINT32_MAX) i = (i + 1) & (next.size() - 1);
+            while (next_fp[i] != UINT8_MAX) i = (i + 1) & (next.size() - 1);
             next[i] = slot;
+            next_fp[i] = static_cast<uint8_t>(slot.hash >> 25);
         }
         table.swap(next);
+        fingerprint.swap(next_fp);
     }
     uint32_t intern(const Field &f) {
+        const uint8_t fp = static_cast<uint8_t>(f.hash >> 25);
         size_t i = f.hash & (table.size() - 1);
-        while (table[i].id != UINT32_MAX) {
-            if (table[i].hash == f.hash && equal_field(table[i], f)) return table[i].id;
+        while (fingerprint[i] != UINT8_MAX) {
+            if (fingerprint[i] == fp && table[i].hash == f.hash &&
+                equal_field(table[i], f)) return table[i].id;
             i = (i + 1) & (table.size() - 1);
         }
         if ((used + 1) * 10 >= table.size() * 9) {
             grow();
             i = f.hash & (table.size() - 1);
-            while (table[i].id != UINT32_MAX) i = (i + 1) & (table.size() - 1);
+            while (fingerprint[i] != UINT8_MAX) i = (i + 1) & (table.size() - 1);
         }
         uint32_t id = static_cast<uint32_t>(seen.size());
         table[i] = f;
         if (own_names) table[i].raw = keep(f);
         table[i].id = id;
+        fingerprint[i] = fp;
         seen.push_back({0, 0, 0, 0});
         ++used;
         return id;
