@@ -91,10 +91,6 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
     return f;
 }
 
-static bool equal_field(const Field &f, const Field &g) {
-    return f.raw_len == g.raw_len && std::memcmp(f.raw, g.raw, f.raw_len) == 0;
-}
-
 struct Arena {
     std::vector<std::unique_ptr<char[]>> blocks;
     char *arena_cursor = nullptr;
@@ -123,9 +119,12 @@ struct Arena {
 struct SharedNames {
     struct alignas(64) Entry {
         std::atomic<uint32_t> state{0};
-        Field field{};
+        uint32_t hash = 0;
+        uint32_t raw_len = 0;
+        char key[16]{};
         std::atomic<uint64_t> seen[4]{};
     };
+    static_assert(sizeof(Entry) == 64, "inline name slot");
     static constexpr size_t capacity = 1 << 18;
     std::unique_ptr<Entry[]> table{new Entry[capacity]};
 
@@ -137,8 +136,15 @@ struct SharedNames {
             if (!state) {
                 uint32_t expected = 0;
                 if (entry.state.compare_exchange_strong(expected, 1, std::memory_order_acq_rel)) {
-                    entry.field = field;
-                    entry.field.raw = storage.keep(field);
+                    entry.hash = field.hash;
+                    entry.raw_len = field.raw_len;
+                    if (field.raw_len <= sizeof(entry.key)) {
+                        std::memcpy(entry.key, field.raw, field.raw_len);
+                    } else {
+                        const char *saved = storage.keep(field);
+                        std::memcpy(entry.key, &saved, sizeof(saved));
+                        std::memcpy(entry.key + 8, field.raw, 8);
+                    }
                     entry.state.store(2, std::memory_order_release);
                     state = 2;
                 } else {
@@ -146,9 +152,20 @@ struct SharedNames {
                 }
             }
             while (state == 1) state = entry.state.load(std::memory_order_acquire);
-            if (state == 2 && entry.field.hash == field.hash && equal_field(entry.field, field)) {
-                uint64_t mask = 1ULL << (group & 63);
-                return !(entry.seen[group >> 6].fetch_or(mask, std::memory_order_relaxed) & mask);
+            if (state == 2 && entry.hash == field.hash && entry.raw_len == field.raw_len) {
+                bool same;
+                if (field.raw_len <= sizeof(entry.key)) {
+                    same = std::memcmp(entry.key, field.raw, field.raw_len) == 0;
+                } else {
+                    const char *saved;
+                    std::memcpy(&saved, entry.key, sizeof(saved));
+                    same = std::memcmp(entry.key + 8, field.raw, 8) == 0 &&
+                           std::memcmp(saved + 8, field.raw + 8, field.raw_len - 8) == 0;
+                }
+                if (same) {
+                    uint64_t mask = 1ULL << (group & 63);
+                    return !(entry.seen[group >> 6].fetch_or(mask, std::memory_order_relaxed) & mask);
+                }
             }
             i = (i + 1) & (capacity - 1);
         }
