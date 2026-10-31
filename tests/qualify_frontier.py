@@ -26,6 +26,8 @@ def main():
     cases.split_boundary_stress()
     cases.huge_name_arena_stress()
     cases.grow_stress()
+    cases.capacity_cutover_stress()
+    cases.money_swar_boundaries()
     cases.merge_collision_stress()
     for seed, scale in [(19, 'tiny'), (37, 'sample')]:
         cases.command(sys.executable, str(cases.GEN), '--seed', str(seed), '--scale', scale,

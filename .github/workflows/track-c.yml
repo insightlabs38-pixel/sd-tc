@@ -80,6 +80,18 @@ jobs:
           docker cp "$container_id":/join /tmp/sd-track-c-baseline
           docker rm "$container_id"
           python3 tests/paired_benchmark.py
+      - name: Paired qualified short-path PGO control
+        run: |
+          staging=$(mktemp -d)
+          git show 90da5461b0c806fafd172ef2f5ca42feb9e0fff8:track-c/join.cpp > "$staging/join.cpp"
+          cp track-c/Dockerfile track-c/generator.py "$staging/"
+          docker build --network=none -t sd-track-c:short-control "$staging"
+          container_id=$(docker create sd-track-c:short-control)
+          docker cp "$container_id":/join /tmp/sd-track-c-baseline
+          docker rm "$container_id"
+          python3 tests/paired_benchmark.py
+      - name: Paired restricted cgroup memory against short-path control
+        run: python3 tests/paired_cgroup.py sd-track-c:short-control sd-track-c:ci
       - name: Independent full references for the final PGO binary
         if: hashFiles('track-c/generator.py') != ''
         run: python3 tests/check_binary_seeds.py --binary /tmp/sd-track-c --seeds 11 29
