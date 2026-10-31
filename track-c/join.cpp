@@ -108,14 +108,14 @@ static bool equal_field(const A &f, const B &g) {
 struct SharedNames {
     static constexpr unsigned shard_bits = 6;
     static constexpr size_t slots_per_shard = 1 << 12;
-    static constexpr size_t pool_per_shard = 1 << 11;
     static uint32_t spread(uint32_t h) { return h ^ (h >> 11) ^ (h >> 22); }
     struct Slot {
-        const char *raw = nullptr;
+        std::atomic<uint32_t> state{0};
         uint32_t raw_len = 0;
+        const char *raw = nullptr;
         std::atomic<uint64_t> seen[4]{};
     };
-    static_assert(sizeof(Slot) == 48, "compact shared name slot");
+    static_assert(sizeof(Slot) == 48, "compact direct name slot");
     struct Shard {
         struct Overflow {
             Field field;
@@ -123,9 +123,7 @@ struct SharedNames {
         };
         std::mutex mutex;
         std::vector<Overflow> overflow;
-        std::array<std::atomic<uint32_t>, slots_per_shard> index{};
         Slot *pool = nullptr;
-        uint16_t used = 0;
         std::vector<std::unique_ptr<char[]>> arena;
         char *cursor = nullptr;
         size_t remaining = 0;
@@ -150,18 +148,16 @@ struct SharedNames {
         }
         std::pair<Slot *, bool> probe(const Field &f, size_t *empty = nullptr) {
             size_t i = (spread(f.hash) >> shard_bits) & (slots_per_shard - 1);
+            uint32_t tag = f.hash | 1U;
             for (size_t n = 0; n < slots_per_shard; ++n) {
-                uint32_t entry = index[i].load(std::memory_order_acquire);
-                uint16_t id = static_cast<uint16_t>(entry);
-                if (!id) {
+                Slot &slot = pool[i];
+                uint32_t state = slot.state.load(std::memory_order_acquire);
+                if (!state) {
                     if (empty) *empty = i;
                     return {nullptr, false};
                 }
-                if ((entry & 0xffff0000U) == (f.hash & 0xffff0000U)) {
-                    Slot &slot = pool[id - 1];
-                    if (equal_field(slot, f))
-                        return {&slot, true};
-                }
+                if (state == tag && slot.raw_len == f.raw_len && equal_field(slot, f))
+                    return {&slot, true};
                 i = (i + 1) & (slots_per_shard - 1);
             }
             return {nullptr, false};
@@ -169,16 +165,16 @@ struct SharedNames {
     };
     std::array<Shard, 1 << shard_bits> shards;
     SharedNames() {
-        static Slot storage[(1 << shard_bits) * pool_per_shard]{};
+        static Slot storage[(1 << shard_bits) * slots_per_shard]{};
         for (size_t i = 0; i < shards.size(); ++i)
-            shards[i].pool = storage + i * pool_per_shard;
+            shards[i].pool = storage + i * slots_per_shard;
     }
     __attribute__((noinline, cold)) static bool slow_first(Shard &s, const Field &name, unsigned group) {
         std::lock_guard<std::mutex> lock(s.mutex);
         size_t empty = slots_per_shard;
         auto match = s.probe(name, &empty);
         Slot *slot = match.first;
-        if (!match.second && (empty == slots_per_shard || s.used == pool_per_shard)) {
+        if (!match.second && empty == slots_per_shard) {
             const uint64_t bit = 1ULL << (group & 63);
             for (auto &entry : s.overflow) {
                 if (entry.field.hash != name.hash || !equal_field(entry.field, name)) continue;
@@ -195,11 +191,10 @@ struct SharedNames {
             return true;
         }
         if (!match.second) {
-            slot = &s.pool[s.used];
+            slot = &s.pool[empty];
             slot->raw = s.keep(name);
             slot->raw_len = name.raw_len;
-            s.index[empty].store((name.hash & 0xffff0000U) | ++s.used,
-                                 std::memory_order_release);
+            slot->state.store(name.hash | 1U, std::memory_order_release);
         }
         const uint64_t mask = 1ULL << (group & 63);
         return !(slot->seen[group >> 6].fetch_or(mask, std::memory_order_relaxed) & mask);
@@ -316,7 +311,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 Field name = text_field(p, end, true);
                 uint32_t spread = SharedNames::spread(name.hash);
                 auto &shard = names.shards[spread & ((1 << SharedNames::shard_bits) - 1)];
-                __builtin_prefetch(&shard.index[(spread >> SharedNames::shard_bits) &
+                __builtin_prefetch(&shard.pool[(spread >> SharedNames::shard_bits) &
                                                 (SharedNames::slots_per_shard - 1)], 0, 1);
                 comma(p, end);
                 Field note = text_field(p, end, false);
