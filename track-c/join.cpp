@@ -337,9 +337,11 @@ static std::vector<Group> merge_workers(const std::vector<Worker> &workers, unsi
                 const Field &slot = right.table[k];
                 if (slot.id == UINT32_MAX) continue;
                 size_t i = slot.hash & mask;
-                while (left.table[i].id != UINT32_MAX) {
-                    const Field &candidate = left.table[i];
-                    if (candidate.hash == slot.hash && equal_field(candidate, slot)) {
+                const uint8_t fp = static_cast<uint8_t>(slot.hash >> 25);
+                while (left.fingerprint[i] != UINT8_MAX) {
+                    if (left.fingerprint[i] == fp && left.table[i].hash == slot.hash &&
+                        equal_field(left.table[i], slot)) {
+                        const Field &candidate = left.table[i];
                         for (unsigned word = 0; word < 4; ++word) {
                             uint64_t shared = left.seen[candidate.id][word] &
                                               right.seen[slot.id][word];
