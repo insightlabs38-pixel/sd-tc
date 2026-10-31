@@ -186,3 +186,17 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Paired 12-trial **full-PGO** runner medians: **105.302 -> 101.869 ms**, RSS **16,496 -> 16,496 KiB**, estimated complete-K proxy **+1.67%**; independent attempt 2: **105.087 -> 100.343 ms**, RSS **16,756 -> 16,756 KiB**, proxy **+2.34%**.
 - Source-only trials: 113.357 -> 109.195 ms, RSS 17,500 -> 18,504 KiB (K +0.76%); replication 109.487 -> 107.327 ms, RSS 17,244 -> 18,684 KiB (K -0.61%). Release uses full-PGO, not source-only. Scored source lines unchanged, D=1.
 - **Promoted** source blob `a9b2c765efe2a5fedec7671d9df9be77a700c853`. Official scoring-box T/M/S/D/K still pending through Luna; runner RSS is not cgroup memory. Preserve AVX2 predecessor as rollback.
+
+## Guarded fused money SWAR trial (2026-10-31)
+
+- [CI 41252674260](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41252674260) passed full seed-1 SHA-256, holdouts 11/29, new money width/sign/EOF fixture, sanitizers, offline Docker and sandbox.
+- Compared with verified 128-shard source `a9b2c765efe2a5fedec7671d9df9be77a700c853`, source-only 12-pair median **86.485 -> 86.149 ms**; full-PGO **81.938 -> 84.812 ms**, RSS **16,776 KiB** both.
+- Physical source **487 -> 504 lines**, unchanged D=1; full-PGO K proxy approximately **-2.2%** including source growth. Reject; the PGO-vs-untrained comparison is not a champion comparison.
+- Restored the exact qualified 128-shard source. The independent adversarial money fixture and corrected main-to-main CI baseline remain; no redundant restoration CI.
+
+## Separate frontier candidate for official evaluation (2026-10-31)
+
+- Qualified public branch commit `90da5461b0c806fafd172ef2f5ca42feb9e0fff8` ([CI 41251942615](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41251942615)) uses guarded short-key hashing and a fused numeric path. All exactness, sanitizer, Docker and holdout gates passed.
+- Paired full-PGO runner versus main `f294a882`: **68.679 -> 59.927 ms**; process RSS **16,776 -> 35,752 KiB**. Canonical scored S **577 -> 622**, D=1.
+- Its separate pinned-container cgroup comparison reports **145.858 -> 129.350 ms**, **10,168,320 -> 10,149,888 bytes**, estimated complete K **+5.04%**. Runner RSS is not official cgroup M; these are not official scoring-box measurements.
+- **Do not auto-promote** without official T/M/S/D/K through Luna. The verified main champion `a9b2c765` remains authoritative; the frontier branch is an optional isolated scoring trial.

@@ -123,6 +123,21 @@ def handwritten():
 
 
 
+def money_swar_boundaries():
+    DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n")
+    DATA.joinpath("records.csv").write_bytes(
+        b"id,name,note,region_id,amount\n"
+        b'1,"a","",7,0.00\n'
+        b'2,"a","",7,-0.01\r\n'
+        b'3,"b","",7,99999.99\n'
+        b'4,"b","",7,-999.99\r\n'
+        b'5,"c","",7,123456.78\n'
+        b'6,"c","",7,-123456.78\r\n'
+        b'7,"d","",7,1.00'
+    )
+    check_case("money-swar-widths-sign-and-eof")
+
+
 def quote_vector_boundary_stress():
     DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n8,BBB\n")
     rows = bytearray(b"id,name,note,region_id,amount\n")
@@ -268,6 +283,7 @@ def main():
             "-Werror", "-o", "/tmp/sd-track-c", str(BIN))
     handwritten()
     page_tail_stress()
+    money_swar_boundaries()
     quote_vector_boundary_stress()
     packed_metadata_stress()
     split_boundary_stress()
