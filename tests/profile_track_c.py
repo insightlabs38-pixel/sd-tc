@@ -23,7 +23,7 @@ def instrument(source, workers):
         ("int main() {\n    try {", "\n        const auto t0 = std::chrono::steady_clock::now();"),
         ('        File records("/data/records.csv");', "        const auto t_lookup = std::chrono::steady_clock::now();\n"),
         ("        std::vector<Worker> workers;", "        const auto t_boundary = std::chrono::steady_clock::now();\n"),
-        ("        std::vector<Group> groups = merge_workers(workers, unmatched + 1);", "        const auto t_parse = std::chrono::steady_clock::now();\n"),
+        ("        std::vector<Group> groups(unmatched + 1);", "        const auto t_parse = std::chrono::steady_clock::now();\n"),
         ("        std::vector<unsigned> order;", "        const auto t_merge = std::chrono::steady_clock::now();\n"),
     ]
     for needle, insertion in markers:
@@ -44,7 +44,7 @@ def instrument(source, workers):
 
 def main():
     source = SOURCE.read_text()
-    counts = (1, 2) if 'workers.size() > 2' in source else (1, 2, 3, 4, 5, 6, 12)
+    counts = (1, 2, 3, 4, 6, 8, 12)
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
         for workers in counts:
