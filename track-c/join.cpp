@@ -6,7 +6,6 @@
 #include <cstring>
 #include <exception>
 #include <memory>
-#include <immintrin.h>
 #include <thread>
 #include <fcntl.h>
 #include <stdexcept>
@@ -195,11 +194,19 @@ struct Names {
 static uint64_t number(const char *&p, const char *end) {
     const char *start = p;
     uint64_t n = 0;
-    while (p < end) {
+    while (end - p >= 2) {
+        unsigned a = static_cast<unsigned char>(p[0]) - '0';
+        unsigned b = static_cast<unsigned char>(p[1]) - '0';
+        if (a > 9 || b > 9) break;
+        n = n * 100 + a * 10 + b;
+        p += 2;
+    }
+    if (p < end) {
         unsigned digit = static_cast<unsigned char>(*p) - '0';
-        if (digit > 9) break;
-        n = n * 10 + digit;
-        ++p;
+        if (digit <= 9) {
+            n = n * 10 + digit;
+            ++p;
+        }
     }
     if (p == start) throw std::runtime_error("missing integer");
     return n;
@@ -448,14 +455,6 @@ int main() {
                     const char *reclaimed = a;
                     for (const char *q = a; q < b;) {
                         const char *limit = b - q > (1 << 20) ? q + (1 << 20) : b;
-                        const __m256i quotes = _mm256_set1_epi8('"');
-                        unsigned masks = 0;
-                        while (limit - q >= 32) {
-                            const __m256i block = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(q));
-                            masks ^= static_cast<unsigned>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(block, quotes)));
-                            q += 32;
-                        }
-                        x ^= __builtin_parity(masks);
                         for (; q < limit; ++q) x ^= (*q == '"');
                         discard_consumed(reclaimed, q);
                     }
