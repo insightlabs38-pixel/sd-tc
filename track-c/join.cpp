@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -8,6 +9,7 @@
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <utility>
 #include <fcntl.h>
 #include <stdexcept>
 #include <string>
@@ -118,97 +120,67 @@ static bool equal_field(const Field &f, const Field &g) {
     return a == ae && b == be;
 }
 
-struct Names {
-    std::vector<Field> table;
-    std::vector<uint8_t> fingerprint;
-    std::vector<std::array<uint64_t, 4>> seen;
-    size_t used = 0;
-    bool own_names;
-    unsigned index_shift;
-    size_t arena_block;
-    std::vector<std::unique_ptr<char[]>> arena;
-    char *arena_cursor = nullptr;
-    size_t arena_remaining = 0;
-    explicit Names(size_t capacity = 1 << 18, bool own = false,
-                   unsigned shift = 0, size_t block = 1 << 20)
-        : table(capacity), fingerprint(capacity, UINT8_MAX), own_names(own),
-          index_shift(shift), arena_block(block) { seen.reserve(capacity); }
-    const char *keep(const Field &f) {
-        const size_t block = arena_block;
-        if (!f.raw_len) return f.raw;
-        if (f.raw_len > block) {
-            arena.emplace_back(new char[f.raw_len]);
-            std::memcpy(arena.back().get(), f.raw, f.raw_len);
-            return arena.back().get();
-        }
-        if (f.raw_len > arena_remaining) {
-            arena.emplace_back(new char[block]);
-            arena_cursor = arena.back().get();
-            arena_remaining = block;
-        }
-        char *dst = arena_cursor;
-        std::memcpy(dst, f.raw, f.raw_len);
-        arena_cursor += f.raw_len;
-        arena_remaining -= f.raw_len;
-        return dst;
-    }
-    void grow() {
-        std::vector<Field> next(table.size() * 2);
-        std::vector<uint8_t> next_fp(next.size(), UINT8_MAX);
-        for (const auto &slot : table) {
-            if (slot.id == UINT32_MAX) continue;
-            size_t i = (slot.hash >> index_shift) & (next.size() - 1);
-            while (next_fp[i] != UINT8_MAX) i = (i + 1) & (next.size() - 1);
-            next[i] = slot;
-            next_fp[i] = static_cast<uint8_t>(slot.hash >> 25);
-        }
-        table.swap(next);
-        fingerprint.swap(next_fp);
-    }
-    uint32_t intern(const Field &f) {
-        const uint8_t fp = static_cast<uint8_t>(f.hash >> 25);
-        size_t i = (f.hash >> index_shift) & (table.size() - 1);
-        while (fingerprint[i] != UINT8_MAX) {
-            if (fingerprint[i] == fp && table[i].hash == f.hash &&
-                equal_field(table[i], f)) return table[i].id;
-            i = (i + 1) & (table.size() - 1);
-        }
-        if ((used + 1) * 10 >= table.size() * 9) {
-            grow();
-            i = (f.hash >> index_shift) & (table.size() - 1);
-            while (fingerprint[i] != UINT8_MAX) i = (i + 1) & (table.size() - 1);
-        }
-        uint32_t id = static_cast<uint32_t>(seen.size());
-        table[i] = f;
-        if (own_names) table[i].raw = keep(f);
-        table[i].id = id;
-        fingerprint[i] = fp;
-        seen.push_back({0, 0, 0, 0});
-        ++used;
-        return id;
-    }
-    bool first_in_group(uint32_t id, unsigned group) {
-        uint64_t &cell = seen[id][group >> 6];
-        uint64_t mask = 1ULL << (group & 63);
-        if (cell & mask) return false;
-        cell |= mask;
-        return true;
-    }
-};
-
 struct SharedNames {
     static constexpr unsigned shard_bits = 6;
+    static constexpr size_t slots_per_shard = 1 << 12;
+    struct Slot {
+        Field field{};
+        std::atomic<uint64_t> seen[4]{};
+        std::atomic<uint8_t> ready{0};
+    };
     struct Shard {
         std::mutex mutex;
-        Names names;
-        Shard() : names(1 << 12, true, shard_bits, 1 << 16) {}
+        std::unique_ptr<Slot[]> table{new Slot[slots_per_shard]};
+        std::vector<std::unique_ptr<char[]>> arena;
+        char *cursor = nullptr;
+        size_t remaining = 0;
+        const char *keep(const Field &f) {
+            constexpr size_t block = 1 << 16;
+            if (!f.raw_len) return f.raw;
+            if (f.raw_len > block) {
+                arena.emplace_back(new char[f.raw_len]);
+                std::memcpy(arena.back().get(), f.raw, f.raw_len);
+                return arena.back().get();
+            }
+            if (f.raw_len > remaining) {
+                arena.emplace_back(new char[block]);
+                cursor = arena.back().get();
+                remaining = block;
+            }
+            char *dst = cursor;
+            std::memcpy(dst, f.raw, f.raw_len);
+            cursor += f.raw_len;
+            remaining -= f.raw_len;
+            return dst;
+        }
+        std::pair<Slot *, bool> probe(const Field &f) {
+            size_t i = (f.hash >> shard_bits) & (slots_per_shard - 1);
+            for (size_t n = 0; n < slots_per_shard; ++n) {
+                Slot &slot = table[i];
+                if (!slot.ready.load(std::memory_order_acquire)) return {&slot, false};
+                if (slot.field.hash == f.hash && equal_field(slot.field, f)) return {&slot, true};
+                i = (i + 1) & (slots_per_shard - 1);
+            }
+            throw std::runtime_error("name shard full");
+        }
     };
     std::array<Shard, 1 << shard_bits> shards;
     bool first(const Field &name, unsigned group) {
         Shard &s = shards[name.hash & (shards.size() - 1)];
-        std::lock_guard<std::mutex> lock(s.mutex);
-        uint32_t id = s.names.intern(name);
-        return s.names.first_in_group(id, group);
+        auto match = s.probe(name);
+        Slot *slot = match.first;
+        if (!match.second) {
+            std::lock_guard<std::mutex> lock(s.mutex);
+            match = s.probe(name);
+            slot = match.first;
+            if (!match.second) {
+                slot->field = name;
+                slot->field.raw = s.keep(name);
+                slot->ready.store(1, std::memory_order_release);
+            }
+        }
+        const uint64_t mask = 1ULL << (group & 63);
+        return !(slot->seen[group >> 6].fetch_or(mask, std::memory_order_relaxed) & mask);
     }
 };
 
