@@ -68,7 +68,7 @@ static uint32_t hash_bytes(const char *p, size_t n) {
         n -= 8;
     }
     while (n--) h = _mm_crc32_u8(h, static_cast<unsigned char>(*p++));
-    return h ^ (h >> 11) ^ (h >> 22);
+    return h;
 }
 
 static Field text_field(const char *&p, const char *end, bool need_hash) {
@@ -108,6 +108,7 @@ static bool equal_field(const A &f, const B &g) {
 struct SharedNames {
     static constexpr unsigned shard_bits = 6;
     static constexpr size_t slots_per_shard = 1 << 12;
+    static uint32_t spread(uint32_t h) { return h ^ (h >> 11) ^ (h >> 22); }
     struct Slot {
         const char *raw = nullptr;
         uint32_t raw_len = 0;
@@ -147,7 +148,7 @@ struct SharedNames {
             return dst;
         }
         std::pair<Slot *, bool> probe(const Field &f, size_t *empty = nullptr) {
-            size_t i = (f.hash >> shard_bits) & (slots_per_shard - 1);
+            size_t i = (spread(f.hash) >> shard_bits) & (slots_per_shard - 1);
             for (size_t n = 0; n < slots_per_shard; ++n) {
                 uint32_t entry = index[i].load(std::memory_order_acquire);
                 uint16_t id = static_cast<uint16_t>(entry);
@@ -172,7 +173,7 @@ struct SharedNames {
             shards[i].pool = storage + i * slots_per_shard;
     }
     bool first(const Field &name, unsigned group) {
-        Shard &s = shards[name.hash & (shards.size() - 1)];
+        Shard &s = shards[spread(name.hash) & (shards.size() - 1)];
         auto match = s.probe(name);
         Slot *slot = match.first;
         if (!match.second) {
@@ -310,7 +311,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 uint64_t id = number(p, end);
                 comma(p, end);
                 Field name = text_field(p, end, true);
-                uint32_t spread = name.hash;
+                uint32_t spread = SharedNames::spread(name.hash);
                 auto &shard = names.shards[spread & ((1 << SharedNames::shard_bits) - 1)];
                 __builtin_prefetch(&shard.index[(spread >> SharedNames::shard_bits) &
                                                 (SharedNames::slots_per_shard - 1)], 0, 1);
@@ -318,17 +319,20 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 Field note = text_field(p, end, false);
                 comma(p, end);
                 uint64_t region = number(p, end);
-                unsigned group = region < regions.size() && regions[region] != UINT8_MAX
-                                     ? regions[region] : unmatched;
+                uint32_t region_key = region < regions.size()
+                                          ? static_cast<uint32_t>(region) : UINT32_MAX;
+                if (region_key != UINT32_MAX) __builtin_prefetch(&regions[region_key], 0, 1);
                 comma(p, end);
                 int64_t amount = cents(p, end);
                 newline(p, end);
-                batch[count++] = Pending{id, name, note.len, amount, group};
+                batch[count++] = Pending{id, name, note.len, amount, region_key};
             } while (count < batch.size() && p < end);
             for (unsigned i = 0; i < count; ++i) {
                 const Pending &r = batch[i];
-                w.groups[r.group].add(r.id, r.amount, r.name, r.note_len,
-                                      names.first(r.name, r.group));
+                unsigned group = r.group < regions.size() && regions[r.group] != UINT8_MAX
+                                     ? regions[r.group] : unmatched;
+                w.groups[group].add(r.id, r.amount, r.name, r.note_len,
+                                    names.first(r.name, group));
             }
             if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
         }
