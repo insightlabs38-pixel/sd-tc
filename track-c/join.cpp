@@ -67,7 +67,21 @@ static uint32_t hash_bytes(const char *p, size_t n) {
         p += 8;
         n -= 8;
     }
-    while (n--) h = _mm_crc32_u8(h, static_cast<unsigned char>(*p++));
+    if (n >= 4) {
+        uint32_t word;
+        std::memcpy(&word, p, 4);
+        h = _mm_crc32_u32(h, word);
+        p += 4;
+        n -= 4;
+    }
+    if (n >= 2) {
+        uint16_t word;
+        std::memcpy(&word, p, 2);
+        h = _mm_crc32_u16(h, word);
+        p += 2;
+        n -= 2;
+    }
+    if (n) h = _mm_crc32_u8(h, static_cast<unsigned char>(*p));
     return h;
 }
 
