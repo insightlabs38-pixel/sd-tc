@@ -332,7 +332,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 w.groups[group].add(r.id, r.amount, r.name, r.note_len,
                                     names.first(r.name, group));
             }
-            if (p - reclaimed >= (1 << 18)) discard_consumed(reclaimed, p);
+            if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
         }
     } catch (...) { w.error = std::current_exception(); }
 }
