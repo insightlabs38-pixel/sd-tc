@@ -66,7 +66,9 @@ static uint32_t raw_hash(const char *p, size_t n) {
         p += 8;
         n -= 8;
     }
-    while (n--) h = _mm_crc32_u8(h, static_cast<unsigned char>(*p++));
+    if (n & 4) { uint32_t w; std::memcpy(&w, p, 4); h = _mm_crc32_u32(h, w); p += 4; }
+    if (n & 2) { uint16_t w; std::memcpy(&w, p, 2); h = _mm_crc32_u16(h, w); p += 2; }
+    if (n & 1) h = _mm_crc32_u8(h, static_cast<unsigned char>(*p));
     return h;
 }
 
@@ -248,6 +250,24 @@ struct SharedNames {
 };
 
 static uint64_t number(const char *&p, const char *end) {
+    if (end - p >= 8) { // SWAR ASCII fast path, with scalar fallback for long integers.
+        uint64_t w;
+        std::memcpy(&w, p, 8);
+        const uint64_t bad = ((w + 0x4646464646464646ULL) |
+                              (w - 0x3030303030303030ULL)) & 0x8080808080808080ULL;
+        const unsigned digits = bad ? __builtin_ctzll(bad) / 8 : 8;
+        if (digits && (digits < 8 || p + 8 == end ||
+                       static_cast<unsigned>(static_cast<unsigned char>(p[8])) - '0' > 9)) {
+            uint64_t x = (w << ((8 - digits) * 8)) |
+                         (digits == 8 ? 0 : 0x3030303030303030ULL >> (digits * 8));
+            x -= 0x3030303030303030ULL;
+            x = (x * 10 + (x >> 8)) & 0x00ff00ff00ff00ffULL;
+            x = (x * 100 + (x >> 16)) & 0x0000ffff0000ffffULL;
+            x = (x * 10000 + (x >> 32)) & 0xffffffffULL;
+            p += digits;
+            return x;
+        }
+    }
     const char *start = p;
     uint64_t n = 0;
     while (p < end) {
