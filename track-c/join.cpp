@@ -385,6 +385,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
     constexpr unsigned lag = 32, window = lag * 2;
     static_assert((window & (window - 1)) == 0);
     std::array<Entry, window> ring{};
+    const char *range_begin = p;
     const char *reclaimed = p;
     const char *safe = p;
     size_t n = 0;
@@ -429,6 +430,11 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
             if (i >= window && i - window < n) retire(i - window);
             if (i >= lag && i - lag < n) intern(i - lag);
         }
+        const uintptr_t page = static_cast<uintptr_t>(sysconf(_SC_PAGESIZE));
+        const uintptr_t first = (reinterpret_cast<uintptr_t>(range_begin) + page - 1) & ~(page - 1);
+        const uintptr_t last = reinterpret_cast<uintptr_t>(end) & ~(page - 1);
+        if (last > first && munmap(reinterpret_cast<void *>(first), last - first))
+            throw std::runtime_error("worker munmap");
     } catch (...) { w.error = std::current_exception(); }
 }
 
