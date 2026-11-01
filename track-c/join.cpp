@@ -416,11 +416,16 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
             // Finish the parse burst before blocking on dictionary index loads.
             for (unsigned i = 0; i < count; ++i) {
                 slots[i] = shared.prepare(batch[i].name);
-                if (slots[i]) __builtin_prefetch(slots[i], 1, 3);
+                if (slots[i]) __builtin_prefetch(&slots[i]->seen[batch[i].group >> 6], 1, 3);
+            }
+            // Numeric reductions are independent of exact name-country publication.
+            for (unsigned i = 0; i < count; ++i) {
+                const Pending &r = batch[i];
+                w.groups[r.group].add(r.id, r.amount, r.name_len, r.note_len, false);
             }
             for (unsigned i = 0; i < count; ++i) {
                 const Pending &r = batch[i];
-                w.groups[r.group].add(r.id, r.amount, r.name_len, r.note_len, shared.first(r.name, r.group, slots[i], end));
+                w.groups[r.group].distinct += shared.first(r.name, r.group, slots[i], end);
             }
             if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
         }
