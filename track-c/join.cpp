@@ -133,10 +133,10 @@ static Field text_field(const char *&p, const char *end, bool need_hash, uint32_
         }
     }
     f.raw = p;
-    while (p < end && *p != ',' && *p != '\r' && *p != '\n') {
-        ++p;
-        ++length;
-    }
+    const char *delimiter = static_cast<const char *>(std::memchr(p, ',', end - p));
+    if (!delimiter) throw std::runtime_error("missing field delimiter");
+    length = static_cast<uint32_t>(delimiter - p);
+    p = delimiter;
     f.raw_len = length;
     f.hash = need_hash ? raw_hash(f.raw, f.raw_len, end) : HASH_OFFSET;
     return f;
