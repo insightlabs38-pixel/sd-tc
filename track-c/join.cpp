@@ -454,7 +454,7 @@ static void parse_four(const char *const beginnings[4],const char *const endings
             for (unsigned i=0;i<count;++i) {
                 const Pending &r=batch[i];
                 w.groups[r.group].add(r.id,r.amount,r.name_len,r.note_len,
-                                      shared.first(r.name,r.group,slots[i],endings[0]));
+                                      shared.first(r.name,r.group,slots[i],endings[3]));
             }
             for (auto &stream:streams)
                 if (stream.p-stream.reclaimed>=(1<<20))
