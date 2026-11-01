@@ -286,3 +286,10 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - [CI 41277229285](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41277229285) passed the same gates for 512 KiB record-page reclamation, compared directly with fused-scanner commit `d459dcc`.
 - Direct full-PGO paired median **66.697 -> 67.051 ms**, cgroup median **11,003,904 -> 11,030,528 bytes**, unchanged S/D; complete-K proxy **-0.31%**. Source-only **71.113 -> 72.534 ms**. Reject.
 - Restored exact qualified fused-scanner source; retained quote-mask regression and direct-champion CI baseline. Official T/M/S/D/K remains Luna's responsibility.
+
+
+## Bounded private tile pipeline qualification (2026-11-01)
+
+- Four parsers route bounded 8-byte descriptor batches to two exclusive dictionary owners; no shared dictionary or membership writes. Two 2 MiB tiles per parser bound buffering and retain input until every consumer finishes.
+- Stage overlap replaces global epoch barriers; 24-byte inline exact keys reduce long-name indirection. Local interleaved full-PGO T162 ms versus b31 T162 ms and fused T154 ms. Complete Docker memory/source and four-vCPU scaling are required before promotion.
+- Local hostile ASan/UBSan and TSan passed. CI profiling labels worker counts as parser counts; one or two owner threads run in addition. Preserve all main/official champions; this is a research experiment.
