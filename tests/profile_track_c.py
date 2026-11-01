@@ -18,7 +18,6 @@ def instrument(source, workers):
     needle = match.group(0)
     assert source.count(needle) == 1
     source = source.replace(needle, f"unsigned threads = end - p < (1 << 20) ? 1 : {workers};")
-    source = re.sub(r"^\s*threads = std::min\(threads, allowed_threads\(\)\);\n", "\n        (void)allowed_threads;\n", source, flags=re.M)
     source = "#include <chrono>\n" + source
     markers = [
         ("int main() {\n    try {", "\n        const auto t0 = std::chrono::steady_clock::now();"),
@@ -45,7 +44,7 @@ def instrument(source, workers):
 
 def main():
     source = SOURCE.read_text()
-    counts = (1, 2, 3, 4, 6, 8, 12)
+    counts = (2, 3, 4, 6, 8, 12)
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
         for workers in counts:

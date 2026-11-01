@@ -1,20 +1,19 @@
+# Private radix field solver
 
-## Exact compact field pipeline, 2026-11-01
+Bounded8-byte descriptors, exact wide escapes, exclusively owned radix-head
+dictionaries with dynamically promoted16-bit chains and contiguous canonical
+slots. No shared name dictionary or shared membership writes. All quoted
+fields are decoded by the independently implemented field-mask parser.
 
-Independent fingerprint locator with full-byte canonical verification, separate
-country bitsets, three bounded record rings, field masks and work-based phases.
-Every matching locator verifies full bytes. SIMD compares copies of acquire
-atomic loads. Canonical input stays mapped until every lookup completes.
-No probabilistic identity, external code or direct dependencies were added.
+The full hostile ASan/UBSan and TSan suites pass locally. Native repaired
+solver140.758ms versus149.572 champion. Pinned offline PGO is152.026ms
+versus156.468; fresh-container peaks12,451,840 versus10,952,704 bytes.
+Runtime gains alone do not establish complete K; source penalty and CI
+scaling remain under evaluation. Do not promote before those measurements.
 
-Local pinned offline PGO full1: champion153.782ms/M10,936,320/S657 versus
-candidate142.523ms/M8,691,712/S784; relative complete K1.0591. Seven
-interleaved runs, middle5 runtime, maximum cgroup peak, two-quota-CPU host.
-Full11 five pairs:158.603ms/M10,850,304 versus143.124ms/M8,626,176.
-Full1/11/29/137 hashes match. Hostile ASan/UBSan and TSan pass locally.
-Public research source/receipts: PR15, commit6522767; further receipts pending.
-This is a challenger for CI/scoring-host validation, not an official score.
+Profile worker counts2/3/4/6/8/12 are total parser+owner budgets. Tiny input
+still needs one parser plus one consumer. Six means4parsers/2owners;12 means
+8parsers/4owners. This is an ownership architecture, not private interning
+followed by a global shared dictionary. Sources and repair receipts: PR15.
 
-Rollback: source-equivalent official champion e253190 (PR14), immutable
-official6917275, source SHA25690ff49b2dbf26bc3d33e62c6e2e86ed990f19280e6b99d3e8dfca7426ec7ac65.
-Luna alone handles official integration; do not promote on local speed alone.
+Rollback e253190 (official source-equivalent6917275); Luna owns integration.

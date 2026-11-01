@@ -6,15 +6,16 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <deque>
 #include <exception>
 #include <fcntl.h>
+#include <functional>
 #include <immintrin.h>
 #include <memory>
 #include <mutex>
-#include <sched.h>
+#include <pthread.h>
 #include <stdexcept>
 #include <string>
-#include <string_view>
 #include <sys/mman.h>
 #include <sys/prctl.h>
 #include <sys/stat.h>
@@ -108,167 +109,6 @@ static uint32_t raw_hash(const char *p, size_t n, const char *end) {
         h = _mm_crc32_u8(h, static_cast<unsigned char>(*p));
     return h;
 }
-
-class ExactNames {
-  public:
-    static constexpr unsigned capacity = 1 << 17, words = capacity / 64;
-    static constexpr uint32_t missing = UINT32_MAX;
-
-  private:
-    struct Overflow {
-        std::mutex mutex;
-        std::unordered_map<std::string_view, std::array<uint64_t, 4>> names;
-    };
-    std::array<Overflow, 128> overflow;
-    std::atomic<uint64_t> *keys, *bits;
-    const char **canonical;
-    struct Masks {
-        unsigned equal, empty, busy;
-    };
-    static uint64_t fingerprint(const Field &name) {
-        uint64_t key = (uint64_t(name.raw_len) << 32) | name.hash;
-        return key < 2 ? key + 2 : key;
-    }
-    static unsigned first(const Field &name) {
-        return (name.hash ^ (name.hash >> 16)) & (capacity - 4);
-    }
-    Masks inspect(unsigned at, uint64_t key) const {
-        uint64_t a = keys[at].load(std::memory_order_acquire),
-                 b = keys[at + 1].load(std::memory_order_acquire);
-        uint64_t c = keys[at + 2].load(std::memory_order_acquire),
-                 d = keys[at + 3].load(std::memory_order_acquire);
-        auto block = _mm256_set_epi64x(d, c, b, a);
-        auto mask = [](__m256i x) {
-            return unsigned(_mm256_movemask_pd(_mm256_castsi256_pd(x)));
-        };
-        return {mask(_mm256_cmpeq_epi64(block, _mm256_set1_epi64x(key))),
-                mask(_mm256_cmpeq_epi64(block, _mm256_setzero_si256())),
-                mask(_mm256_cmpeq_epi64(block, _mm256_set1_epi64x(1)))};
-    }
-    bool same(unsigned id, const Field &name, uint64_t key) const {
-        (void)key;
-        const char *saved = canonical[id];
-        return saved == name.raw || !std::memcmp(saved, name.raw, name.raw_len);
-    }
-    bool claim(unsigned id, const Field &name, uint64_t key) {
-        uint64_t expected = 0;
-        if (!keys[id].compare_exchange_strong(expected, 1,
-                                              std::memory_order_acq_rel))
-            return false;
-        canonical[id] = name.raw;
-        keys[id].store(key, std::memory_order_release);
-        return true;
-    }
-    void prefetch_canonical(unsigned id, uint64_t key) const {
-        (void)key;
-        __builtin_prefetch(canonical[id], 0, 1);
-    }
-
-  public:
-    ExactNames() {
-        alignas(4096) static std::atomic<uint64_t> key_storage[capacity]{};
-        alignas(4096) static const char *canonical_storage[capacity]{};
-        alignas(4096) static std::atomic<uint64_t> membership[256 * words]{};
-        keys = key_storage;
-        canonical = canonical_storage;
-        bits = membership;
-    }
-    void populate(unsigned task, unsigned tasks, unsigned groups) {
-        for (unsigned page = task; page < capacity / 512; page += tasks) {
-            keys[page * 512].store(0, std::memory_order_relaxed);
-            canonical[page * 512] = nullptr;
-        }
-        for (unsigned page = task; page < groups * words / 512; page += tasks)
-            bits[page * 512].store(0, std::memory_order_relaxed);
-    }
-    void prefetch(const Field &name) const {
-        unsigned at = first(name);
-        __builtin_prefetch(&keys[at], 0, 1);
-        __builtin_prefetch(&canonical[at], 0, 1);
-    }
-    uint32_t prepare(const Field &name) {
-        uint64_t key = fingerprint(name);
-        if (!key)
-            return missing;
-        unsigned at = first(name);
-        for (unsigned probe = 0; probe < 16;
-             ++probe, at = (at + 4) & (capacity - 1)) {
-            auto found = inspect(at, key);
-            if (found.equal) {
-                unsigned id = at + __builtin_ctz(found.equal);
-                prefetch_canonical(id, key);
-                return id;
-            }
-            if (found.busy)
-                return missing;
-            if (found.empty) {
-                unsigned id = at + __builtin_ctz(found.empty);
-                return claim(id, name, key) ? id : missing;
-            }
-        }
-        return missing;
-    }
-    uint32_t resolve(const Field &name, uint32_t hint) {
-        uint64_t key = fingerprint(name);
-        if (!key)
-            return missing;
-        if (hint < capacity &&
-            keys[hint].load(std::memory_order_acquire) == key &&
-            same(hint, name, key))
-            return hint;
-        unsigned at = first(name), probe = 0, spins = 0;
-        while (probe < 16) {
-            auto found = inspect(at, key);
-            for (unsigned equal = found.equal; equal; equal &= equal - 1) {
-                unsigned id = at + __builtin_ctz(equal);
-                if (same(id, name, key))
-                    return id;
-            }
-            if (found.busy) {
-                if (++spins % 64)
-                    _mm_pause();
-                else
-                    std::this_thread::yield();
-                continue;
-            }
-            if (found.empty) {
-                unsigned id = at + __builtin_ctz(found.empty);
-                if (claim(id, name, key))
-                    return id;
-                continue;
-            }
-            ++probe;
-            at = (at + 4) & (capacity - 1);
-        }
-        return missing;
-    }
-    void prefetch_bit(unsigned id, unsigned group) const {
-        if (id < capacity)
-            __builtin_prefetch(&bits[group * words + (id >> 6)], 1, 3);
-    }
-    void mark(unsigned id, unsigned group) {
-        uint64_t bit = uint64_t(1) << (id & 63);
-        auto &word = bits[group * words + (id >> 6)];
-        if (!(word.load(std::memory_order_relaxed) & bit))
-            word.fetch_or(bit, std::memory_order_relaxed);
-    }
-    bool overflow_first(const Field &name, unsigned group) {
-        auto &shard = overflow[name.hash & 127];
-        std::lock_guard<std::mutex> lock(shard.mutex);
-        auto &seen = shard.names[std::string_view(name.raw, name.raw_len)];
-        uint64_t bit = uint64_t(1) << (group & 63);
-        bool fresh = !(seen[group >> 6] & bit);
-        seen[group >> 6] |= bit;
-        return fresh;
-    }
-    uint32_t count(unsigned group) const {
-        uint32_t total = 0;
-        for (unsigned i = 0; i < words; ++i)
-            total += __builtin_popcountll(
-                bits[group * words + i].load(std::memory_order_relaxed));
-        return total;
-    }
-};
 
 static uint64_t number(const char *&p, const char *end) {
     if (end - p >=
@@ -381,10 +221,303 @@ static std::string money(int64_t n) {
     return s + std::to_string(mag % 100);
 }
 
+struct KeyArena {
+    std::vector<std::unique_ptr<char[]>> arena;
+    char *cursor = nullptr;
+    size_t remaining = 0;
+    const char *keep(const Field &f) {
+        if (remaining < f.raw_len) {
+            remaining = std::max<size_t>(32768, f.raw_len);
+            arena.emplace_back(new char[remaining]);
+            cursor = arena.back().get();
+        }
+        char *out = cursor;
+        std::memcpy(out, f.raw, f.raw_len);
+        cursor += f.raw_len;
+        remaining -= f.raw_len;
+        return out;
+    }
+};
+
+struct PrivateNames {
+    struct Slot {
+        char key[16]{};
+        uint32_t length = 0, next = 0;
+        std::array<uint64_t, 4> seen{};
+        bool matches(const Field &name) const {
+            if (length != name.raw_len)
+                return false;
+            const char *raw = key;
+            if (length > 16)
+                std::memcpy(&raw, key, sizeof(raw));
+            return !std::memcmp(raw, name.raw, length);
+        }
+    };
+    std::vector<uint16_t> small = std::vector<uint16_t>(4096);
+    std::vector<uint32_t> large;
+    std::vector<Slot> slots;
+    KeyArena *arena;
+    explicit PrivateNames(KeyArena *a) : arena(a) { slots.reserve(512); }
+    uint32_t head(uint32_t hash) const {
+        return large.empty() ? small[hash & 4095] : large[hash & 4095];
+    }
+    void set_head(uint32_t hash, uint32_t id) {
+        if (id > UINT16_MAX && large.empty()) {
+            large.assign(small.begin(), small.end());
+            std::vector<uint16_t>().swap(small);
+        }
+        if (large.empty())
+            small[hash & 4095] = uint16_t(id);
+        else
+            large[hash & 4095] = id;
+    }
+    Slot &get(const Field &name) {
+        uint32_t first = head(name.hash);
+        for (uint32_t id = first; id; id = slots[id - 1].next)
+            if (slots[id - 1].matches(name))
+                return slots[id - 1];
+        slots.emplace_back();
+        auto &slot = slots.back();
+        slot.length = name.raw_len;
+        slot.next = first;
+        if (name.raw_len <= 16)
+            std::memcpy(slot.key, name.raw, name.raw_len);
+        else {
+            const char *raw = arena->keep(name);
+            std::memcpy(slot.key, &raw, sizeof(raw));
+        }
+        set_head(name.hash, slots.size());
+        return slot;
+    }
+    uint32_t prepare(const Field &name) const {
+        uint32_t id = head(name.hash);
+        if (id)
+            __builtin_prefetch(&slots[id - 1], 1, 3);
+        return id;
+    }
+    bool mark_prepared(const Field &name, unsigned group, uint32_t id) {
+        Slot *slot = id ? &slots[id - 1] : nullptr;
+        if (!slot || !slot->matches(name))
+            slot = &get(name);
+        auto &word = slot->seen[group >> 6];
+        uint64_t bit = uint64_t(1) << (group & 63);
+        bool fresh = !(word & bit);
+        word |= bit;
+        return fresh;
+    }
+};
+
 struct Worker {
     std::vector<Group> groups;
     std::exception_ptr error;
-    explicit Worker(size_t group_count) : groups(group_count) {}
+    explicit Worker(size_t n) : groups(n) {}
+};
+
+struct NamePacket {
+    unsigned used = 0;
+    std::array<uint64_t, 4096> values{};
+};
+class NamePipeline {
+    struct alignas(64) Owner {
+        KeyArena arena;
+        std::array<std::unique_ptr<PrivateNames>, 256> dictionaries;
+        std::array<uint32_t, 256> distinct{};
+        std::mutex mutex;
+        std::condition_variable ready, space;
+        std::array<NamePacket, 4> ring;
+        unsigned read = 0, write = 0, count = 0;
+        bool closed = false;
+    };
+    std::vector<std::unique_ptr<Owner>> owners;
+    std::vector<std::thread> jobs;
+    std::atomic<bool> aborted{false};
+    std::mutex error_mutex;
+    std::exception_ptr error;
+    void fail() {
+        {
+            std::lock_guard<std::mutex> lock(error_mutex);
+            if (!error)
+                error = std::current_exception();
+        }
+        aborted.store(true, std::memory_order_release);
+        for (auto &owner : owners) {
+            std::lock_guard<std::mutex> lock(owner->mutex);
+            owner->space.notify_all();
+            owner->ready.notify_all();
+        }
+    }
+    void consume(Owner &owner, const NamePacket &packet) {
+        std::array<uint16_t, 256> counts{}, next{};
+        std::array<uint16_t, 257> ranges{};
+        std::array<uint16_t, 4096> order;
+        for (unsigned i = 0; i < packet.used;) {
+            uint64_t row = packet.values[i];
+            ++counts[row >> 56];
+            i += ((row >> 36) & 255) == 255 ? 3 : 1;
+        }
+        unsigned total = 0;
+        for (unsigned bucket = 0; bucket < 256; ++bucket) {
+            next[bucket] = ranges[bucket] = total;
+            total += counts[bucket];
+        }
+        ranges[256] = total;
+        for (unsigned i = 0; i < packet.used;) {
+            uint64_t row = packet.values[i];
+            order[next[row >> 56]++] = i;
+            i += ((row >> 36) & 255) == 255 ? 3 : 1;
+        }
+        for (unsigned bucket = 0; bucket < 256; ++bucket) {
+            if (!counts[bucket])
+                continue;
+            if (!owner.dictionaries[bucket])
+                owner.dictionaries[bucket] =
+                    std::make_unique<PrivateNames>(&owner.arena);
+            auto &names = *owner.dictionaries[bucket];
+            for (unsigned start = ranges[bucket]; start < ranges[bucket + 1];
+                 start += 64) {
+                unsigned count =
+                    std::min<unsigned>(64, ranges[bucket + 1] - start);
+                std::array<Field, 64> fields;
+                std::array<uint32_t, 64> prepared;
+                std::array<unsigned, 64> groups;
+                for (unsigned i = 0; i < count; ++i) {
+                    unsigned index = order[start + i];
+                    uint64_t row = packet.values[index];
+                    unsigned length = (row >> 36) & 255;
+                    const char *raw = base + ((row >> 8) & 0xfffffff);
+                    if (length == 255) {
+                        raw = reinterpret_cast<const char *>(
+                            packet.values[index + 1]);
+                        length = uint32_t(packet.values[index + 2]);
+                    }
+                    fields[i] = {raw, length, uint32_t(row >> 44)};
+                    groups[i] = row & 255;
+                    __builtin_prefetch(raw, 0, 1);
+                    if (length > 64)
+                        __builtin_prefetch(raw + 64, 0, 1);
+                }
+                for (unsigned i = 0; i < count; ++i)
+                    prepared[i] = names.prepare(fields[i]);
+                for (unsigned i = 0; i < count; ++i)
+                    owner.distinct[groups[i]] +=
+                        names.mark_prepared(fields[i], groups[i], prepared[i]);
+            }
+        }
+    }
+
+  public:
+    const char *base;
+    unsigned owner_shift;
+    NamePipeline(const char *input, unsigned count)
+        : base(input), owner_shift(0) {
+        owners.reserve(count);
+        jobs.reserve(count);
+        for (unsigned i = 0; i < count; ++i)
+            owners.emplace_back(new Owner);
+        try {
+            for (auto &entry : owners) {
+                Owner *owner = entry.get();
+                jobs.emplace_back([&, owner] {
+                    try {
+                        NamePacket packet;
+                        for (;;) {
+                            {
+                                std::unique_lock<std::mutex> lock(owner->mutex);
+                                owner->ready.wait(lock, [&] {
+                                    return owner->count || owner->closed ||
+                                           aborted.load(
+                                               std::memory_order_acquire);
+                                });
+                                if (aborted.load(std::memory_order_acquire) ||
+                                    !owner->count)
+                                    return;
+                                packet = owner->ring[owner->read];
+                                owner->read =
+                                    (owner->read + 1) % owner->ring.size();
+                                --owner->count;
+                                owner->space.notify_one();
+                            }
+                            consume(*owner, packet);
+                        }
+                    } catch (...) {
+                        fail();
+                    }
+                });
+            }
+        } catch (...) {
+            fail();
+            finish();
+            throw;
+        }
+    }
+    unsigned count() const { return owners.size(); }
+    void push(unsigned index, const NamePacket &packet) {
+        auto &owner = *owners[index];
+        std::unique_lock<std::mutex> lock(owner.mutex);
+        owner.space.wait(lock, [&] {
+            return owner.count < owner.ring.size() ||
+                   aborted.load(std::memory_order_acquire);
+        });
+        if (aborted.load(std::memory_order_acquire))
+            throw std::runtime_error("name owner failed");
+        owner.ring[owner.write] = packet;
+        owner.write = (owner.write + 1) % owner.ring.size();
+        ++owner.count;
+        owner.ready.notify_one();
+    }
+    void finish() {
+        for (auto &owner : owners) {
+            std::lock_guard<std::mutex> lock(owner->mutex);
+            owner->closed = true;
+            owner->ready.notify_all();
+        }
+        for (auto &job : jobs)
+            if (job.joinable())
+                job.join();
+    }
+    void cancel() { fail(); }
+    void check() {
+        if (error)
+            std::rethrow_exception(error);
+    }
+    void add_distinct(std::vector<Group> &groups) const {
+        for (const auto &owner : owners)
+            for (unsigned g = 0; g < groups.size(); ++g)
+                groups[g].distinct += owner->distinct[g];
+    }
+    ~NamePipeline() { finish(); }
+};
+struct NameRouter {
+    NamePipeline &pipeline;
+    std::vector<NamePacket> packets;
+    explicit NameRouter(NamePipeline &p) : pipeline(p), packets(p.count()) {}
+    void emit(const Field &name, unsigned group) {
+        uint32_t hash = name.hash & 0xfffff;
+        unsigned owner = unsigned((uint64_t(hash) * packets.size()) >> 20);
+        auto &packet = packets[owner];
+        size_t offset = name.raw - pipeline.base;
+        bool wide = offset > 0xfffffff || name.raw_len >= 255;
+        unsigned words = wide ? 3 : 1;
+        if (packet.used + words > packet.values.size()) {
+            pipeline.push(owner, packet);
+            packet.used = 0;
+        }
+        uint64_t metadata = (uint64_t(hash) << 44) |
+                            (uint64_t(wide ? 255 : name.raw_len) << 36) | group;
+        packet.values[packet.used++] =
+            metadata | (wide ? 0 : uint64_t(offset) << 8);
+        if (wide) {
+            packet.values[packet.used++] = reinterpret_cast<uint64_t>(name.raw);
+            packet.values[packet.used++] = name.raw_len;
+        }
+    }
+    void flush() {
+        for (unsigned owner = 0; owner < packets.size(); ++owner)
+            if (packets[owner].used) {
+                pipeline.push(owner, packets[owner]);
+                packets[owner].used = 0;
+            }
+    }
 };
 
 static const char *fast_comma(const char *p, const char *end) {
@@ -471,146 +604,66 @@ static Field fast_text(const char *&p, const char *end, uint32_t &length) {
     }
 }
 
-struct CompactRow {
-    uint64_t id;
-    int64_t amount;
-    Field name;
-    uint32_t nlen, xlen;
-    uint64_t region;
-};
-class RecordPipe {
-    static constexpr unsigned lag = 16;
-    struct Name {
+static void parse_stream(const char *p, const char *end,
+                         const std::vector<uint8_t> &regions,
+                         unsigned unmatched, Worker &worker,
+                         NamePipeline &pipeline) {
+    struct Row {
+        uint64_t id;
+        int64_t amount;
         Field name;
-        uint32_t group, hint;
+        uint32_t nlen, xlen, group;
     };
-    struct Mark {
-        Field name;
-        uint32_t group, id;
-    };
-    std::array<CompactRow, lag> rows;
-    std::array<Name, lag> names;
-    std::array<Mark, lag> marks;
-    uint64_t tick = 0;
-    ExactNames &registry;
-    const std::vector<uint8_t> &regions;
-    unsigned unmatched;
-    Worker &worker;
-    void advance(uint64_t last) {
-        unsigned i = tick & (lag - 1);
-        if (tick >= 3 * lag && tick - 3 * lag < last) {
-            auto &mark = marks[i];
-            if (mark.id < ExactNames::capacity)
-                registry.mark(mark.id, mark.group);
-            else
-                worker.groups[mark.group].distinct +=
-                    registry.overflow_first(mark.name, mark.group);
-        }
-        if (tick >= 2 * lag && tick - 2 * lag < last) {
-            const auto &name = names[i];
-            uint32_t id = registry.resolve(name.name, name.hint);
-            registry.prefetch_bit(id, name.group);
-            marks[i] = {name.name, name.group, id};
-        }
-        if (tick >= lag && tick - lag < last) {
-            const auto &row = rows[i];
-            unsigned group =
-                row.region < regions.size() && regions[row.region] != UINT8_MAX
-                    ? regions[row.region]
-                    : unmatched;
-            worker.groups[group].add(row.id, row.amount, row.nlen, row.xlen,
-                                     false);
-            names[i] = {row.name, group, registry.prepare(row.name)};
-        }
-    }
-
-  public:
-    RecordPipe(ExactNames &r, const std::vector<uint8_t> &lookup,
-               unsigned unknown, Worker &w)
-        : registry(r), regions(lookup), unmatched(unknown), worker(w) {}
-    void push(const CompactRow &row) {
-        advance(UINT64_MAX);
-        rows[tick & (lag - 1)] = row;
-        ++tick;
-    }
-    void finish() {
-        uint64_t last = tick;
-        for (unsigned i = 0; i < 3 * lag; ++i, ++tick)
-            advance(last);
-    }
-};
-struct Gate {
-    std::atomic<unsigned> left;
-    std::mutex mutex;
-    std::condition_variable ready;
-    explicit Gate(unsigned n) : left(n) {}
-    void done() {
-        if (left.fetch_sub(1, std::memory_order_acq_rel) == 1) {
-            std::lock_guard<std::mutex> lock(mutex);
-            ready.notify_all();
-        }
-    }
-    void wait() {
-        if (!left.load(std::memory_order_acquire))
-            return;
-        std::unique_lock<std::mutex> lock(mutex);
-        ready.wait(lock, [&] { return !left.load(std::memory_order_acquire); });
-    }
-};
-static unsigned allowed_threads() {
-    cpu_set_t set;
-    unsigned n = sched_getaffinity(0, sizeof(set), &set) ? 1 : CPU_COUNT(&set);
-    return std::clamp(n, 1U, 12U);
-}
-static void drop_pages(const File &file, unsigned task, unsigned tasks) {
-    size_t page = size_t(sysconf(_SC_PAGESIZE)),
-           pages = (file.size + page - 1) / page;
-    size_t first = pages * task / tasks, last = pages * (task + 1) / tasks;
-    if (last > first)
-        (void)madvise(const_cast<char *>(file.data) + first * page,
-                      (last - first) * page, MADV_DONTNEED);
-}
-
-static void parse_range(const char *p, const char *end,
-                        const std::vector<uint8_t> &regions, unsigned unmatched,
-                        Worker &worker, ExactNames &registry) {
     try {
-        RecordPipe pipe(registry, regions, unmatched, worker);
+        NameRouter router(pipeline);
+        std::array<Row, 32> rows;
         while (p < end) {
-            _mm_prefetch(p + 2048, _MM_HINT_T0);
-            bom(p, end);
-            const char *id_end = fast_comma(p, end);
-            uint64_t id = fast_decimal(p, id_end - p, end);
-            p = id_end + 1;
-            uint32_t nlen, xlen;
-            Field name = fast_text(p, end, nlen);
-            name.hash = raw_hash(name.raw, name.raw_len, end);
-            registry.prefetch(name);
-            (void)fast_text(p, end, xlen);
-            auto tail =
-                _mm256_loadu_si256(reinterpret_cast<const __m256i *>(p));
-            unsigned cm = _mm256_movemask_epi8(
-                _mm256_cmpeq_epi8(tail, _mm256_set1_epi8(',')));
-            unsigned lf = _mm256_movemask_epi8(
-                _mm256_cmpeq_epi8(tail, _mm256_set1_epi8('\n')));
-            const char *region_end =
-                cm ? p + __builtin_ctz(cm) : fast_comma(p, end);
-            uint64_t region = fast_decimal(p, region_end - p, end);
-            if (region < regions.size())
-                __builtin_prefetch(&regions[region], 0, 1);
-            const char *eol =
-                lf ? p + __builtin_ctz(lf)
-                   : static_cast<const char *>(std::memchr(p, '\n', end - p));
-            if (!eol)
-                eol = end;
-            const char *amount_end = eol;
-            if (amount_end > region_end && amount_end[-1] == '\r')
-                --amount_end;
-            int64_t amount = fast_money(region_end + 1, amount_end);
-            p = eol + (eol < end);
-            pipe.push({id, amount, name, nlen, xlen, region});
+            unsigned count = 0;
+            do {
+                _mm_prefetch(p + 2048, _MM_HINT_T0);
+                bom(p, end);
+                const char *id_end = fast_comma(p, end);
+                uint64_t id = fast_decimal(p, id_end - p, end);
+                p = id_end + 1;
+                uint32_t nlen, xlen;
+                Field name = fast_text(p, end, nlen);
+                name.hash = raw_hash(name.raw, name.raw_len, end);
+                (void)fast_text(p, end, xlen);
+                auto tail =
+                    _mm256_loadu_si256(reinterpret_cast<const __m256i *>(p));
+                unsigned cm = _mm256_movemask_epi8(
+                    _mm256_cmpeq_epi8(tail, _mm256_set1_epi8(',')));
+                unsigned lf = _mm256_movemask_epi8(
+                    _mm256_cmpeq_epi8(tail, _mm256_set1_epi8('\n')));
+                const char *region_end =
+                    cm ? p + __builtin_ctz(cm) : fast_comma(p, end);
+                uint64_t region = fast_decimal(p, region_end - p, end);
+                if (region < regions.size())
+                    __builtin_prefetch(&regions[region], 0, 1);
+                const char *eol = lf ? p + __builtin_ctz(lf)
+                                     : static_cast<const char *>(
+                                           std::memchr(p, '\n', end - p));
+                if (!eol)
+                    eol = end;
+                const char *amount_end = eol;
+                if (amount_end > region_end && amount_end[-1] == '\r')
+                    --amount_end;
+                int64_t amount = fast_money(region_end + 1, amount_end);
+                p = eol + (eol < end);
+                unsigned group =
+                    region < regions.size() && regions[region] != UINT8_MAX
+                        ? regions[region]
+                        : unmatched;
+                rows[count++] = {id, amount, name, nlen, xlen, group};
+            } while (count < rows.size() && p < end);
+            for (unsigned i = 0; i < count; ++i) {
+                const auto &row = rows[i];
+                worker.groups[row.group].add(row.id, row.amount, row.nlen,
+                                             row.xlen, false);
+                router.emit(row.name, row.group);
+            }
         }
-        pipe.finish();
+        router.flush();
     } catch (...) {
         worker.error = std::current_exception();
     }
@@ -680,87 +733,48 @@ int main() {
         p += 29;
         newline(p, end);
         const char *record_start = p;
-        unsigned threads = end - p < (1 << 20) ? 1 : 12;
-        threads = std::min(threads, allowed_threads());
-        unsigned pieces = threads * 8, initial = threads * 3;
-        std::vector<const char *> cuts(pieces + 1);
+        unsigned threads = end - p < (1 << 20) ? 1 : 6;
+        unsigned owners = threads >= 12 ? 4 : threads >= 6 ? 2 : 1;
+        unsigned parsers = std::max(1U, threads - owners);
+        std::vector<const char *> cuts(parsers + 1);
         cuts[0] = record_start;
-        cuts[pieces] = end;
-        for (unsigned i = 1; i < pieces; ++i)
-            cuts[i] = next_boundary(
-                record_start + (end - record_start) * i / pieces, end);
-        ExactNames registry;
+        cuts[parsers] = end;
+        for (unsigned t = 1; t < parsers; ++t)
+            cuts[t] = next_boundary(
+                record_start + (end - record_start) * t / parsers, end);
         std::vector<Worker> workers;
-        for (unsigned t = 0; t < threads; ++t)
+        workers.reserve(parsers);
+        for (unsigned t = 0; t < parsers; ++t)
             workers.emplace_back(unmatched + 1);
-        Gate populated(initial), parsed(pieces);
-        std::atomic<unsigned> next_init{0}, next_parse{0}, next_count{0},
-            next_drop{0};
-        std::atomic<bool> failed{false};
+        NamePipeline pipeline(records.data, owners);
         std::vector<std::thread> jobs;
-        jobs.reserve(threads);
         try {
-            for (unsigned t = 0; t < threads; ++t)
+            jobs.reserve(parsers);
+            for (unsigned t = 0; t < parsers; ++t)
                 jobs.emplace_back([&, t] {
-                    for (;;) {
-                        unsigned i =
-                            next_init.fetch_add(1, std::memory_order_relaxed);
-                        if (i >= initial)
-                            break;
-                        registry.populate(i, initial, unmatched + 1);
-                        populated.done();
-                    }
-                    populated.wait();
-                    for (;;) {
-                        unsigned i =
-                            next_parse.fetch_add(1, std::memory_order_relaxed);
-                        if (i >= pieces)
-                            break;
-                        if (!failed.load(std::memory_order_relaxed)) {
-                            parse_range(cuts[i], cuts[i + 1], regions,
-                                        unmatched, workers[t], registry);
-                            if (workers[t].error)
-                                failed.store(true, std::memory_order_relaxed);
-                        }
-                        parsed.done();
-                    }
-                    parsed.wait();
-                    for (;;) {
-                        unsigned group =
-                            next_count.fetch_add(1, std::memory_order_relaxed);
-                        if (group > unmatched)
-                            break;
-                        workers[t].groups[group].distinct +=
-                            registry.count(group);
-                    }
-                    for (;;) {
-                        unsigned i =
-                            next_drop.fetch_add(1, std::memory_order_relaxed);
-                        if (i >= pieces)
-                            break;
-                        drop_pages(records, i, pieces);
-                    }
+                    parse_stream(cuts[t], cuts[t + 1], regions, unmatched,
+                                 workers[t], pipeline);
                 });
         } catch (...) {
+            pipeline.cancel();
             for (auto &job : jobs)
                 job.join();
             throw;
         }
         for (auto &job : jobs)
             job.join();
+        pipeline.finish();
+        pipeline.check();
         for (const auto &worker : workers)
             if (worker.error)
                 std::rethrow_exception(worker.error);
         std::vector<Group> groups(unmatched + 1);
         for (const auto &worker : workers)
-            for (unsigned g = 0; g <= unmatched; ++g)
-                groups[g].distinct += worker.groups[g].distinct;
-        for (const Worker &w : workers)
             for (unsigned g = 0; g <= unmatched; ++g) {
-                const Group &src = w.groups[g];
+                const auto &src = worker.groups[g];
                 if (!src.count)
                     continue;
-                Group &dst = groups[g];
+                auto &dst = groups[g];
                 if (!dst.count || src.min < dst.min)
                     dst.min = src.min;
                 if (!dst.count || src.max > dst.max)
@@ -771,6 +785,7 @@ int main() {
                 dst.name_bytes += src.name_bytes;
                 dst.note_bytes += src.note_bytes;
             }
+        pipeline.add_distinct(groups);
         std::vector<unsigned> order;
         for (unsigned i = 0; i < country.size(); ++i)
             if (groups[i].count)
