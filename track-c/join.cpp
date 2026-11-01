@@ -381,6 +381,7 @@ static Field text_pair(const char *&p, const char *end, uint32_t &name_len,
 __attribute__((target("pclmul")))
 static void parse_range(const char *p, const char *end, const std::vector<uint8_t> &regions,
                         unsigned unmatched, Worker &w, SharedNames &shared) {
+    const char *range_begin = p;
     struct Pending {
         uint64_t id;
         int64_t amount;
@@ -424,6 +425,11 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
             }
             if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
         }
+        const uintptr_t page = static_cast<uintptr_t>(sysconf(_SC_PAGESIZE));
+        const uintptr_t first = (reinterpret_cast<uintptr_t>(range_begin) + page - 1) & ~(page - 1);
+        const uintptr_t last = reinterpret_cast<uintptr_t>(end) & ~(page - 1);
+        if (last > first && munmap(reinterpret_cast<void *>(first), last - first))
+            throw std::runtime_error("worker munmap");
     } catch (...) { w.error = std::current_exception(); }
 }
 
