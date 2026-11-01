@@ -345,3 +345,15 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Added a second 64-byte quote mask only when the first mask contains the name closing and note opening quotes but not the note closing quote.
 - Direct qualified-champion full-PGO paired median **99.901 -> 100.708 ms**; fresh cgroup **11,034,624 -> 11,018,240 B**; physical source **567 -> 577 lines**, D=1. Approximate complete-K runner proxy **-0.63%**. Rejected.
 - Restored exact qualified champion blob `3b5e1392f49abdbb7fdcf6a36b5866366298143b`. Retained the new boundary regression; no redundant restoration CI.
+
+## Deferred comma-mask experiment (2026-11-01)
+
+- [CI 41302337233](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41302337233) passed full seed-1 SHA-256, independent full holdouts 11/29, exhaustive quote-mask boundary tests, ASan/UBSan/TSan, pinned offline Docker and sandbox.
+- Moved comma SIMD mask computation below the simple-quote early return, without changing the fallback parser or output semantics.
+- Direct qualified-champion full-PGO paired medians **76.574 -> 76.584 ms**; cgroup **11,026,432 -> 11,022,336 B**; source **567 -> 567 lines**, D=1. Complete-K runner proxy approximately **+0.001%**, indistinguishable from noise. Source-only 83.418 -> 83.638 ms.
+- **Not promoted**: exact qualified source blob `3b5e1392f49abdbb7fdcf6a36b5866366298143b` restored. Enhanced quote-boundary regression remains; no redundant restoration CI.
+
+## Official scoring snapshot (2026-11-01 11:07 UTC)
+
+- Organizer [raw board](https://s3.amazonaws.com/raptors.dev/speeddemon.dev/2026/board/board.json), generated 11:07:32 UTC: HighVelocity Track C BEST `run-e7eab9673214`, official **T=50.141 ms, M=11,288,576 B, S=657, D=1, K=25.979773** (submission `6917275`). LATEST `run-e50afc3730a2` K=25.478194.
+- This is an external scoring snapshot, not a measurement of the newer development champion; Luna alone controls official integration and submission.
