@@ -78,16 +78,7 @@ static uint32_t raw_hash(const char *p, size_t n, const char *end) {
         return static_cast<uint32_t>(_mm_crc32_u64(h, static_cast<uint64_t>(_mm_extract_epi64(key, 1))));
     }
     uint32_t h = HASH_OFFSET;
-    while (n >= 16) {
-        uint64_t lo, hi;
-        std::memcpy(&lo, p, 8);
-        std::memcpy(&hi, p + 8, 8);
-        h = static_cast<uint32_t>(_mm_crc32_u64(h, lo));
-        h = static_cast<uint32_t>(_mm_crc32_u64(h, hi));
-        p += 16;
-        n -= 16;
-    }
-    if (n >= 8) {
+    while (n >= 8) {
         uint64_t word;
         std::memcpy(&word, p, 8);
         h = static_cast<uint32_t>(_mm_crc32_u64(h, word));
