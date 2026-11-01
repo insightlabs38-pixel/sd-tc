@@ -31,3 +31,13 @@ Publication and all-byte identity are unchanged. Hostile ASan/UBSan/TSan pass.
 Seven interleaved pinned Docker full1 runs: champion153.562ms/M11,005,952
 versus inline16131.101ms/M9,601,024 (middle5, maximum cgroup peak). Canonical
 S and independent-seed/CI comparisons are pending; no official-score claim.
+
+### Dense anonymous pages
+
+Dense control/canonical/membership storage requests huge pages for the used
+first6MiB; the hint may be declined without affecting correctness. Ready hints
+refer to immutable, acquire-published keys and still verify every byte.
+Both hostile sanitizer suites pass locally. Seven-pair pinned Docker full1:
+champion159.197ms/M10,821,632 versus119.373ms/M11,227,136; S657→807/D1.
+This local gain needs CI validation; PR19 still loses CI and is not promoted.
+No official repository change is authorized by this experimental PR.

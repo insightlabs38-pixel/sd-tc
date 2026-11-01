@@ -187,12 +187,16 @@ class ExactNames {
 
   public:
     ExactNames() {
-        alignas(4096) static std::atomic<uint64_t> key_storage[capacity]{};
-        alignas(4096) static Key canonical_storage[capacity]{};
-        alignas(4096) static std::atomic<uint64_t> membership[256 * words]{};
-        keys = key_storage;
-        canonical = canonical_storage;
-        bits = membership;
+        struct Arena {
+            std::atomic<uint64_t> key_storage[capacity]{};
+            Key canonical_storage[capacity]{};
+            std::atomic<uint64_t> membership[256 * words]{};
+        };
+        alignas(2097152) static Arena storage;
+        keys = storage.key_storage;
+        canonical = storage.canonical_storage;
+        bits = storage.membership;
+        (void)madvise(&storage, 6U << 20, MADV_HUGEPAGE);
     }
     void populate(unsigned task, unsigned tasks, unsigned groups) {
         for (unsigned page = task; page < capacity / 512; page += tasks) {
@@ -234,9 +238,7 @@ class ExactNames {
         uint64_t key = fingerprint(name);
         if (!key)
             return missing;
-        if (hint < capacity &&
-            keys[hint].load(std::memory_order_acquire) == key &&
-            same(hint, name, key))
+        if (hint < capacity && same(hint, name, key))
             return hint;
         unsigned at = first(name), probe = 0, spins = 0;
         while (probe < 16) {
@@ -658,7 +660,7 @@ static const char *next_boundary(const char *q, const char *end) {
 
 int main() {
     try {
-        (void)prctl(PR_SET_THP_DISABLE, 1, 0, 0, 0);
+
         File lookup("/data/regions.csv");
         const char *p = lookup.data, *end = p + lookup.size;
         const char *header = "region_id,country\n";
