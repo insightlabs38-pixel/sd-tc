@@ -350,7 +350,7 @@ static Field text_pair(const char *&p, const char *end, uint32_t &name_len,
                 unsigned ne = __builtin_ctzll(q);
                 if (ne + 2 < bytes && block[ne + 1] == ',' && block[ne + 2] == '"') {
                     q &= q - 1;
-                    if (q && __builtin_ctzll(q) == ne + 2) {
+                    if (q && static_cast<unsigned>(__builtin_ctzll(q)) == ne + 2) {
                         q &= q - 1;
                         if (q) {
                             unsigned te = __builtin_ctzll(q);
