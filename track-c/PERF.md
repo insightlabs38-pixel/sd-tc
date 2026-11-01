@@ -295,3 +295,10 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Paired cgroup peaks: **11,034,624 -> 11,026,432 B** and **11,034,624 -> 11,022,336 B**. Physical source 546 -> 540 lines; D=1. Approximate complete-K proxy **+0.72% / +0.74%**, assuming scored S changes by six code lines; not an official measurement.
 - Source-only paired medians were 86.194 -> 87.171 ms and 88.079 -> 87.026 ms; source-only benefit is not established. Release uses pinned PGO. Preserve prior qualified fused-scanner blob `0772ace04e358868f0b060b178d6ab77e93a15ab` as rollback.
 - Promoted to development main after independent qualification. Luna must measure official scoring-box T/M/S/D/K before official integration.
+
+## Four-worker scoring tradeoff (2026-11-01)
+
+- Trial `40dd73d` changed only full-scale workers 6 -> 4. [CI 41285464392](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41285464392) passed exact full seed-1 SHA, holdout seeds 11/29, adversarial/sanitizer tests, offline Docker and sandbox.
+- Same-source instrumented source-only GH runner: workers 4 **80.514 ms / 41,808 KiB** vs workers 6 **81.510 ms / 44,940 KiB**. Runner has four vCPUs; the official scoring box has six P-cores, so this is not evidence that four workers improve official K.
+- Paired full-PGO against the older fused-scanner six-worker baseline (not the new hash champion): **77.548 -> 75.968 ms**; cgroup **11,028,480 -> 11,018,240 B**. Confounded by the head-tail hash improvement and runner topology, not a direct official T/M/S/D/K comparison.
+- Rejected for automatic promotion; source restored byte-identically to qualified six-worker hash champion `1cfd7405b24cfff6f855f16ef0ad20dda38ad5b7` at `eff1c947`. Optional Luna official-box trial only if useful; no redundant restoration CI.
