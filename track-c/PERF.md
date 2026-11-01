@@ -439,3 +439,12 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - [CI 41333064922](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41333064922) passed full seed-1 SHA, holdouts 11/29, hostile cases, sanitizers, offline Docker and sandbox.
 - Direct qualified champion full-PGO 12-trial median **73.898 -> 74.649 ms** (+1.02% T, 4/12 paired faster); cgroup **10,252,288 -> 10,479,616 B** (+2.22% M), unchanged 564 source lines and D=1.
 - Complete-K runner proxy **-0.94%**. **Rejected**; exact champion blob `b02c0e99543f228462b75840be8e1f13cfcb6b26` restored in `a23a9b1`, without redundant restoration CI.
+
+## Immediate region-prefetch removal (2026-11-01)
+
+- Candidate [acc1dc4](https://github.com/insightlabs38-pixel/sd-tc/commit/acc1dc4d8f93dd7629fdce6ab7eb8ae9efa900f2) deletes the prefetch immediately preceding the `regions[region_key]` load; no semantic changes.
+- [CI 41333867256](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41333867256), attempts 1/2: full seed-1 SHA, holdouts 11/29, hostile tests, ASan/UBSan/TSan, offline Docker and sandbox passed.
+- Attempt 1 direct champion full-PGO 12-pair median **87.078 -> 86.356 ms**, 10/12 faster; cgroup **10,287,104 -> 10,250,240 B**. Approximate complete-K proxy **+0.52%**.
+- Attempt 2 independent full-PGO 12-pair median **47.749 -> 49.693 ms**, 5/12 faster; cgroup **10,383,360 -> 10,244,096 B**. Approximate complete-K proxy **-1.68%**.
+- Physical C++ source **564 -> 563 lines**, D=1. The slower, faster-host run outweighs the unreplicated gain; no official six-P-core result. **Rejected**.
+- Restored exact qualified source blob `b02c0e99543f228462b75840be8e1f13cfcb6b26` in [eeea8aa](https://github.com/insightlabs38-pixel/sd-tc/commit/eeea8aae90e5614161f9ee62a6eb19c363797f4d); no redundant restoration CI.
