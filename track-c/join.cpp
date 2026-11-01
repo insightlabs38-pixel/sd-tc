@@ -465,7 +465,7 @@ int main() {
         p += 29;
         newline(p, end);
         const char *record_start = p;
-        unsigned threads = end - p < (1 << 20) ? 1 : 12;
+        unsigned threads = end - p < (1 << 20) ? 1 : 6;
         threads = std::min(threads, std::max(1u, std::thread::hardware_concurrency()));
         unsigned pieces = threads == 1 ? 1 : threads * 8;
         std::vector<const char *> cuts(pieces + 1);
