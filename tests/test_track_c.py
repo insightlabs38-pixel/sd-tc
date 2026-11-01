@@ -136,6 +136,18 @@ def money_swar_boundaries():
     check_case("money-swar-widths-sign-and-eof")
 
 
+def page_boundary_tail_stress():
+    DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n")
+    header = b"\xef\xbb\xbfid,name,note,region_id,amount\r\n"
+    lead, tail = b'1,"pad","', b'",7,1.00\r\n'
+    last = b'2,"a",,7,0.00\r\n'
+    padding = (-len(header) - len(lead) - len(tail) - len(last)) % 4096
+    records = header + lead + b"x" * padding + tail + last
+    assert len(records) == 4096
+    DATA.joinpath("records.csv").write_bytes(records)
+    check_case("page-aligned-eof-short-name-and-money")
+
+
 def quote_vector_boundary_stress():
     DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n8,BBB\n")
     rows = bytearray(b"id,name,note,region_id,amount\n")
@@ -271,6 +283,7 @@ def main():
             "-Werror", "-o", "/tmp/sd-track-c", str(BIN))
     handwritten()
     money_swar_boundaries()
+    page_boundary_tail_stress()
     quote_vector_boundary_stress()
     packed_metadata_stress()
     split_boundary_stress()

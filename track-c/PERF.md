@@ -200,3 +200,11 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Paired full-PGO runner versus main `f294a882`: **68.679 -> 59.927 ms**; process RSS **16,776 -> 35,752 KiB**. Canonical scored S **577 -> 622**, D=1.
 - Its separate pinned-container cgroup comparison reports **145.858 -> 129.350 ms**, **10,168,320 -> 10,149,888 bytes**, estimated complete K **+5.04%**. Runner RSS is not official cgroup M; these are not official scoring-box measurements.
 - **Do not auto-promote** without official T/M/S/D/K through Luna. The verified main champion `a9b2c765` remains authoritative; the frontier branch is an optional isolated scoring trial.
+
+## 256-shard, 2,048-slot architecture trial (2026-11-01)
+
+- [CI 41257048767](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41257048767) passed exact full SHA-256, holdout seeds, concentrated-shard overflow, sanitizers, offline Docker and sandbox.
+- Source-only paired median **87.750 -> 89.404 ms**, RSS **18,424 -> 20,330 KiB**.
+- Full-PGO paired median **83.476 -> 84.294 ms**, RSS **16,808 -> 18,156 KiB**. Estimated runner complete-K proxy **-2.01%**, unchanged S and D=1.
+- Rejected: restore exact qualified champion blob `a9b2c765efe2a5fedec7671d9df9be77a700c853`. CI architecture baseline repaired to this champion via commit `d3b9a32`.
+- Additional safety gate: page-aligned EOF fixture protects against speculative short-name SIMD or money loads crossing the mapped file end. Frontier candidate `90da546` has unguarded 16-byte/8-byte loads and requires explicit end guards before promotion.

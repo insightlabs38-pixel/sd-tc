@@ -20,6 +20,7 @@ def main():
     cases.DATA.mkdir(exist_ok=True)
     cases.OUT.mkdir(exist_ok=True)
     cases.handwritten()
+    cases.page_boundary_tail_stress()
     cases.quote_vector_boundary_stress()
     cases.packed_metadata_stress()
     cases.split_boundary_stress()
