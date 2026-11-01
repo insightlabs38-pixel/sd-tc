@@ -357,3 +357,10 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 
 - Organizer [raw board](https://s3.amazonaws.com/raptors.dev/speeddemon.dev/2026/board/board.json), generated 11:07:32 UTC: HighVelocity Track C BEST `run-e7eab9673214`, official **T=50.141 ms, M=11,288,576 B, S=657, D=1, K=25.979773** (submission `6917275`). LATEST `run-e50afc3730a2` K=25.478194.
 - This is an external scoring snapshot, not a measurement of the newer development champion; Luna alone controls official integration and submission.
+
+## PGO training-seed experiment (2026-11-01)
+
+- Candidate [aacb36b](https://github.com/insightlabs38-pixel/sd-tc/commit/aacb36be8c8eb9d31eb67d61c43546891a3be2eb) changed pinned GCC 15 full-PGO training from generated seed 37 to seed 1; exact `join.cpp` unchanged.
+- [CI 41306717074](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41306717074) passed full seed-1 SHA, independent full holdouts 11/29, hostile tests, ASan/UBSan/TSan, offline Docker and sandbox.
+- Direct 12-trial paired full-PGO seed-37 -> seed-1 median **105.487 -> 104.945 ms**, fresh cgroup **11,018,240 -> 11,024,384 B**; scored source S and D unchanged. Complete-K runner proxy **+0.25%**.
+- **Rejected:** small seed-1-specific gain within runner variation, no evidence on private final holdout seed. Restored original seed-37 Dockerfile and workflow; exact qualified `join.cpp` blob `3b5e1392f49abdbb7fdcf6a36b5866366298143b` preserved. No redundant restoration CI.
