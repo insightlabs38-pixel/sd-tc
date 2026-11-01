@@ -1,0 +1,322 @@
+[
+  {
+    "trial": 0,
+    "name": "main-baseline-post",
+    "wall_ms": 317.3203389999344,
+    "cpu_ms": 475.56499999999994,
+    "rss_kib": 14696,
+    "minor_faults": 5854
+  },
+  {
+    "trial": 0,
+    "name": "block-direct",
+    "wall_ms": 320.81827800004703,
+    "cpu_ms": 452.82800000000003,
+    "rss_kib": 14564,
+    "minor_faults": 5192
+  },
+  {
+    "trial": 0,
+    "name": "block-post",
+    "wall_ms": 324.7967590000371,
+    "cpu_ms": 484.51599999999996,
+    "rss_kib": 14712,
+    "minor_faults": 5851
+  },
+  {
+    "trial": 0,
+    "name": "main-baseline-direct",
+    "wall_ms": 353.108620999933,
+    "cpu_ms": 439.863,
+    "rss_kib": 14416,
+    "minor_faults": 5200
+  },
+  {
+    "trial": 0,
+    "name": "main-baseline",
+    "wall_ms": 298.22887900002115,
+    "cpu_ms": 407.76599999999996,
+    "rss_kib": 14296,
+    "minor_faults": 5270
+  },
+  {
+    "trial": 1,
+    "name": "block-post",
+    "wall_ms": 335.09098600006837,
+    "cpu_ms": 483.27699999999993,
+    "rss_kib": 14564,
+    "minor_faults": 5826
+  },
+  {
+    "trial": 1,
+    "name": "main-baseline-direct",
+    "wall_ms": 360.76210700002775,
+    "cpu_ms": 430.111,
+    "rss_kib": 13668,
+    "minor_faults": 5200
+  },
+  {
+    "trial": 1,
+    "name": "main-baseline",
+    "wall_ms": 254.48718200004805,
+    "cpu_ms": 340.27599999999995,
+    "rss_kib": 14604,
+    "minor_faults": 5287
+  },
+  {
+    "trial": 1,
+    "name": "block-direct",
+    "wall_ms": 306.986633000065,
+    "cpu_ms": 425.0059999999999,
+    "rss_kib": 14308,
+    "minor_faults": 5196
+  },
+  {
+    "trial": 1,
+    "name": "main-baseline-post",
+    "wall_ms": 284.80717399997957,
+    "cpu_ms": 402.18399999999997,
+    "rss_kib": 14232,
+    "minor_faults": 5854
+  },
+  {
+    "trial": 2,
+    "name": "block-post",
+    "wall_ms": 348.1331670000145,
+    "cpu_ms": 462.86699999999996,
+    "rss_kib": 14344,
+    "minor_faults": 5834
+  },
+  {
+    "trial": 2,
+    "name": "main-baseline-direct",
+    "wall_ms": 243.30955499999618,
+    "cpu_ms": 393.90999999999997,
+    "rss_kib": 14156,
+    "minor_faults": 5192
+  },
+  {
+    "trial": 2,
+    "name": "block-direct",
+    "wall_ms": 266.3038879999249,
+    "cpu_ms": 411.44699999999995,
+    "rss_kib": 13900,
+    "minor_faults": 5200
+  },
+  {
+    "trial": 2,
+    "name": "main-baseline-post",
+    "wall_ms": 242.68508600005134,
+    "cpu_ms": 394.493,
+    "rss_kib": 14872,
+    "minor_faults": 5847
+  },
+  {
+    "trial": 2,
+    "name": "main-baseline",
+    "wall_ms": 280.393035999964,
+    "cpu_ms": 354.08099999999996,
+    "rss_kib": 14476,
+    "minor_faults": 5253
+  },
+  {
+    "trial": 3,
+    "name": "block-post",
+    "wall_ms": 273.0023420000407,
+    "cpu_ms": 413.54099999999994,
+    "rss_kib": 14588,
+    "minor_faults": 5859
+  },
+  {
+    "trial": 3,
+    "name": "main-baseline-direct",
+    "wall_ms": 254.4937119999986,
+    "cpu_ms": 360.32899999999995,
+    "rss_kib": 14156,
+    "minor_faults": 5199
+  },
+  {
+    "trial": 3,
+    "name": "main-baseline-post",
+    "wall_ms": 290.62072199997147,
+    "cpu_ms": 354.23199999999997,
+    "rss_kib": 14756,
+    "minor_faults": 5877
+  },
+  {
+    "trial": 3,
+    "name": "main-baseline",
+    "wall_ms": 269.0178880000076,
+    "cpu_ms": 327.816,
+    "rss_kib": 14632,
+    "minor_faults": 5276
+  },
+  {
+    "trial": 3,
+    "name": "block-direct",
+    "wall_ms": 277.1539999999959,
+    "cpu_ms": 413.73499999999996,
+    "rss_kib": 14240,
+    "minor_faults": 5206
+  },
+  {
+    "trial": 4,
+    "name": "main-baseline-direct",
+    "wall_ms": 307.7989280000111,
+    "cpu_ms": 429.196,
+    "rss_kib": 13536,
+    "minor_faults": 5197
+  },
+  {
+    "trial": 4,
+    "name": "main-baseline-post",
+    "wall_ms": 333.1320259999302,
+    "cpu_ms": 452.34299999999996,
+    "rss_kib": 14880,
+    "minor_faults": 5849
+  },
+  {
+    "trial": 4,
+    "name": "main-baseline",
+    "wall_ms": 280.44914499992046,
+    "cpu_ms": 399.645,
+    "rss_kib": 14352,
+    "minor_faults": 5261
+  },
+  {
+    "trial": 4,
+    "name": "block-direct",
+    "wall_ms": 280.1998659999754,
+    "cpu_ms": 430.683,
+    "rss_kib": 14308,
+    "minor_faults": 5205
+  },
+  {
+    "trial": 4,
+    "name": "block-post",
+    "wall_ms": 322.96286899997995,
+    "cpu_ms": 464.522,
+    "rss_kib": 14060,
+    "minor_faults": 5826
+  },
+  {
+    "trial": 5,
+    "name": "block-direct",
+    "wall_ms": 336.9771929999388,
+    "cpu_ms": 474.8829999999999,
+    "rss_kib": 13964,
+    "minor_faults": 5196
+  },
+  {
+    "trial": 5,
+    "name": "main-baseline-post",
+    "wall_ms": 360.13673999991624,
+    "cpu_ms": 453.16799999999995,
+    "rss_kib": 14524,
+    "minor_faults": 5840
+  },
+  {
+    "trial": 5,
+    "name": "main-baseline-direct",
+    "wall_ms": 322.68420800005515,
+    "cpu_ms": 428.732,
+    "rss_kib": 14620,
+    "minor_faults": 5202
+  },
+  {
+    "trial": 5,
+    "name": "block-post",
+    "wall_ms": 391.38760900004854,
+    "cpu_ms": 495.39599999999996,
+    "rss_kib": 14648,
+    "minor_faults": 5845
+  },
+  {
+    "trial": 5,
+    "name": "main-baseline",
+    "wall_ms": 316.6466619999255,
+    "cpu_ms": 434.134,
+    "rss_kib": 14264,
+    "minor_faults": 5254
+  },
+  {
+    "trial": 6,
+    "name": "main-baseline",
+    "wall_ms": 287.4366390000205,
+    "cpu_ms": 408.467,
+    "rss_kib": 14444,
+    "minor_faults": 5273
+  },
+  {
+    "trial": 6,
+    "name": "main-baseline-direct",
+    "wall_ms": 301.4408709999543,
+    "cpu_ms": 420.025,
+    "rss_kib": 14384,
+    "minor_faults": 5210
+  },
+  {
+    "trial": 6,
+    "name": "block-post",
+    "wall_ms": 394.3360539999503,
+    "cpu_ms": 504.16399999999993,
+    "rss_kib": 14616,
+    "minor_faults": 5874
+  },
+  {
+    "trial": 6,
+    "name": "main-baseline-post",
+    "wall_ms": 300.1337370000101,
+    "cpu_ms": 432.102,
+    "rss_kib": 14244,
+    "minor_faults": 5866
+  },
+  {
+    "trial": 6,
+    "name": "block-direct",
+    "wall_ms": 373.8562940000065,
+    "cpu_ms": 464.3949999999999,
+    "rss_kib": 14356,
+    "minor_faults": 5194
+  },
+  {
+    "trial": 7,
+    "name": "block-direct",
+    "wall_ms": 390.33847400003197,
+    "cpu_ms": 469.339,
+    "rss_kib": 14408,
+    "minor_faults": 5201
+  },
+  {
+    "trial": 7,
+    "name": "block-post",
+    "wall_ms": 299.7526099999277,
+    "cpu_ms": 421.87899999999996,
+    "rss_kib": 14400,
+    "minor_faults": 5811
+  },
+  {
+    "trial": 7,
+    "name": "main-baseline-post",
+    "wall_ms": 209.3785189999835,
+    "cpu_ms": 412.46700000000004,
+    "rss_kib": 14868,
+    "minor_faults": 5859
+  },
+  {
+    "trial": 7,
+    "name": "main-baseline-direct",
+    "wall_ms": 205.66391499994552,
+    "cpu_ms": 394.746,
+    "rss_kib": 13668,
+    "minor_faults": 5216
+  },
+  {
+    "trial": 7,
+    "name": "main-baseline",
+    "wall_ms": 195.46685099999195,
+    "cpu_ms": 390.63599999999997,
+    "rss_kib": 14724,
+    "minor_faults": 5287
+  }
+]

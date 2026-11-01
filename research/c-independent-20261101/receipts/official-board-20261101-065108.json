@@ -1,0 +1,70 @@
+{
+  "generated_at": "2026-11-01T06:51:08Z",
+  "dataset": "full public dataset, seed 1",
+  "tracks": {
+    "HighVelocity": {
+      "run_id": "run-e7eab9673214",
+      "commit": "6917275dbd2ee12fd19df6fe3b87a60920c86ef8",
+      "pushed_at": "2026-11-01T05:06:35Z",
+      "dispatched_at": "2026-11-01T05:06:35Z",
+      "started_at": "2026-11-01T05:06:54Z",
+      "ended_at": "2026-11-01T05:06:56Z",
+      "queue_latency_s": 19.2,
+      "ok": true,
+      "stage": "scored",
+      "gates": {
+        "check": true,
+        "build": true,
+        "correctness": true,
+        "timeout": true,
+        "sandbox": true
+      },
+      "T_s": 0.050141,
+      "M_bytes": 11288576,
+      "S": 657,
+      "D": 1,
+      "K": 25.979773,
+      "points": 70.731767,
+      "static_axes": "measured",
+      "timeout_s": 43.332,
+      "build_s": 0.799,
+      "image_bytes": 119386482,
+      "failure": null,
+      "lang": [
+        "C++"
+      ]
+    },
+    "NickTrapp": {
+      "run_id": "run-48f5feabf834",
+      "commit": "e1017212d65c4104e82f9102dffe2f47c1b27b61",
+      "pushed_at": "2026-11-01T02:31:49Z",
+      "dispatched_at": "2026-11-01T02:31:49Z",
+      "started_at": "2026-11-01T02:32:10Z",
+      "ended_at": "2026-11-01T02:32:11Z",
+      "queue_latency_s": 21.3,
+      "ok": true,
+      "stage": "scored",
+      "gates": {
+        "check": true,
+        "build": true,
+        "correctness": true,
+        "timeout": true,
+        "sandbox": true
+      },
+      "T_s": 0.018018,
+      "M_bytes": 12754944,
+      "S": 303,
+      "D": 1,
+      "K": 47.499505,
+      "points": 83.834454,
+      "static_axes": "measured",
+      "timeout_s": 43.332,
+      "build_s": 5.36,
+      "image_bytes": 121094320,
+      "failure": null,
+      "lang": [
+        "C++"
+      ]
+    }
+  }
+}

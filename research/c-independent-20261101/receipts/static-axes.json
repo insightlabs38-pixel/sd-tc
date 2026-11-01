@@ -193,21 +193,21 @@
   },
   "membership-pipeline": {
     "S": 777,
+    "D": 1,
     "cpp_code": 764,
-    "build_code": 13,
-    "D": 1
+    "build_code": 13
   },
   "epoch-sort": {
     "S": 707,
+    "D": 1,
     "cpp_code": 694,
-    "build_code": 13,
-    "D": 1
+    "build_code": 13
   },
   "epoch-sort-compact": {
     "S": 738,
+    "D": 1,
     "cpp_code": 725,
-    "build_code": 13,
-    "D": 1
+    "build_code": 13
   },
   "tile-balanced-inline24": {
     "S": 756,
@@ -250,5 +250,185 @@
     "cpp_code": 717,
     "build_code": 13,
     "D": 1
+  },
+  "flat-borrowed": {
+    "S": 652,
+    "D": 1,
+    "cpp_code": 639,
+    "build_code": 13
+  },
+  "flat-optimistic": {
+    "S": 646,
+    "D": 1,
+    "cpp_code": 633,
+    "build_code": 13
+  },
+  "flat-borrowed-soa": {
+    "S": 651,
+    "D": 1,
+    "cpp_code": 638,
+    "build_code": 13
+  },
+  "epoch-packed": {
+    "S": 767,
+    "cpp_code": 754,
+    "build_code": 13,
+    "D": 1
+  },
+  "tile-packed": {
+    "S": 797,
+    "cpp_code": 784,
+    "build_code": 13,
+    "D": 1
+  },
+  "flat-borrowed-probes": {
+    "S": 713,
+    "D": 1,
+    "cpp_code": 700,
+    "build_code": 13
+  },
+  "epoch-sort-phases": {
+    "S": 723,
+    "D": 1,
+    "cpp_code": 710,
+    "build_code": 13
+  },
+  "epoch-sort-compact-phases": {
+    "S": 754,
+    "D": 1,
+    "cpp_code": 741,
+    "build_code": 13
+  },
+  "linear": {
+    "S": 752,
+    "D": 1,
+    "cpp_code": 739,
+    "build_code": 13
+  },
+  "linear-byte-key": {
+    "S": 752,
+    "D": 1,
+    "cpp_code": 739,
+    "build_code": 13
+  },
+  "linear-packed": {
+    "S": 749,
+    "D": 1,
+    "cpp_code": 736,
+    "build_code": 13
+  },
+  "linear-id": {
+    "S": 716,
+    "D": 1,
+    "cpp_code": 703,
+    "build_code": 13
+  },
+  "membership-prefetch": {
+    "S": 781,
+    "D": 1,
+    "cpp_code": 768,
+    "build_code": 13
+  },
+  "membership-grouped": {
+    "S": 803,
+    "D": 1,
+    "cpp_code": 790,
+    "build_code": 13
+  },
+  "membership-borrowed-grouped": {
+    "S": 779,
+    "D": 1,
+    "cpp_code": 766,
+    "build_code": 13
+  },
+  "membership-cacheline": {
+    "S": 779,
+    "D": 1,
+    "cpp_code": 766,
+    "build_code": 13
+  },
+  "membership-cacheline-simd": {
+    "S": 796,
+    "D": 1,
+    "cpp_code": 783,
+    "build_code": 13
+  },
+  "membership-pipeline-phases": {
+    "S": 797,
+    "D": 1,
+    "cpp_code": 784,
+    "build_code": 13
+  },
+  "membership-grouped-phases": {
+    "S": 823,
+    "D": 1,
+    "cpp_code": 810,
+    "build_code": 13
+  },
+  "membership-borrowed-grouped-phases": {
+    "S": 799,
+    "D": 1,
+    "cpp_code": 786,
+    "build_code": 13
+  },
+  "private-stream": {
+    "S": 781,
+    "D": 1,
+    "cpp_code": 768,
+    "build_code": 13
+  },
+  "private-stream-phases": {
+    "S": 806,
+    "D": 1,
+    "cpp_code": 793,
+    "build_code": 13
+  },
+  "private-radix-stream": {
+    "S": 768,
+    "D": 1,
+    "cpp_code": 755,
+    "build_code": 13
+  },
+  "tail-vector": {
+    "S": 860,
+    "D": 1,
+    "cpp_code": 847,
+    "build_code": 13
+  },
+  "compact-exact": {
+    "S": 764,
+    "D": 1,
+    "cpp_code": 751,
+    "build_code": 13
+  },
+  "compact-six": {
+    "S": 759,
+    "D": 1,
+    "cpp_code": 746,
+    "build_code": 13
+  },
+  "compact-fields": {
+    "S": 798,
+    "D": 1,
+    "cpp_code": 785,
+    "build_code": 13
+  },
+  "compact-verify": {
+    "S": 750,
+    "D": 1,
+    "cpp_code": 737,
+    "build_code": 13
+  },
+  "compact-fields-verify": {
+    "S": 784,
+    "D": 1,
+    "cpp_code": 771,
+    "build_code": 13
+  },
+  "pair-affinity": {
+    "S": 664,
+    "D": 1,
+    "cpp_code": 651,
+    "build_code": 13
   }
 }

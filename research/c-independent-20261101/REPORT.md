@@ -3,6 +3,20 @@
 This is development evidence, not an official score or permission to integrate
 into sd-sm. The independently written discovery pass is in PASS-I.md.
 
+## Current verified official champion
+
+Board snapshot 2026-11-01 06:51:08 UTC: HighVelocity best is run-e7eab9673214,
+official commit6917275dbd2ee12fd19df6fe3b87a60920c86ef8, T50.141 ms,
+M11,288,576 B, S657, D1, K25.979773. Retrieved its immutable source and
+Dockerfile read-only: both are byte-identical to campaign PR14. Join blob
+0772ace04e358868f0b060b178d6ab77e93a15ab, SHA256
+90ff49b2dbf26bc3d33e62c6e2e86ed990f19280e6b99d3e8dfca7426ec7ac65.
+The new source is preserved under baselines/ and public rollback branch
+`rollback/c-independent-official-6917275`, pointing to source-equivalent sd-tc
+commit e253190. Luna performed the official integration/scoring; this campaign
+only verified the published result. NickTrapp remains K47.499505 at this
+snapshot. Historical baselines below remain preserved for reproducibility.
+
 ## Frozen baselines and rules
 
 - Official specifications/generator/harness: upstream e0982830d2d86cee090ec6d8d332d55450dba455.
@@ -491,3 +505,105 @@ owned private dictionaries (`epoch-borrowed*`, `tile-borrowed`). These sources
 are preserved before results; qualification/benchmarking is pending. They
 retain full exact lengths/hashes in each private slot and do not depend on a
 shared dictionary.
+
+## Completed BCD and deferred decimal columns
+
+The monetary extrema experiment is now complete, not silently shelved.
+`linear.cpp` accumulates right-aligned decimal columns in 16-bit lanes with
+bounded2048-record flushes; monetary signs are applied to the lanes and
+weights only at flush. A signed monotonic BCD key supplies extrema. Wider
+values flush the group and permanently use exact scalar arithmetic, including
+conversion of existing extrema. ID columns are unsigned; signed money column
+magnitudes remain within16-bit bounds at the chosen flush interval.
+
+`linear-byte-key.cpp` replaces PEXT extrema with a spaced-byte big-endian key.
+Both pass the full hostile ASan/UBSan and TSan suites. Original BCD production
+Docker passes full1/11/29/137 exactly; full1 has five interleaved timing pairs.
+The byte-key repair has five interleaved pairs on every seed. All builds use
+the unchanged pinned offline PGO Dockerfile, training37, D1. Canonical S752.
+M below is the maximum fresh-container cgroup peak, not RSS.
+
+| Prototype / full seed | Champion T ms | Candidate T ms | Champion M | Candidate M | Relative complete K |
+|---|---:|---:|---:|---:|---:|
+| PEXT BCD /1 |155.160|157.622|10,883,072|11,018,240|0.9699|
+| byte-key /1 |155.108|161.852|10,825,728|10,969,088|0.9568|
+| byte-key /11 |160.634|158.655|10,825,728|10,997,760|0.9829|
+| byte-key /29 |159.187|161.071|10,985,472|10,817,536|0.9772|
+| byte-key /137 |161.038|165.422|10,813,440|10,919,936|0.9650|
+
+Runtime is the trimmed middle3 of5. These are two-quota-CPU development
+measurements, not official scores. Original BCD holdouts have correctness
+receipts only, not paired performance estimates. `linear-packed.cpp` tries
+carry-free packed byte sums with8-record flushes; `linear-id.cpp` retains only
+ID columns. Both pass hostile ASan/UBSan but lose in native PGO comparisons.
+The added lanes/flushes/key work do not remove enough critical-path work to
+pay for their source and runtime cost. No member of this tested set should
+replace the champion. This does not establish a lower bound for all fused
+numeric pipelines.
+
+## Public amplification and new exact engines
+
+See PUBLIC-AUDIT.md for immutable source identities, verified board
+associations, and mechanism-by-mechanism comparison. Manu is the primary
+public performance reference (K38.755,28.594ms); Rj is secondary (K27.281,
+51.316ms). The K43–47 leaderboard leaders are not attributed to either.
+
+`compact-exact.cpp` replaces copied32-byte keys and name-major seen words
+with a compact immutable fingerprint locator, canonical input references,
+country-major bitsets and parallel final reduction. Equality remains exact:
+full byte verification, or an injective ASCII<=8 encoding. It separates
+region/numeric aggregation, canonical verification and membership updates in
+three bounded16-record rings. Atomic key loads are individually acquire;
+SIMD compares register copies, never plain-loads atomic storage. Release
+publication orders canonical pointer reads. Exact overflow maps handle
+capacity and pathological collisions. Work-based gates and dynamic morsels
+support late workers, parallel prefaulting and final page reclamation.
+Canonical references remain mapped until every query completes.
+
+`compact-fields.cpp` adds independent32-byte field masks with reused escape
+counts, delimiter SWAR, known-width numeric decoding and input prefetch.
+`compact-verify.cpp` and `compact-fields-verify.cpp` remove the short exact
+encoding and always verify complete bytes, isolating representation costs.
+All primary variants' full hostile sanitizer receipts are preserved; the
+field/full-verification solver passes ASan/UBSan and TSan, including deliberate
+CRC collisions, very long names and capacity overflow. Native comparison
+includes affinity-only champion and fixed6-worker challenger controls. These
+are challengers under evaluation, not qualified promotions.
+
+`tail-vector.cpp` is an independent parser decomposition: scan record endings
+and total quote counts, locate numeric fields from the tail, decode four
+records together, parse only names, and derive note bytes from quote-count
+arithmetic. It keeps only32 stack records and avoids a second note traversal.
+Its complete hostile ASan/UBSan and TSan suites pass; native PGO initially
+improves roughly7%, but canonical S860 and production cgroup measurements
+must be included before judging K.
+
+### Repaired private streams and ownership diagnosis
+
+`private-stream.cpp` uses sequential8-byte parser packets and exclusive
+consumer dictionaries; full pointers/lengths use a wide escape. Consumers
+radix-partition each bounded packet before exact dictionary lookup. No global
+name dictionary or shared membership updates exist. It passes full hostile
+ASan/UBSan and TSan. CPU profiling separates parser185–187ms and owner143–146ms,
+with native wall181ms versus fused150ms. `private-radix-stream.cpp` seriously
+repairs the owner side with direct radix heads, compact collision chains,
+16-bit heads promoted exactly on growth, and contiguous owner hash ranges.
+It is preserved before qualification; do not promote it from a proposal.
+
+Country-owned membership streams were also repaired using grouped country
+packets, cacheline-sized staging and borrowed/SIMD canonical keys. Measured
+phase CPU (`pipeline-cpu-phases.json`) is parser290–297ms versus owner17–20ms;
+grouping gives284–292 versus16–17. Borrowed grouping worsens producer CPU to
+321–327ms. The consumer bitmap is not the dominant cost. Queue emission and
+exact key producer work must change before another consumer-only tuning pass.
+Sources, phase instrumentation and sanitizer receipts are preserved.
+
+### Completed earlier pending production measurements
+
+The pure exact sort-catalog repair gives Docker194.809ms, M15,577,088, S738
+versus fused156.841ms; its original gives207.092ms/M14,729,216/S707. Sorting
+reference descriptors reduced sort CPU38ms to21–23ms, but exact catalog merge
+still costs91–100ms. This is a measured remaining bottleneck, not a dismissal
+of all sort/reduce hybrids. Input-backed flat dictionary Docker relative K
+across1/11/29/137 is1.0046/0.9749/1.0116/0.9125: seed sensitivity prevents
+promotion. Its probe instrumentation and optimistic/SoA repairs are preserved.
