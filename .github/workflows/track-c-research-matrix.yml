@@ -1,0 +1,22 @@
+name: C breakthrough exact architecture matrix
+on:
+  push:
+    branches:
+      - research/c-breakthrough-20261101
+    paths:
+      - research/c-breakthrough-20261101/matrix.py
+      - .github/workflows/track-c-research-matrix.yml
+jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Prepare data and output
+        run: |
+          sudo mkdir -p /data /out
+          sudo chown "$(id -u):$(id -g)" /data /out
+      - name: Build and compare exact architectures on same runner
+        run: python3 research/c-breakthrough-20261101/matrix.py
