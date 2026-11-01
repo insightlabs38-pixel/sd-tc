@@ -61,6 +61,13 @@ static_assert(sizeof(Field) == 16, "projected name metadata");
 static constexpr uint32_t HASH_OFFSET = 5381U;
 
 static uint32_t raw_hash(const char *p, size_t n, const char *end) {
+    if (n <= 8) {
+        uint64_t word = 0;
+        if (end - p >= 8) std::memcpy(&word, p, 8);
+        else std::memcpy(&word, p, n);
+        if (n < 8) word &= (1ULL << (n * 8)) - 1;
+        return static_cast<uint32_t>(_mm_crc32_u64(HASH_OFFSET, word));
+    }
     if (n <= 16) {
         alignas(16) static const unsigned char mask[32] = {
             255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
