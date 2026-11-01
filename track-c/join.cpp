@@ -78,18 +78,12 @@ static uint32_t raw_hash(const char *p, size_t n, const char *end) {
         uint32_t h = static_cast<uint32_t>(_mm_crc32_u64(HASH_OFFSET, static_cast<uint64_t>(_mm_cvtsi128_si64(key))));
         return static_cast<uint32_t>(_mm_crc32_u64(h, static_cast<uint64_t>(_mm_extract_epi64(key, 1))));
     }
-    uint32_t h = HASH_OFFSET;
-    while (n >= 8) {
-        uint64_t word;
-        std::memcpy(&word, p, 8);
-        h = static_cast<uint32_t>(_mm_crc32_u64(h, word));
-        p += 8;
-        n -= 8;
-    }
-    if (n & 4) { uint32_t w; std::memcpy(&w, p, 4); h = _mm_crc32_u32(h, w); p += 4; }
-    if (n & 2) { uint16_t w; std::memcpy(&w, p, 2); h = _mm_crc32_u16(h, w); p += 2; }
-    if (n & 1) h = _mm_crc32_u8(h, static_cast<unsigned char>(*p));
-    return h;
+    uint64_t first, last;
+    std::memcpy(&first, p, 8);
+    std::memcpy(&last, p + n - 8, 8);
+    uint32_t h = static_cast<uint32_t>(_mm_crc32_u64(HASH_OFFSET, first));
+    h = static_cast<uint32_t>(_mm_crc32_u64(h, last));
+    return _mm_crc32_u32(h, static_cast<uint32_t>(n));
 }
 
 struct SharedNames {
