@@ -522,3 +522,11 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - [CI 41357614885](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41357614885) passed full seed-1 reference SHA, full holdouts 11/29, hostile BOM/quote/long-name/overflow cases, ASan/UBSan/TSan, pinned offline Docker and sandbox.
 - Direct qualified-champion full-PGO 12-pair medians **94.532 -> 98.945 ms** (+4.67% T); cgroup median **10,237,952 -> 10,299,392 B** (+0.60% M). D=1; source reduction contributes +1.07% alone, but complete-K runner proxy **-1.33%**.
 - **Rejected.** Restored exact qualified source blob `0b6a6ef559781147f07ac541631ed36faeddac09`. Keep vector quote-parity path; no redundant restoration CI and no official six-P-core measurement.
+
+## Long-note quote-close fast path trial (2026-11-01)
+
+- Candidate [742bd9c](https://github.com/insightlabs38-pixel/sd-tc/commit/742bd9cb9221201a60d338c7350898115e94e546) adds a guarded memchr continuation for long quoted notes beyond the first 64-byte SIMD mask; exact PCLMUL fallback retained.
+- [CI 41361992569](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41361992569) passed full seed-1 SHA, holdouts 11/29, hostile quote-boundary/long-name cases, ASan/UBSan/TSan, offline Docker and sandbox.
+- Direct champion full-PGO 12-trial medians **60.290 -> 60.630 ms** (+0.56% T); cgroup peak **10,242,048 -> 10,477,568 B** (+2.30% M). Source **570 -> 591 physical lines**, D=1.
+- Complete-K development proxy **-1.27%**, accounting for T/M/S/D; the pinned PGO-vs-untrained comparison is not a champion comparison. Rejected, restored qualified blob `0b6a6ef559781147f07ac541631ed36faeddac09`.
+- Official six-P-core T/M/S/D/K remains unmeasured; Luna controls official integration.
