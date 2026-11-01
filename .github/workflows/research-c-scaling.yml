@@ -1,0 +1,20 @@
+name: C worker scaling, pinned PGO and exact oracles
+on:
+  push:
+    branches: ["research/c-breakthrough-20261101*"]
+    paths: [".github/workflows/research-c-scaling.yml", "research/c-breakthrough-20261101-scaling.py"]
+jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Generate official full seed 1 data
+        run: |
+          sudo mkdir -p /data /out
+          sudo chown "$(id -u):$(id -g)" /data /out
+          python3 tests/oracle/generator.py --seed 1 --scale full --out /data
+      - name: Immutable exact source controls, pinned GCC15 PGO
+        run: python3 research/c-breakthrough-20261101-scaling.py
