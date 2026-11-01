@@ -245,3 +245,9 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - [CI 41265183196](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41265183196) passed full seed-1 SHA-256, holdouts 11/29, hostile cases, sanitizers, offline Docker and sandbox. Moving private group arithmetic before the atomic name membership check: full-PGO **83.060 -> 82.019 ms**, cgroup **10,244,096 -> 10,489,856 B**, physical source **543 -> 545 lines**, D=1; complete-K runner proxy **+0.10%**, too small relative to variability to promote.
 - [CI 41265503908](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41265503908) passed the same gates for added long-name arena prefetch. Direct qualified-champion full-PGO **83.035 -> 83.833 ms**, cgroup **10,483,712 -> 10,485,760 B**, source **543 -> 550 lines**, D=1; complete-K proxy **-0.67%**. Source-only **92.265 -> 94.333 ms**. Rejected.
 - Restored exact twice-qualified source blob `b31de39258eec335f79e14a0568a325d4ad2c732`; CI comparison baseline remains commit `981d23c`. No redundant restoration CI.
+
+## Name-slot pipeline depth experiments (2026-11-01)
+
+- [CI 41268916263](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41268916263): moving name-slot lookup before region/amount parsing passed all correctness, sanitizer, Docker and holdout gates. Full-PGO paired 78.001 -> 84.571 ms, cgroup peak 10,471,424 -> 10,459,136 bytes; T/M-only K proxy -3.94%. Rejected.
+- [CI 41269285736](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41269285736): 64-row instead of 32-row name prefetch batches passed the same gates. Full-PGO paired 77.523 -> 77.474 ms, cgroup peak 10,452,992 -> 10,510,336 bytes; complete-K proxy -0.08% (unchanged S and D). Rejected.
+- Restored exact twice-qualified 32-row champion source blob `b31de39258eec335f79e14a0568a325d4ad2c732`; no redundant restoration CI. Official scoring-box T/M/S/D for these trials was not measured.
