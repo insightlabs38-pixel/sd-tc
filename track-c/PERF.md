@@ -308,3 +308,11 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Trial `8ccd918` changed the six-worker, full-PGO champion's batch capacity 32 -> 16 rows, with no other solution changes.
 - A new CI run was not observable through the available GitHub commit-status/workflow-read interface; no correctness, T/M/S/D or K receipt is claimed.
 - **Not promoted**: commit `83c889a` restored exact qualified champion source blob `1cfd7405b24cfff6f855f16ef0ad20dda38ad5b7` on `main`.
+
+## Finer shared-name sharding trial (2026-11-01)
+
+- Commit `3adc71f` tested 256 shards x 1024 slots against qualified `9b6c256` (128 x 2048); total slot capacity unchanged. CI baseline was updated to compare directly against this qualified champion.
+- [CI 41293164374](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41293164374) passed full seed-1 SHA-256, full holdouts 11/29, adversarial overflow and collision cases, ASan/UBSan/TSan, pinned offline Docker and sandbox.
+- Direct 12-trial full-PGO paired medians **64.069 -> 63.938 ms**, cgroup peak **11,098,112 -> 11,546,624 B**; unchanged source S (540 physical lines) and D=1. Complete-K runner proxy **-0.69%**. Rejected despite 0.20% faster T.
+- Earlier 16-row batch trial [CI 41288724025](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41288724025) also completed successfully, resolving its previous CI-visibility blocker; no direct complete-K evidence justified promotion.
+- Restored exact qualified six-worker source blob `1cfd7405b24cfff6f855f16ef0ad20dda38ad5b7`; no redundant restoration CI. Official scoring-box measurements remain Luna's responsibility.

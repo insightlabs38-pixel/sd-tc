@@ -87,8 +87,8 @@ static uint32_t raw_hash(const char *p, size_t n, const char *end) {
 }
 
 struct SharedNames {
-    static constexpr unsigned shard_bits = 8;
-    static constexpr size_t slots_per_shard = 1 << 10;
+    static constexpr unsigned shard_bits = 7;
+    static constexpr size_t slots_per_shard = 1 << 11;
     static uint32_t spread(uint32_t h) { return h ^ (h >> 11) ^ (h >> 22); }
     static uint32_t tag(const Field &f) {
         return (f.hash & 0xfffc0000U) | ((f.raw_len <= 32 ? f.raw_len : 63U) << 12);
@@ -360,8 +360,8 @@ static Field text_pair(const char *&p, const char *end, uint32_t &name_len,
                 name_len = static_cast<uint32_t>(finish - start) - total / 2 - quoted;
                 name.hash = raw_hash(name.raw, name.raw_len, end);
                 uint32_t spread = SharedNames::spread(name.hash);
-                auto &shard = shared.shards[spread & 255];
-                __builtin_prefetch(&shard.index[(spread >> 8) & (SharedNames::slots_per_shard - 1)], 0, 1);
+                auto &shard = shared.shards[spread & 127];
+                __builtin_prefetch(&shard.index[(spread >> 7) & (SharedNames::slots_per_shard - 1)], 0, 1);
                 name_quotes = total;
                 start = finish + 1;
                 have_name = true;
