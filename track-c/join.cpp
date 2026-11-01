@@ -338,10 +338,8 @@ static void comma(const char *&p, const char *end) {
     if (p == end || *p++ != ',') throw std::runtime_error("missing comma");
 }
 static void newline(const char *&p, const char *end) {
-    if (p < end && *p == '\r') ++p;
-    if (p < end) {
-        if (*p++ != '\n') throw std::runtime_error("missing LF");
-    }
+    p += (p < end && *p == '\r');
+    if (p < end && *p++ != '\n') throw std::runtime_error("missing LF");
 }
 static void bom(const char *&p, const char *end) {
     if (end - p >= 3 && static_cast<unsigned char>(p[0]) == 0xef &&
