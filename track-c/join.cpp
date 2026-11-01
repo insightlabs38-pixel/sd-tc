@@ -378,41 +378,56 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
         uint32_t name_len, note_len;
         unsigned group;
     };
-    static_assert(sizeof(Pending) == 48, "compact pending row");
+    struct Entry {
+        Pending row{};
+        SharedNames::Slot *slot = nullptr;
+    };
+    constexpr unsigned lag = 32, window = lag * 2;
+    static_assert((window & (window - 1)) == 0);
+    std::array<Entry, window> ring{};
+    const char *reclaimed = p;
+    const char *safe = p;
+    size_t n = 0;
+    auto retire = [&](size_t i) {
+        Entry &e = ring[i & (window - 1)];
+        const Pending &r = e.row;
+        w.groups[r.group].add(r.id, r.amount, r.name_len, r.note_len,
+                               shared.first(r.name, r.group, e.slot, end));
+        safe = r.name.raw;
+    };
+    auto intern = [&](size_t i) {
+        Entry &e = ring[i & (window - 1)];
+        e.slot = shared.prepare(e.row.name);
+        if (e.slot) {
+            __builtin_prefetch(e.slot, 0, 3);
+            shared.prefetch_seen(e.slot, e.row.group);
+        }
+    };
     try {
-        std::array<Pending, 32> batch;
-        std::array<SharedNames::Slot *, 32> slots;
-        const char *reclaimed = p;
         while (p < end) {
-            unsigned count = 0;
-            do {
-                bom(p, end);
-                uint64_t id = number(p, end);
-                comma(p, end);
-                uint32_t name_len, note_len;
-                Field name = text_pair(p, end, name_len, note_len, shared);
-                uint64_t region = number(p, end);
-                uint32_t region_key = region < regions.size()
-                                          ? static_cast<uint32_t>(region) : UINT32_MAX;
-                if (region_key != UINT32_MAX) __builtin_prefetch(&regions[region_key], 0, 1);
-                comma(p, end);
-                int64_t amount = cents(p, end);
-                unsigned group = region_key != UINT32_MAX && regions[region_key] != UINT8_MAX
-                                     ? regions[region_key] : unmatched;
-                SharedNames::Slot *slot = shared.prepare(name);
-                if (slot) {
-                    __builtin_prefetch(slot, 0, 3);
-                    shared.prefetch_seen(slot, group);
-                }
-                newline(p, end);
-                batch[count] = Pending{id, amount, name, name_len, note_len, group};
-                slots[count++] = slot;
-            } while (count < batch.size() && p < end);
-            for (unsigned i = 0; i < count; ++i) {
-                const Pending &r = batch[i];
-                w.groups[r.group].add(r.id, r.amount, r.name_len, r.note_len, shared.first(r.name, r.group, slots[i], end));
-            }
-            if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
+            if (n >= window) retire(n - window);
+            if (n >= lag) intern(n - lag);
+            bom(p, end);
+            uint64_t id = number(p, end);
+            comma(p, end);
+            uint32_t name_len, note_len;
+            Field name = text_pair(p, end, name_len, note_len, shared);
+            uint64_t region = number(p, end);
+            uint32_t region_key = region < regions.size()
+                                      ? static_cast<uint32_t>(region) : UINT32_MAX;
+            if (region_key != UINT32_MAX) __builtin_prefetch(&regions[region_key], 0, 1);
+            comma(p, end);
+            int64_t amount = cents(p, end);
+            unsigned group = region_key != UINT32_MAX && regions[region_key] != UINT8_MAX
+                                 ? regions[region_key] : unmatched;
+            newline(p, end);
+            ring[n & (window - 1)].row = Pending{id, amount, name, name_len, note_len, group};
+            ++n;
+            if (safe - reclaimed >= (1 << 20)) discard_consumed(reclaimed, safe);
+        }
+        for (size_t i = n; i < n + window; ++i) {
+            if (i >= window && i - window < n) retire(i - window);
+            if (i >= lag && i - lag < n) intern(i - lag);
         }
     } catch (...) { w.error = std::current_exception(); }
 }
