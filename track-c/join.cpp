@@ -325,7 +325,7 @@ struct Worker {
 };
 
 __attribute__((target("pclmul")))
-static Field text_pair(const char *&p, const char *end, uint32_t &name_len,
+static Field text_pair_slow(const char *&p, const char *end, uint32_t &name_len,
                        uint32_t &note_len, SharedNames &shared) {
     const char *start = p;
     Field name{};
@@ -376,6 +376,42 @@ static Field text_pair(const char *&p, const char *end, uint32_t &name_len,
         quote_total += __builtin_popcountll(quotes);
     }
     throw std::runtime_error("missing text delimiters");
+}
+
+
+static Field text_pair(const char *&p,const char *end,
+                       uint32_t &name_len,uint32_t &note_len,SharedNames &shared) {
+    if (end-p>=64 && *p=='"') {
+        const __m256i quotes=_mm256_set1_epi8('"');
+        __m256i x=_mm256_loadu_si256(reinterpret_cast<const __m256i*>(p));
+        __m256i y=_mm256_loadu_si256(reinterpret_cast<const __m256i*>(p+32));
+        uint64_t mask=static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(x,quotes))) |
+             (uint64_t(static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(y,quotes))))<<32);
+        mask &= ~uint64_t(1); // the initial quote is structural
+        if (mask) {
+            unsigned end_name=static_cast<unsigned>(__builtin_ctzll(mask));
+            if (end_name<61 && p[end_name+1]==',') {
+                unsigned start_note=end_name+2;
+                if (p[start_note]=='"') {
+                    uint64_t future=mask & (UINT64_MAX << (start_note+1));
+                    if (future) {
+                        unsigned end_note=static_cast<unsigned>(__builtin_ctzll(future));
+                        if (end_note<63 && p[end_note+1]==',') {
+                            name_len=end_name-1;
+                            note_len=end_note-start_note-1;
+                            Field name{p+1,name_len,raw_hash(p+1,name_len,end)};
+                            uint32_t h=SharedNames::spread(name.hash);
+                            auto &shard=shared.shards[h & 127];
+                            __builtin_prefetch(&shard.index[(h>>7)&(SharedNames::slots_per_shard-1)],0,1);
+                            p+=end_note+2;
+                            return name;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return text_pair_slow(p,end,name_len,note_len,shared);
 }
 
 __attribute__((target("pclmul")))
