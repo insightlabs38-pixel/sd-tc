@@ -417,8 +417,8 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
     };
     static_assert(sizeof(Pending) == 48, "compact pending row");
     try {
-        std::array<Pending, 32> batch;
-        std::array<SharedNames::Slot *, 32> slots;
+        std::array<Pending, 128> batch;
+        std::array<SharedNames::Slot *, 128> slots;
         const char *reclaimed = p;
         while (p < end) {
             unsigned count = 0;
@@ -436,15 +436,17 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 int64_t amount = cents(p, end);
                 unsigned group = region_key != UINT32_MAX && regions[region_key] != UINT8_MAX
                                      ? regions[region_key] : unmatched;
-                SharedNames::Slot *slot = shared.prepare(name);
-                if (slot) {
-                    __builtin_prefetch(slot, 0, 3);
-                    __builtin_prefetch(&slot->seen[group >> 6], 1, 3);
-                }
                 newline(p, end);
-                batch[count] = Pending{id, amount, name, name_len, note_len, group};
-                slots[count++] = slot;
+                batch[count++] = Pending{id, amount, name, name_len, note_len, group};
             } while (count < batch.size() && p < end);
+            // Parse ahead, then resolve and prefetch the exact-name dictionary.
+            for (unsigned i = 0; i < count; ++i) {
+                slots[i] = shared.prepare(batch[i].name);
+                if (slots[i]) {
+                    __builtin_prefetch(slots[i], 0, 3);
+                    __builtin_prefetch(&slots[i]->seen[batch[i].group >> 6], 1, 3);
+                }
+            }
             for (unsigned i = 0; i < count; ++i) {
                 const Pending &r = batch[i];
                 w.groups[r.group].add(r.id, r.amount, r.name_len, r.note_len, shared.first(r.name, r.group, slots[i], end));
