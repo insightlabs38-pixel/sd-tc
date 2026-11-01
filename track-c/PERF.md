@@ -401,3 +401,11 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Direct 128-row champion full-PGO paired median **73.576 -> 74.033 ms** (+0.62% T), cgroup **11,022,336 -> 11,034,624 bytes** (+0.11% M). Source-only median 79.616 -> 80.023 ms.
 - Physical source 569 -> 578 lines, D=1; approximate complete-K proxy **-0.57%** using physical-line S. Four-vCPU runner does not establish six-P-core results, but there is no qualifying gain. Rejected.
 - Restored exact qualified source blob cf7e7c3fb12a6054836d5010c391cb63c59e0c48 in 0659a0d; no redundant restoration CI. Further scheduling sweeps are lower priority than parser/dictionary architecture.
+
+## Compact 56-byte exact-name slot promotion (2026-11-01)
+
+- Candidate [cdc22e6](https://github.com/insightlabs38-pixel/sd-tc/commit/cdc22e6bceab01a68cf0c5cf4f050fb9c38e7d1f) changes shared-name slots from 64 to 56 bytes: 24 inline key bytes, pointer-backed exact longer keys, unchanged 256-bit per-name country membership. Masked AVX2 load avoids reading concurrently modified membership bits.
+- [CI 41327676936](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41327676936), attempts 1 and 2, passed full seed-1 SHA-256, independent full holdouts 11/29, hostile collision/24-25-byte cutoff/long-name tests, ASan/UBSan/TSan, pinned offline Docker and sandbox.
+- Direct qualified 128-row full-PGO 12-trial paired medians: **100.018 -> 100.033 ms** and **46.725 -> 45.896 ms**; cgroup **11,016,192 -> 10,240,000 B** and **11,067,392 -> 10,237,952 B** (7.0%/7.5% lower). Runner hosts varied substantially; compare paired results, not absolute times.
+- Physical source 569 -> 570 lines, D=1. Approximate complete-K runner proxies **+1.44% / +2.46%** using physical-line S. This is not an official six-P-core T/M/S/D/K measurement.
+- **Promoted development champion** source blob d5e0becb4a61f7363c4d1a94c73dd83dcb69436a. Qualified 64-byte-slot rollback blob cf7e7c3fb12a6054836d5010c391cb63c59e0c48 retained in 4bcec24; Luna controls official scoring and submission.
