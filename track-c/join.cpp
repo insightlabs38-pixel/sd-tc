@@ -341,8 +341,6 @@ static Field text_pair(const char *&p, const char *end, uint32_t &name_len,
         __m256i b = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(load + 32));
         uint64_t quotes = static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(a, quote))) |
             (uint64_t(static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(b, quote)))) << 32);
-        uint64_t commas = static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(a, comma))) |
-            (uint64_t(static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(b, comma)))) << 32);
         // Four structural quotes certify two unescaped quoted fields.
         if (block == p && (quotes & 1)) {
             uint64_t q = quotes & ~uint64_t(1);
@@ -370,6 +368,8 @@ static Field text_pair(const char *&p, const char *end, uint32_t &name_len,
                 }
             }
         }
+        uint64_t commas = static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(a, comma))) |
+            (uint64_t(static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(b, comma)))) << 32);
         uint64_t inside = static_cast<uint64_t>(_mm_cvtsi128_si64(_mm_clmulepi64_si128(
             _mm_cvtsi64_si128(quotes), _mm_set1_epi32(-1), 0)));
         inside ^= carry;
