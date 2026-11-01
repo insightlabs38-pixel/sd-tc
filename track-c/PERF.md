@@ -232,3 +232,10 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Paired full-PGO 12-trial medians versus qualified `3519869c`: **65.070 -> 64.236 ms** and **78.833 -> 77.788 ms**; cgroup peaks **10,487,808 -> 10,473,472 B** and **10,498,048 -> 10,467,328 B**.
 - Physical source lines **544 -> 543**, D=1; complete-K runner proxies **+0.70% / +0.76%**. Source-only binaries regressed 71.330 -> 72.548 ms and 87.376 -> 88.580 ms, so promotion is specific to the pinned full-PGO release.
 - Promoted twice-qualified source blob `b31de39258eec335f79e14a0568a325d4ad2c732` (commit `981d23c`). Official six-P-core T/M/S/D/K still requires Luna; official BEST remains K=21.757571.
+
+## Compact 48-byte aggregate-cell trial (2026-11-01)
+
+- [CI 41261785510](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41261785510) passed full seed-1 SHA-256, holdout seeds 11/29, hostile cases, ASan/UBSan/TSan, pinned offline Docker and sandbox.
+- Narrowed spec-bounded count, distinct and byte-length accumulators to 32 bits, reducing each worker's aggregate cell from 64 to 48 bytes without narrowing 64-bit id or money totals.
+- Direct qualified-champion full-PGO paired median **78.186 -> 78.993 ms**, cgroup **10,500,096 -> 10,498,048 B**, physical source **543 -> 544 lines**, D=1; estimated complete-K proxy **-0.54%**.
+- Source-only **87.537 -> 87.603 ms**. Rejected: aggregate cells are not the dominant cache-pressure source; restored byte-identical qualified source blob `b31de39258eec335f79e14a0568a325d4ad2c732`. No redundant restoration CI.
