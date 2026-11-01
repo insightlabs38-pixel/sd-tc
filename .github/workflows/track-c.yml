@@ -23,7 +23,7 @@ jobs:
         run: python3 tests/test_track_c.py
       - name: Paired full-scale runtime and RSS comparison
         run: |
-          git show cdc22e6bceab01a68cf0c5cf4f050fb9c38e7d1f:track-c/join.cpp > /tmp/sd-track-c-baseline.cpp
+          git show 220f94068151bdafed4c5a705a6186a01e14cf9c:track-c/join.cpp > /tmp/sd-track-c-baseline.cpp
           g++ -O3 -march=x86-64-v3 -std=c++17 -DNDEBUG -flto -pthread -Wall -Wextra -Werror \
             -o /tmp/sd-track-c-baseline /tmp/sd-track-c-baseline.cpp
           wc -l /tmp/sd-track-c-baseline.cpp track-c/join.cpp
@@ -63,7 +63,7 @@ jobs:
       - name: Paired full-PGO architecture comparison
         run: |
           staging=$(mktemp -d)
-          git show cdc22e6bceab01a68cf0c5cf4f050fb9c38e7d1f:track-c/join.cpp > "$staging/join.cpp"
+          git show 220f94068151bdafed4c5a705a6186a01e14cf9c:track-c/join.cpp > "$staging/join.cpp"
           cp track-c/Dockerfile track-c/generator.py "$staging/"
           docker build --network=none -t sd-track-c:previous-pgo "$staging"
           container_id=$(docker create sd-track-c:previous-pgo)
