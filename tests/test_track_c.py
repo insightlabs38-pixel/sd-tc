@@ -239,8 +239,9 @@ def split_boundary_stress():
         rows.extend(b"\r\n" if i % 2 else b"\n")
     start = len(header)
     workers = int(BIN.read_text().split("unsigned threads = end - p < (1 << 20) ? 1 : ")[1].split(";")[0])
-    if not any(long_start < start + (len(rows) - start) * i // workers < long_end
-               for i in range(1, workers)):
+    pieces = workers * 8
+    if not any(long_start < start + (len(rows) - start) * i // pieces < long_end
+               for i in range(1, pieces)):
         raise AssertionError("long quoted record missed actual worker partition boundary")
     DATA.joinpath("records.csv").write_bytes(rows)
     check_case("long-quoted-record-crosses-worker-boundary")
