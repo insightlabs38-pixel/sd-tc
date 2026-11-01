@@ -409,3 +409,11 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Direct qualified 128-row full-PGO 12-trial paired medians: **100.018 -> 100.033 ms** and **46.725 -> 45.896 ms**; cgroup **11,016,192 -> 10,240,000 B** and **11,067,392 -> 10,237,952 B** (7.0%/7.5% lower). Runner hosts varied substantially; compare paired results, not absolute times.
 - Physical source 569 -> 570 lines, D=1. Approximate complete-K runner proxies **+1.44% / +2.46%** using physical-line S. This is not an official six-P-core T/M/S/D/K measurement.
 - **Promoted development champion** source blob d5e0becb4a61f7363c4d1a94c73dd83dcb69436a. Qualified 64-byte-slot rollback blob cf7e7c3fb12a6054836d5010c391cb63c59e0c48 retained in 4bcec24; Luna controls official scoring and submission.
+
+## 48-byte exact-name slot trial (2026-11-01)
+
+- Candidate [1909d03](https://github.com/insightlabs38-pixel/sd-tc/commit/1909d036db4f415c25c3314c3b29ef7bbb4c75e5): 16-byte SSE inline keys, exact pointer-backed longer keys, 48-byte slots versus the qualified 56-byte champion.
+- [CI 41331560100](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41331560100) passed full seed-1 SHA, holdouts 11/29, hostile name/collision cases, ASan/UBSan/TSan, pinned offline Docker and sandbox.
+- Direct champion full-PGO 12-trial paired median **74.787 -> 77.278 ms** (+3.33% T); cgroup peak **10,381,312 -> 10,502,144 B** (+1.16% M); physical C++ lines **570 -> 569**, D=1.
+- Approximate complete-K runner proxy **-1.83%**, including T/M/S/D; not official scoring-box evidence. Extra arena copies for 17..24-byte keys plausibly offset the smaller slots.
+- **Rejected.** Restored exact qualified champion blob `d5e0becb4a61f7363c4d1a94c73dd83dcb69436a` in `62067a8`; no redundant restoration CI.
