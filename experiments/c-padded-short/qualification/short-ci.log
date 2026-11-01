@@ -1,0 +1,1027 @@
+verify	Set up job	﻿2026-10-31T23:18:10.8474919Z Current runner version: '2.338.2'
+verify	Set up job	2026-10-31T23:18:10.8497737Z ##[group]Runner Image Provisioner
+verify	Set up job	2026-10-31T23:18:10.8498535Z Hosted Compute Agent
+verify	Set up job	2026-10-31T23:18:10.8499091Z Version: 20261021.618
+verify	Set up job	2026-10-31T23:18:10.8499644Z Commit: 21505ad2541d5be6135ed84fc33697146cf75b8e
+verify	Set up job	2026-10-31T23:18:10.8500267Z Build Date: 2026-10-21T00:45:21Z
+verify	Set up job	2026-10-31T23:18:10.8500943Z Worker ID: {fec810c7-1379-41bf-b2f7-503d1f506991}
+verify	Set up job	2026-10-31T23:18:10.8501552Z Region: westus2
+verify	Set up job	2026-10-31T23:18:10.8502000Z Cloud: Azure
+verify	Set up job	2026-10-31T23:18:10.8502531Z ##[endgroup]
+verify	Set up job	2026-10-31T23:18:10.8503854Z ##[group]Operating System
+verify	Set up job	2026-10-31T23:18:10.8504562Z Ubuntu
+verify	Set up job	2026-10-31T23:18:10.8505005Z 24.04.5
+verify	Set up job	2026-10-31T23:18:10.8505422Z LTS
+verify	Set up job	2026-10-31T23:18:10.8505925Z ##[endgroup]
+verify	Set up job	2026-10-31T23:18:10.8506393Z ##[group]Runner Image
+verify	Set up job	2026-10-31T23:18:10.8506974Z Image: ubuntu-24.04
+verify	Set up job	2026-10-31T23:18:10.8507652Z Version: 20261025.353.1
+verify	Set up job	2026-10-31T23:18:10.8508572Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261025.353/images/ubuntu/Ubuntu2404-Readme.md
+verify	Set up job	2026-10-31T23:18:10.8510560Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261025.353
+verify	Set up job	2026-10-31T23:18:10.8511508Z ##[endgroup]
+verify	Set up job	2026-10-31T23:18:10.8512518Z ##[group]GITHUB_TOKEN Permissions
+verify	Set up job	2026-10-31T23:18:10.8514545Z Contents: read
+verify	Set up job	2026-10-31T23:18:10.8515071Z Metadata: read
+verify	Set up job	2026-10-31T23:18:10.8515588Z Packages: read
+verify	Set up job	2026-10-31T23:18:10.8516148Z ##[endgroup]
+verify	Set up job	2026-10-31T23:18:10.8518150Z Secret source: Actions
+verify	Set up job	2026-10-31T23:18:10.8519028Z Cache mode: write
+verify	Set up job	2026-10-31T23:18:10.8519606Z Prepare workflow directory
+verify	Set up job	2026-10-31T23:18:10.8736544Z Prepare all required actions
+verify	Set up job	2026-10-31T23:18:10.8766678Z Getting action download info
+verify	Set up job	2026-10-31T23:18:11.2011452Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+verify	Set up job	2026-10-31T23:18:11.3788334Z Complete job name: verify
+verify	Run actions/checkout@v4	﻿2026-10-31T23:18:11.4308711Z ##[group]Run actions/checkout@v4
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.4309119Z with:
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.4309340Z   fetch-depth: 0
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.4309608Z   repository: insightlabs38-pixel/sd-tc
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.4311523Z   token: ***
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.4311745Z   ssh-strict: true
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.4311976Z   ssh-user: git
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.4312208Z   persist-credentials: true
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.4312463Z   clean: true
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.4312697Z   sparse-checkout-cone-mode: true
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.4312967Z   fetch-tags: false
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.4313197Z   show-progress: true
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.4313431Z   lfs: false
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.4313651Z   submodules: false
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.4313887Z   set-safe-directory: true
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.4314154Z   allow-unsafe-pr-checkout: false
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.4314491Z ##[endgroup]
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6465201Z Syncing repository: insightlabs38-pixel/sd-tc
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6466172Z ##[group]Getting Git version info
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6466512Z Working directory is '/home/runner/work/sd-tc/sd-tc'
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6467214Z [command]/usr/bin/git version
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6551839Z git version 2.56.0
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6564230Z ##[endgroup]
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6573716Z Temporarily overriding HOME='/home/runner/work/_temp/b85ea4aa-bd5c-41fb-981a-8582fa25415b' before making global git config changes
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6574903Z Adding repository directory to the temporary git global config as a safe directory
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6577846Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/sd-tc/sd-tc
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6620701Z Deleting the contents of '/home/runner/work/sd-tc/sd-tc'
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6623694Z ##[group]Initializing the repository
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6626077Z [command]/usr/bin/git init /home/runner/work/sd-tc/sd-tc
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6734291Z hint: Using 'master' as the name for the initial branch. This default branch name
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6735077Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6735963Z hint: to use in all of your new repositories, which will suppress this warning,
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6736772Z hint: call:
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6737231Z hint:
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6737723Z hint: 	git config --global init.defaultBranch <name>
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6738211Z hint:
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6738594Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6739076Z hint: 'development'. The just-created branch can be renamed via this command:
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6739464Z hint:
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6739681Z hint: 	git branch -m <name>
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6739926Z hint:
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6740249Z hint: Disable this message with "git config set advice.defaultBranchName false"
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6745381Z Initialized empty Git repository in /home/runner/work/sd-tc/sd-tc/.git/
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6753995Z [command]/usr/bin/git remote add origin https://github.com/insightlabs38-pixel/sd-tc
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6795931Z ##[endgroup]
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6796637Z ##[group]Disabling automatic garbage collection
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6798562Z [command]/usr/bin/git config --local gc.auto 0
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6826031Z ##[endgroup]
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6826664Z ##[group]Setting up auth
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6830795Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.6860916Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.7184413Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.7219972Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.7401033Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.7435438Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.7612535Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.7651318Z ##[endgroup]
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.7651833Z ##[group]Fetching the repository
+verify	Run actions/checkout@v4	2026-10-31T23:18:11.7660535Z [command]/usr/bin/git -c protocol.version=2 fetch --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2304232Z From https://github.com/insightlabs38-pixel/sd-tc
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2305132Z  * [new branch]      frontier/c-byte-country-pipeline -> origin/frontier/c-byte-country-pipeline
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2306108Z  * [new branch]      frontier/c-dense-country-pipeline -> origin/frontier/c-dense-country-pipeline
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2307018Z  * [new branch]      frontier/c-padded-short-paths -> origin/frontier/c-padded-short-paths
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2308015Z  * [new branch]      frontier/c-slot-country-bits -> origin/frontier/c-slot-country-bits
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2308767Z  * [new branch]      frontier/c-structural64 -> origin/frontier/c-structural64
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2309499Z  * [new branch]      frontier/cacheline-table -> origin/frontier/cacheline-table
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2310401Z  * [new branch]      frontier/campaign-round2-checkpoint -> origin/frontier/campaign-round2-checkpoint
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2311271Z  * [new branch]      frontier/comma-scan     -> origin/frontier/comma-scan
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2311983Z  * [new branch]      frontier/half-control   -> origin/frontier/half-control
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2312729Z  * [new branch]      frontier/half-safe      -> origin/frontier/half-safe
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2313461Z  * [new branch]      frontier/inline-comma   -> origin/frontier/inline-comma
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2314240Z  * [new branch]      frontier/inline-names   -> origin/frontier/inline-names
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2315005Z  * [new branch]      frontier/inline-twelve  -> origin/frontier/inline-twelve
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2315984Z  * [new branch]      frontier/raw-name-hash  -> origin/frontier/raw-name-hash
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2316806Z  * [new branch]      frontier/round2-dense-eight -> origin/frontier/round2-dense-eight
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2317903Z  * [new branch]      frontier/round2-dense-inline -> origin/frontier/round2-dense-inline
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2318823Z  * [new branch]      frontier/round2-dense-twelve -> origin/frontier/round2-dense-twelve
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2319654Z  * [new branch]      frontier/round2-exact-key-wip -> origin/frontier/round2-exact-key-wip
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2320519Z  * [new branch]      frontier/round2-fused-numeric-pgo -> origin/frontier/round2-fused-numeric-pgo
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2321382Z  * [new branch]      frontier/round2-fused-quotes -> origin/frontier/round2-fused-quotes
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2322190Z  * [new branch]      frontier/round2-owner24-wip -> origin/frontier/round2-owner24-wip
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2323011Z  * [new branch]      frontier/round2-packed48-pgo -> origin/frontier/round2-packed48-pgo
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2323825Z  * [new branch]      frontier/round2-packet40-pgo -> origin/frontier/round2-packet40-pgo
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2324569Z  * [new branch]      frontier/round2-pgo     -> origin/frontier/round2-pgo
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2325292Z  * [new branch]      frontier/round2-pgo-twelve -> origin/frontier/round2-pgo-twelve
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2326049Z  * [new branch]      frontier/round2-pipeline -> origin/frontier/round2-pipeline
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2326827Z  * [new branch]      frontier/round2-quote-end-wip -> origin/frontier/round2-quote-end-wip
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2327781Z  * [new branch]      frontier/round2-reconciled-sse -> origin/frontier/round2-reconciled-sse
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2328561Z  * [new branch]      frontier/round2-swar    -> origin/frontier/round2-swar
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2329257Z  * [new branch]      frontier/shared-names   -> origin/frontier/shared-names
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2330252Z  * [new branch]      frontier/shared-six     -> origin/frontier/shared-six
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2330742Z  * [new branch]      frontier/shared-twelve  -> origin/frontier/shared-twelve
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2331176Z  * [new branch]      frontier/spec-raw       -> origin/frontier/spec-raw
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2331638Z  * [new branch]      frontier/speculative-split -> origin/frontier/speculative-split
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2332071Z  * [new branch]      main                    -> origin/main
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2332635Z  * [new branch]      research/c-architecture-breakthroughs-20261031 -> origin/research/c-architecture-breakthroughs-20261031
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2333680Z [command]/usr/bin/git branch --list --remote origin/frontier/c-padded-short-paths
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2350177Z   origin/frontier/c-padded-short-paths
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2356796Z [command]/usr/bin/git rev-parse refs/remotes/origin/frontier/c-padded-short-paths
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2383475Z 90da5461b0c806fafd172ef2f5ca42feb9e0fff8
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2392804Z ##[endgroup]
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2393238Z ##[group]Determining the checkout info
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2393884Z ##[endgroup]
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2395916Z [command]/usr/bin/git sparse-checkout disable
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2442750Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2474727Z ##[group]Checking out the ref
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2477434Z [command]/usr/bin/git checkout --progress --force -B frontier/c-padded-short-paths refs/remotes/origin/frontier/c-padded-short-paths
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2536732Z Switched to a new branch 'frontier/c-padded-short-paths'
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2541765Z branch 'frontier/c-padded-short-paths' set up to track 'origin/frontier/c-padded-short-paths'.
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2545431Z ##[endgroup]
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2583562Z [command]/usr/bin/git log -1 --format=%H
+verify	Run actions/checkout@v4	2026-10-31T23:18:12.2611295Z 90da5461b0c806fafd172ef2f5ca42feb9e0fff8
+verify	Prepare data and output mounts	﻿2026-10-31T23:18:12.2769599Z ##[group]Run sudo mkdir -p /data /out
+verify	Prepare data and output mounts	2026-10-31T23:18:12.2769961Z [36;1msudo mkdir -p /data /out[0m
+verify	Prepare data and output mounts	2026-10-31T23:18:12.2770283Z [36;1msudo chown "$(id -u):$(id -g)" /data /out[0m
+verify	Prepare data and output mounts	2026-10-31T23:18:12.2787901Z shell: /usr/bin/bash -e {0}
+verify	Prepare data and output mounts	2026-10-31T23:18:12.2788180Z ##[endgroup]
+verify	Differential oracle, tiny/sample/full seeds	﻿2026-10-31T23:18:12.2998393Z ##[group]Run python3 tests/test_track_c.py
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:12.2998729Z [36;1mpython3 tests/test_track_c.py[0m
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:12.3012165Z shell: /usr/bin/bash -e {0}
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:12.3012427Z ##[endgroup]
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:14.7821699Z worked-example: exact, 144 output bytes, sha256=72ed9e59bff2dad354a9fb4cbc2d4b102477f634230b47e86035864c88d27444
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:14.8028036Z quoted-bom-no-final-terminator: exact, 60 output bytes, sha256=0c084eef633858f79b023d1d767c8c474e73ad5c37f3f587c1145c3aa36e52ec
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:14.8236372Z colliding-name-hashes: exact, 30 output bytes, sha256=7f1663c6c185848cdcfeffd76a87c54c5ac6c930a726609e04254071a95834c0
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:14.8449805Z canonical-raw-name-equivalence: exact, 32 output bytes, sha256=e26766ec88917afefd9c0718502ba613c54bb0290a0e4d3f02de77fc996b3701
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:14.8656979Z wide-unknown-region-id: exact, 68 output bytes, sha256=e3a1aad8d6ae9bdaf4776c35c17c45e6d725a66ad7649f448d0fa22f04e2b1f6
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:14.8860908Z eight-digit-id-fast-path: exact, 38 output bytes, sha256=0e12e730cfd62e802a2eaa25d66db993367206f35136895305d7514aab17ab9f
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:14.9065422Z page-tail-empty-name-4095: exact, 32 output bytes, sha256=8a0eee218fc00b5628acf18501af35ebed20a11fdf77d2fceb115bf25fe180e3
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:14.9269109Z page-tail-empty-name-4096: exact, 32 output bytes, sha256=fe795b51905b072935c9d7b69a4a742ceb7e551be038801ddbece2201d5df78e
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:14.9472132Z page-tail-empty-name-4097: exact, 32 output bytes, sha256=7c99e0025034e7740269473067aaa37e7bf3b4ac933cdecbcedfa0d5bf4f95f4
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:14.9677494Z page-tail-empty-name-8192: exact, 32 output bytes, sha256=2ed3b30d126ceff96883ac5a2464d4af5997afdbf9ce0d912014b824c89bb60b
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:14.9883200Z quote-vector-boundary-and-escaped-pairs: exact, 79 output bytes, sha256=7452e0d9bf1d0f2e9ad8d4ee66a7cdf47c74a9ff5cccbcf16c309a9764d57d2e
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:15.1530532Z packed-metadata-lengths-and-full-hash-collisions: exact, 115 output bytes, sha256=26631f91ae32b799363bbfff3d21674175ee70f20c2b08e3525d0db689b96dfd
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:15.2511767Z long-quoted-record-crosses-worker-boundary: exact, 98 output bytes, sha256=e26343acbacaddb7d01c8c0a821f6e4861ddaee5caedda527083e01174421313
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:15.2565195Z huge-name-arena-1048593: exact, long name and worker boundaries
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:15.4858257Z huge-name-arena-16777233: exact, long name and worker boundaries
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:15.9390218Z sharded-name-table-grow: exact, 60 output bytes, sha256=f8af717c6731f00daf15d7be5e37cfb7bd589cfb4ddd005886fd10922fb286c5
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:16.4966280Z concentrated-name-shard-overflow: exact, 53 output bytes, sha256=36577573f422f84992a4ad96bf2f9187660d66a34bab1f3b387fdfe42e641146
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:16.6002239Z cross-worker-colliding-names: exact, 109 output bytes, sha256=34f1fa808d87d2639010072d341d574e18bd9e65d9cb6cb81be1fee2048917fe
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:16.6509515Z tiny-seed1: exact, 1195 output bytes, sha256=e4e43bc39920e9d446c3fcd700fdd35b3959e9495c6aaa738491df38a1aed733
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:16.7012119Z tiny-seed2: exact, 1191 output bytes, sha256=33751caa2d533502b540bad1ad914bce49118ca9732c89c37892541c91b6713a
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:16.7517706Z tiny-seed3: exact, 1193 output bytes, sha256=c080b7e7d70f1abe437c77e3f242007dd9d286e95b5ec56dc9d1127816e7a30a
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:19.1973969Z sample-seed2: exact, 15408 output bytes, sha256=f389938275df1b495a38c4375fe741795df180e64617e01e2cf77a95a56982a3
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:21.6603340Z sample-seed1: exact, 15415 output bytes, sha256=9035fed36823232dd41ae2d1b9d6d21aa7c73f49d8e95647e953a89d5ebe9a66
+verify	Differential oracle, tiny/sample/full seeds	2026-10-31T23:18:39.3665810Z full-seed1: exact, 17054 output bytes, sha256=d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536
+verify	Paired full-scale runtime and RSS comparison	﻿2026-10-31T23:18:39.3753905Z ##[group]Run git show f294a882897e2ceb940f8878306b30b80c5e9829:track-c/join.cpp > /tmp/sd-track-c-baseline.cpp
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:39.3754368Z [36;1mgit show f294a882897e2ceb940f8878306b30b80c5e9829:track-c/join.cpp > /tmp/sd-track-c-baseline.cpp[0m
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:39.3754884Z [36;1mg++ -O3 -march=x86-64-v3 -std=c++17 -DNDEBUG -flto -pthread -Wall -Wextra -Werror \[0m
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:39.3755166Z [36;1m  -o /tmp/sd-track-c-baseline /tmp/sd-track-c-baseline.cpp[0m
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:39.3755398Z [36;1mwc -l /tmp/sd-track-c-baseline.cpp track-c/join.cpp[0m
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:39.3755646Z [36;1mif cmp -s /tmp/sd-track-c-baseline.cpp track-c/join.cpp; then[0m
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:39.3755949Z [36;1m  echo "Source matches verified baseline; skip redundant paired timing"[0m
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:39.3756159Z [36;1melse[0m
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:39.3756299Z [36;1m  python3 tests/paired_benchmark.py[0m
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:39.3756451Z [36;1mfi[0m
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:39.3772674Z shell: /usr/bin/bash -e {0}
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:39.3772853Z ##[endgroup]
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:40.5349905Z   487 /tmp/sd-track-c-baseline.cpp
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:40.5350313Z   520 track-c/join.cpp
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:40.5350527Z  1007 total
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:40.6273158Z baseline trial=1 elapsed_ms=72.479 peak_rss_kib=18780
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:40.6911073Z current trial=1 elapsed_ms=63.636 peak_rss_kib=18392
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:40.7549592Z current trial=2 elapsed_ms=63.560 peak_rss_kib=44060
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:40.8325523Z baseline trial=2 elapsed_ms=77.480 peak_rss_kib=18652
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:40.9029920Z baseline trial=3 elapsed_ms=70.271 peak_rss_kib=18616
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:40.9658404Z current trial=3 elapsed_ms=62.587 peak_rss_kib=45132
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:41.0288456Z current trial=4 elapsed_ms=62.811 peak_rss_kib=44620
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:41.0999647Z baseline trial=4 elapsed_ms=70.946 peak_rss_kib=18780
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:41.1708526Z baseline trial=5 elapsed_ms=70.661 peak_rss_kib=18652
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:41.2343984Z current trial=5 elapsed_ms=63.293 peak_rss_kib=45172
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:41.3031720Z current trial=6 elapsed_ms=68.556 peak_rss_kib=42208
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:41.3814376Z baseline trial=6 elapsed_ms=78.069 peak_rss_kib=18780
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:41.4555569Z baseline trial=7 elapsed_ms=73.902 peak_rss_kib=19036
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:41.5224818Z current trial=7 elapsed_ms=66.719 peak_rss_kib=43368
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:41.5853382Z current trial=8 elapsed_ms=62.646 peak_rss_kib=44732
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:41.6586779Z baseline trial=8 elapsed_ms=73.138 peak_rss_kib=18980
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:41.7294643Z baseline trial=9 elapsed_ms=70.594 peak_rss_kib=18360
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:41.7915630Z current trial=9 elapsed_ms=61.916 peak_rss_kib=44712
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:41.8606028Z current trial=10 elapsed_ms=68.821 peak_rss_kib=43172
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:41.9344551Z baseline trial=10 elapsed_ms=73.674 peak_rss_kib=18836
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:42.0049845Z baseline trial=11 elapsed_ms=70.260 peak_rss_kib=19156
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:42.0673011Z current trial=11 elapsed_ms=62.166 peak_rss_kib=43912
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:42.1294549Z current trial=12 elapsed_ms=61.947 peak_rss_kib=44724
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:42.2009859Z baseline trial=12 elapsed_ms=71.303 peak_rss_kib=18388
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:42.2010288Z baseline median_ms=71.891 median_rss_kib=18780
+verify	Paired full-scale runtime and RSS comparison	2026-10-31T23:18:42.2010687Z current median_ms=63.052 median_rss_kib=44340
+verify	Verify source-only x86-64-v3 compiler compatibility	﻿2026-10-31T23:18:42.2086340Z ##[group]Run g++ -O3 -march=x86-64-v3 -std=c++17 -DNDEBUG -flto -pthread -static -o /tmp/sd-track-c-default track-c/join.cpp
+verify	Verify source-only x86-64-v3 compiler compatibility	2026-10-31T23:18:42.2086865Z [36;1mg++ -O3 -march=x86-64-v3 -std=c++17 -DNDEBUG -flto -pthread -static -o /tmp/sd-track-c-default track-c/join.cpp[0m
+verify	Verify source-only x86-64-v3 compiler compatibility	2026-10-31T23:18:42.2087430Z [36;1mpython3 -c 'from pathlib import Path; Path("/out/aggregates.txt").unlink(missing_ok=True)'[0m
+verify	Verify source-only x86-64-v3 compiler compatibility	2026-10-31T23:18:42.2087675Z [36;1m/tmp/sd-track-c-default[0m
+verify	Verify source-only x86-64-v3 compiler compatibility	2026-10-31T23:18:42.2087969Z [36;1mtest "$(sha256sum /out/aggregates.txt | cut -d' ' -f1)" = "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"[0m
+verify	Verify source-only x86-64-v3 compiler compatibility	2026-10-31T23:18:42.2104575Z shell: /usr/bin/bash -e {0}
+verify	Verify source-only x86-64-v3 compiler compatibility	2026-10-31T23:18:42.2104720Z ##[endgroup]
+verify	Unscored phase profile and worker-count comparison	﻿2026-10-31T23:18:44.0139123Z ##[group]Run python3 tests/profile_track_c.py
+verify	Unscored phase profile and worker-count comparison	2026-10-31T23:18:44.0139383Z [36;1mpython3 tests/profile_track_c.py[0m
+verify	Unscored phase profile and worker-count comparison	2026-10-31T23:18:44.0158168Z shell: /usr/bin/bash -e {0}
+verify	Unscored phase profile and worker-count comparison	2026-10-31T23:18:44.0158310Z ##[endgroup]
+verify	Unscored phase profile and worker-count comparison	2026-10-31T23:18:55.4531181Z workers=1 median_of_5 {'lookup': 1.215, 'boundary': 0.361, 'parse': 160.727, 'merge': 0.011, 'output': 0.397, 'total': 162.748, 'rss_kib': 13008}
+verify	Unscored phase profile and worker-count comparison	2026-10-31T23:18:55.4532563Z workers=2 median_of_5 {'lookup': 1.205, 'boundary': 0.368, 'parse': 87.965, 'merge': 0.022, 'output': 0.408, 'total': 89.945, 'rss_kib': 27848}
+verify	Unscored phase profile and worker-count comparison	2026-10-31T23:18:55.4533349Z workers=3 median_of_5 {'lookup': 1.219, 'boundary': 0.403, 'parse': 74.044, 'merge': 0.014, 'output': 0.413, 'total': 76.079, 'rss_kib': 38128}
+verify	Unscored phase profile and worker-count comparison	2026-10-31T23:18:55.4533951Z workers=4 median_of_5 {'lookup': 1.211, 'boundary': 0.375, 'parse': 57.116, 'merge': 0.014, 'output': 0.398, 'total': 59.156, 'rss_kib': 41276}
+verify	Unscored phase profile and worker-count comparison	2026-10-31T23:18:55.4534573Z workers=6 median_of_5 {'lookup': 1.2, 'boundary': 0.393, 'parse': 57.546, 'merge': 0.016, 'output': 0.402, 'total': 59.562, 'rss_kib': 45008}
+verify	Unscored phase profile and worker-count comparison	2026-10-31T23:18:55.4535238Z workers=8 median_of_5 {'lookup': 1.204, 'boundary': 0.4, 'parse': 58.563, 'merge': 0.018, 'output': 0.428, 'total': 60.624, 'rss_kib': 39428}
+verify	Unscored phase profile and worker-count comparison	2026-10-31T23:18:55.4535881Z workers=12 median_of_5 {'lookup': 1.248, 'boundary': 0.426, 'parse': 58.379, 'merge': 0.022, 'output': 0.405, 'total': 60.85, 'rss_kib': 45356}
+verify	Build pinned offline Docker context	﻿2026-10-31T23:18:55.4618769Z ##[group]Run docker build --network=none -t sd-track-c:ci track-c
+verify	Build pinned offline Docker context	2026-10-31T23:18:55.4619049Z [36;1mdocker build --network=none -t sd-track-c:ci track-c[0m
+verify	Build pinned offline Docker context	2026-10-31T23:18:55.4634524Z shell: /usr/bin/bash -e {0}
+verify	Build pinned offline Docker context	2026-10-31T23:18:55.4634658Z ##[endgroup]
+verify	Build pinned offline Docker context	2026-10-31T23:18:55.9828345Z #0 building with "default" instance using docker driver
+verify	Build pinned offline Docker context	2026-10-31T23:18:55.9828549Z 
+verify	Build pinned offline Docker context	2026-10-31T23:18:55.9828623Z #1 [internal] load build definition from Dockerfile
+verify	Build pinned offline Docker context	2026-10-31T23:18:55.9828796Z #1 transferring dockerfile: 1.02kB done
+verify	Build pinned offline Docker context	2026-10-31T23:18:55.9828941Z #1 DONE 0.0s
+verify	Build pinned offline Docker context	2026-10-31T23:18:55.9829003Z 
+verify	Build pinned offline Docker context	2026-10-31T23:18:55.9829225Z #2 [internal] load metadata for docker.io/library/python:3.13-slim@sha256:d98cc29d3266e535dd9da1099688d9cb3ca4753813571e071763d17725460962
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.1991930Z #2 ...
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.1992069Z 
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.1992208Z #3 [auth] library/gcc:pull token for registry-1.docker.io
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.1992470Z #3 DONE 0.0s
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.1992550Z 
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.1992634Z #4 [auth] library/debian:pull token for registry-1.docker.io
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.1992855Z #4 DONE 0.0s
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.1992914Z 
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.1992997Z #5 [auth] library/python:pull token for registry-1.docker.io
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.1993160Z #5 DONE 0.0s
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.3493202Z 
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.3493613Z #6 [internal] load metadata for docker.io/library/gcc:15@sha256:eb5e64286ad47187b32bda75c6b6916166ecb41da56559b8b09e0001748d2cce
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.6311607Z #6 ...
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.6311714Z 
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.6312047Z #7 [internal] load metadata for docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.6312351Z #7 DONE 0.8s
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.7571220Z 
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.7571636Z #6 [internal] load metadata for docker.io/library/gcc:15@sha256:eb5e64286ad47187b32bda75c6b6916166ecb41da56559b8b09e0001748d2cce
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.7572103Z #6 DONE 0.9s
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.7572205Z 
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.7572532Z #2 [internal] load metadata for docker.io/library/python:3.13-slim@sha256:d98cc29d3266e535dd9da1099688d9cb3ca4753813571e071763d17725460962
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.7573041Z #2 DONE 0.9s
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.8712167Z 
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.8712543Z #8 [internal] load .dockerignore
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.8712812Z #8 transferring context: 2B done
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.8713100Z #8 DONE 0.0s
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.8713281Z 
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.8713437Z #9 [internal] load build context
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.8713681Z #9 transferring context: 37.98kB done
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.8713917Z #9 DONE 0.0s
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.8714080Z 
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.8714388Z #10 [training 1/3] FROM docker.io/library/python:3.13-slim@sha256:d98cc29d3266e535dd9da1099688d9cb3ca4753813571e071763d17725460962
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.8715104Z #10 resolve docker.io/library/python:3.13-slim@sha256:d98cc29d3266e535dd9da1099688d9cb3ca4753813571e071763d17725460962 done
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.8715576Z #10 sha256:d98cc29d3266e535dd9da1099688d9cb3ca4753813571e071763d17725460962 10.37kB / 10.37kB done
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.8716006Z #10 sha256:d879ed88565a7a3c614b980b369d4a5025a9d057b71f93d09fc6d0b2ca823a18 1.75kB / 1.75kB done
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.8716419Z #10 sha256:72036a705a7cff38924efd674e60654666cb283faf7b3fad160b34007f7395bd 5.51kB / 5.51kB done
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.8716828Z #10 sha256:f2be67225471500c788ce88c597eb5ea8336e912ad1ca4815650e0281afe2034 0B / 29.84MB 0.1s
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.8717401Z #10 sha256:bec94cf691b4dddfccfba1394c83bd789bbed4a1f7c336a67d42e2e4d38b8930 0B / 1.29MB 0.1s
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.8717853Z #10 sha256:e1f7d490169d660949e28a29d1d513760a431ac5cda9c666f3be44a4b7a42469 0B / 11.92MB 0.1s
+verify	Build pinned offline Docker context	2026-10-31T23:18:56.9718031Z #10 sha256:f2be67225471500c788ce88c597eb5ea8336e912ad1ca4815650e0281afe2034 29.84MB / 29.84MB 0.2s
+verify	Build pinned offline Docker context	2026-10-31T23:18:57.0729392Z #10 sha256:bec94cf691b4dddfccfba1394c83bd789bbed4a1f7c336a67d42e2e4d38b8930 1.29MB / 1.29MB 0.3s
+verify	Build pinned offline Docker context	2026-10-31T23:18:57.0730102Z #10 sha256:e1f7d490169d660949e28a29d1d513760a431ac5cda9c666f3be44a4b7a42469 11.92MB / 11.92MB 0.3s
+verify	Build pinned offline Docker context	2026-10-31T23:18:57.2751088Z #10 sha256:f2be67225471500c788ce88c597eb5ea8336e912ad1ca4815650e0281afe2034 29.84MB / 29.84MB 0.4s done
+verify	Build pinned offline Docker context	2026-10-31T23:18:57.2753254Z #10 sha256:bec94cf691b4dddfccfba1394c83bd789bbed4a1f7c336a67d42e2e4d38b8930 1.29MB / 1.29MB 0.4s done
+verify	Build pinned offline Docker context	2026-10-31T23:18:57.2754059Z #10 sha256:e1f7d490169d660949e28a29d1d513760a431ac5cda9c666f3be44a4b7a42469 11.92MB / 11.92MB 0.4s done
+verify	Build pinned offline Docker context	2026-10-31T23:18:57.2755953Z #10 extracting sha256:f2be67225471500c788ce88c597eb5ea8336e912ad1ca4815650e0281afe2034
+verify	Build pinned offline Docker context	2026-10-31T23:18:57.2756932Z #10 sha256:1972997cb12722025e38722a7ac2d1f2526e93b32650511f0da9153772c4fa86 250B / 250B 0.5s
+verify	Build pinned offline Docker context	2026-10-31T23:18:57.3751744Z #10 sha256:1972997cb12722025e38722a7ac2d1f2526e93b32650511f0da9153772c4fa86 250B / 250B 0.5s done
+verify	Build pinned offline Docker context	2026-10-31T23:18:58.0559283Z #10 extracting sha256:f2be67225471500c788ce88c597eb5ea8336e912ad1ca4815650e0281afe2034 0.7s done
+verify	Build pinned offline Docker context	2026-10-31T23:18:58.2757256Z #10 ...
+verify	Build pinned offline Docker context	2026-10-31T23:18:58.2758394Z 
+verify	Build pinned offline Docker context	2026-10-31T23:18:58.2759293Z #11 [stage-2 1/2] FROM docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad
+verify	Build pinned offline Docker context	2026-10-31T23:18:58.2760324Z #11 resolve docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad done
+verify	Build pinned offline Docker context	2026-10-31T23:18:58.2762649Z #11 sha256:f2be67225471500c788ce88c597eb5ea8336e912ad1ca4815650e0281afe2034 29.84MB / 29.84MB 0.4s done
+verify	Build pinned offline Docker context	2026-10-31T23:18:58.2764312Z #11 sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad 8.97kB / 8.97kB done
+verify	Build pinned offline Docker context	2026-10-31T23:18:58.2764769Z #11 sha256:4876fdea29cac1a33a3195f1eb1952feb1fca7dd6dd00be3e2f1879cf20d34d2 1.02kB / 1.02kB done
+verify	Build pinned offline Docker context	2026-10-31T23:18:58.2766191Z #11 sha256:133aec7ab1411181567fef7fc3f4512123e1f9660090b49851de4b698b4ff772 451B / 451B done
+verify	Build pinned offline Docker context	2026-10-31T23:18:58.2766660Z #11 extracting sha256:f2be67225471500c788ce88c597eb5ea8336e912ad1ca4815650e0281afe2034 0.7s done
+verify	Build pinned offline Docker context	2026-10-31T23:18:58.2767235Z #11 DONE 1.4s
+verify	Build pinned offline Docker context	2026-10-31T23:18:58.2767476Z 
+verify	Build pinned offline Docker context	2026-10-31T23:18:58.2767929Z #10 [training 1/3] FROM docker.io/library/python:3.13-slim@sha256:d98cc29d3266e535dd9da1099688d9cb3ca4753813571e071763d17725460962
+verify	Build pinned offline Docker context	2026-10-31T23:18:58.2768778Z #10 extracting sha256:bec94cf691b4dddfccfba1394c83bd789bbed4a1f7c336a67d42e2e4d38b8930
+verify	Build pinned offline Docker context	2026-10-31T23:18:58.4167729Z #10 extracting sha256:bec94cf691b4dddfccfba1394c83bd789bbed4a1f7c336a67d42e2e4d38b8930 0.1s done
+verify	Build pinned offline Docker context	2026-10-31T23:19:01.2367420Z #10 extracting sha256:e1f7d490169d660949e28a29d1d513760a431ac5cda9c666f3be44a4b7a42469
+verify	Build pinned offline Docker context	2026-10-31T23:19:01.5434385Z #10 extracting sha256:e1f7d490169d660949e28a29d1d513760a431ac5cda9c666f3be44a4b7a42469 0.4s done
+verify	Build pinned offline Docker context	2026-10-31T23:19:02.5504816Z #10 extracting sha256:1972997cb12722025e38722a7ac2d1f2526e93b32650511f0da9153772c4fa86
+verify	Build pinned offline Docker context	2026-10-31T23:19:02.6662630Z #10 extracting sha256:1972997cb12722025e38722a7ac2d1f2526e93b32650511f0da9153772c4fa86 done
+verify	Build pinned offline Docker context	2026-10-31T23:19:02.6663949Z #10 DONE 5.8s
+verify	Build pinned offline Docker context	2026-10-31T23:19:02.6664672Z 
+verify	Build pinned offline Docker context	2026-10-31T23:19:02.6665215Z #12 [training 2/3] COPY generator.py /generator.py
+verify	Build pinned offline Docker context	2026-10-31T23:19:02.6665807Z #12 DONE 0.0s
+verify	Build pinned offline Docker context	2026-10-31T23:19:02.6666056Z 
+verify	Build pinned offline Docker context	2026-10-31T23:19:02.6666367Z #13 [build 1/6] FROM docker.io/library/gcc:15@sha256:eb5e64286ad47187b32bda75c6b6916166ecb41da56559b8b09e0001748d2cce
+verify	Build pinned offline Docker context	2026-10-31T23:19:02.6667233Z #13 resolve docker.io/library/gcc:15@sha256:eb5e64286ad47187b32bda75c6b6916166ecb41da56559b8b09e0001748d2cce done
+verify	Build pinned offline Docker context	2026-10-31T23:19:02.6667998Z #13 sha256:df8a4d9d058f59c2a4ee8cca45e59cea987f442fdb348aa6258357886a13afa8 2.49kB / 2.49kB done
+verify	Build pinned offline Docker context	2026-10-31T23:19:02.6668970Z #13 sha256:43f51138b1cd8113a36a0a38d89243debb9da1dc64dff2d3f10e945f15eab0bd 7.46kB / 7.46kB done
+verify	Build pinned offline Docker context	2026-10-31T23:19:02.6669569Z #13 sha256:eb5e64286ad47187b32bda75c6b6916166ecb41da56559b8b09e0001748d2cce 7.63kB / 7.63kB done
+verify	Build pinned offline Docker context	2026-10-31T23:19:02.6670304Z #13 sha256:63040bd9752a74c5b1082903de92d441d30121f994018576b4a2f4cf8bb3bca4 25.64MB / 25.64MB 1.3s done
+verify	Build pinned offline Docker context	2026-10-31T23:19:02.6671217Z #13 sha256:7046f4e749f0e32d9fc67f654ad5e33cc555534f82a9971e45a00dbdb899e309 67.82MB / 67.82MB 1.4s
+verify	Build pinned offline Docker context	2026-10-31T23:19:02.6671969Z #13 sha256:8d0037029946d2c6dabce18eceda79c533c5797ed1ee86f94084cb8cddaeea91 49.39MB / 49.39MB 1.0s done
+verify	Build pinned offline Docker context	2026-10-31T23:19:02.6672908Z #13 extracting sha256:8d0037029946d2c6dabce18eceda79c533c5797ed1ee86f94084cb8cddaeea91 1.3s done
+verify	Build pinned offline Docker context	2026-10-31T23:19:02.6673698Z #13 sha256:992d9e06c2e85b99901bc1e8b27e557e9537e4d0eee8d4cdff13bc0f9bdee2e4 237.00MB / 237.00MB 4.2s done
+verify	Build pinned offline Docker context	2026-10-31T23:19:02.6674384Z #13 sha256:89609dd4f2480f888a687c4a426a0da6df53ce8433ff2d51962984ed305565ea 168.16MB / 168.16MB 4.2s done
+verify	Build pinned offline Docker context	2026-10-31T23:19:02.6675061Z #13 sha256:50bc7c381382ccc0ef2a6aca7edfe90ada5ce5432fc1b6bd15a815c01c6f748b 4.59MB / 4.59MB 1.5s done
+verify	Build pinned offline Docker context	2026-10-31T23:19:02.6675735Z #13 sha256:6d00483150ff167003da6b91eaf3c32f70e3165c244ddd7146c285fd424886eb 10.64kB / 10.64kB 1.8s done
+verify	Build pinned offline Docker context	2026-10-31T23:19:02.6676412Z #13 sha256:7141354ffcf765a5454476c2d38c2318eba54cc13a3fc5b6a04430064b940c2c 2.00kB / 2.00kB 2.1s done
+verify	Build pinned offline Docker context	2026-10-31T23:19:02.6677211Z #13 extracting sha256:63040bd9752a74c5b1082903de92d441d30121f994018576b4a2f4cf8bb3bca4 0.4s done
+verify	Build pinned offline Docker context	2026-10-31T23:19:02.6677854Z #13 extracting sha256:7046f4e749f0e32d9fc67f654ad5e33cc555534f82a9971e45a00dbdb899e309 0.1s
+verify	Build pinned offline Docker context	2026-10-31T23:19:04.1112698Z #13 extracting sha256:7046f4e749f0e32d9fc67f654ad5e33cc555534f82a9971e45a00dbdb899e309 1.4s done
+verify	Build pinned offline Docker context	2026-10-31T23:19:05.3399913Z #13 extracting sha256:992d9e06c2e85b99901bc1e8b27e557e9537e4d0eee8d4cdff13bc0f9bdee2e4
+verify	Build pinned offline Docker context	2026-10-31T23:19:09.3862917Z #13 extracting sha256:992d9e06c2e85b99901bc1e8b27e557e9537e4d0eee8d4cdff13bc0f9bdee2e4 3.9s done
+verify	Build pinned offline Docker context	2026-10-31T23:19:12.6865862Z #13 ...
+verify	Build pinned offline Docker context	2026-10-31T23:19:12.6866096Z 
+verify	Build pinned offline Docker context	2026-10-31T23:19:12.6866371Z #14 [training 3/3] RUN python3 /generator.py --seed 37 --scale full --out /training-data
+verify	Build pinned offline Docker context	2026-10-31T23:19:13.7211890Z #14 ...
+verify	Build pinned offline Docker context	2026-10-31T23:19:13.7212376Z 
+verify	Build pinned offline Docker context	2026-10-31T23:19:13.7213161Z #13 [build 1/6] FROM docker.io/library/gcc:15@sha256:eb5e64286ad47187b32bda75c6b6916166ecb41da56559b8b09e0001748d2cce
+verify	Build pinned offline Docker context	2026-10-31T23:19:13.7214065Z #13 extracting sha256:50bc7c381382ccc0ef2a6aca7edfe90ada5ce5432fc1b6bd15a815c01c6f748b
+verify	Build pinned offline Docker context	2026-10-31T23:19:13.9509898Z #13 extracting sha256:50bc7c381382ccc0ef2a6aca7edfe90ada5ce5432fc1b6bd15a815c01c6f748b 0.1s done
+verify	Build pinned offline Docker context	2026-10-31T23:19:14.2095873Z #13 extracting sha256:89609dd4f2480f888a687c4a426a0da6df53ce8433ff2d51962984ed305565ea
+verify	Build pinned offline Docker context	2026-10-31T23:19:16.2159193Z #13 extracting sha256:89609dd4f2480f888a687c4a426a0da6df53ce8433ff2d51962984ed305565ea 1.9s done
+verify	Build pinned offline Docker context	2026-10-31T23:19:18.9922314Z #13 ...
+verify	Build pinned offline Docker context	2026-10-31T23:19:18.9922545Z 
+verify	Build pinned offline Docker context	2026-10-31T23:19:18.9922798Z #14 [training 3/3] RUN python3 /generator.py --seed 37 --scale full --out /training-data
+verify	Build pinned offline Docker context	2026-10-31T23:19:18.9923072Z #14 DONE 16.4s
+verify	Build pinned offline Docker context	2026-10-31T23:19:19.1699227Z 
+verify	Build pinned offline Docker context	2026-10-31T23:19:19.1699805Z #13 [build 1/6] FROM docker.io/library/gcc:15@sha256:eb5e64286ad47187b32bda75c6b6916166ecb41da56559b8b09e0001748d2cce
+verify	Build pinned offline Docker context	2026-10-31T23:19:19.1700393Z #13 extracting sha256:6d00483150ff167003da6b91eaf3c32f70e3165c244ddd7146c285fd424886eb done
+verify	Build pinned offline Docker context	2026-10-31T23:19:19.1700950Z #13 extracting sha256:7141354ffcf765a5454476c2d38c2318eba54cc13a3fc5b6a04430064b940c2c done
+verify	Build pinned offline Docker context	2026-10-31T23:19:19.1701175Z #13 DONE 22.3s
+verify	Build pinned offline Docker context	2026-10-31T23:19:19.1701247Z 
+verify	Build pinned offline Docker context	2026-10-31T23:19:19.1701303Z #15 [build 2/6] WORKDIR /src
+verify	Build pinned offline Docker context	2026-10-31T23:19:19.1701439Z #15 DONE 0.0s
+verify	Build pinned offline Docker context	2026-10-31T23:19:19.1701499Z 
+verify	Build pinned offline Docker context	2026-10-31T23:19:19.1701554Z #16 [build 3/6] COPY join.cpp .
+verify	Build pinned offline Docker context	2026-10-31T23:19:19.1701676Z #16 DONE 0.0s
+verify	Build pinned offline Docker context	2026-10-31T23:19:19.1701736Z 
+verify	Build pinned offline Docker context	2026-10-31T23:19:19.1701874Z #17 [build 4/6] COPY --from=training /training-data /data
+verify	Build pinned offline Docker context	2026-10-31T23:19:20.3164682Z #17 DONE 1.1s
+verify	Build pinned offline Docker context	2026-10-31T23:19:20.4675322Z 
+verify	Build pinned offline Docker context	2026-10-31T23:19:20.4676123Z #18 [build 5/6] RUN g++ -O3 -march=x86-64-v3 -std=c++17 -DNDEBUG -flto -pthread -static -o /join-baseline join.cpp
+verify	Build pinned offline Docker context	2026-10-31T23:19:21.7236877Z #18 DONE 1.4s
+verify	Build pinned offline Docker context	2026-10-31T23:19:21.8750349Z 
+verify	Build pinned offline Docker context	2026-10-31T23:19:21.8751883Z #19 [build 6/6] RUN mkdir /out && g++ -O3 -march=x86-64-v3 -std=c++17 -DNDEBUG -flto -pthread -static -fprofile-generate=/profile -fprofile-update=atomic -o /join join.cpp && /join && g++ -O3 -march=x86-64-v3 -std=c++17 -DNDEBUG -flto -pthread -static -fprofile-use=/profile -fprofile-correction -Werror=missing-profile -Werror=coverage-mismatch -o /join join.cpp
+verify	Build pinned offline Docker context	2026-10-31T23:19:22.5935158Z #19 0.869 lto-wrapper: warning: using serial compilation of 2 LTRANS jobs
+verify	Build pinned offline Docker context	2026-10-31T23:19:22.5935528Z #19 0.869 lto-wrapper: note: see the '-flto' option documentation for more information
+verify	Build pinned offline Docker context	2026-10-31T23:19:25.6540590Z #19 DONE 3.9s
+verify	Build pinned offline Docker context	2026-10-31T23:19:26.0615061Z 
+verify	Build pinned offline Docker context	2026-10-31T23:19:26.0616635Z #20 [stage-2 2/2] COPY --from=build /join /join
+verify	Build pinned offline Docker context	2026-10-31T23:19:26.2226295Z #20 DONE 0.0s
+verify	Build pinned offline Docker context	2026-10-31T23:19:26.2226472Z 
+verify	Build pinned offline Docker context	2026-10-31T23:19:26.2226556Z #21 exporting to image
+verify	Build pinned offline Docker context	2026-10-31T23:19:26.2226751Z #21 exporting layers
+verify	Build pinned offline Docker context	2026-10-31T23:19:27.0046483Z #21 exporting layers 0.9s done
+verify	Build pinned offline Docker context	2026-10-31T23:19:27.0169587Z #21 writing image sha256:ff86abb8670702653258d1781c8533433173fc18de5f303ef9750860ae3d2ac1 done
+verify	Build pinned offline Docker context	2026-10-31T23:19:27.0170035Z #21 naming to docker.io/library/sd-track-c:ci done
+verify	Build pinned offline Docker context	2026-10-31T23:19:27.0170300Z #21 DONE 0.9s
+verify	Validate sandbox and full official hash	﻿2026-10-31T23:19:27.0254711Z ##[group]Run chmod 777 /out
+verify	Validate sandbox and full official hash	2026-10-31T23:19:27.0254894Z [36;1mchmod 777 /out[0m
+verify	Validate sandbox and full official hash	2026-10-31T23:19:27.0255026Z [36;1mrm -f /out/aggregates.txt[0m
+verify	Validate sandbox and full official hash	2026-10-31T23:19:27.0255230Z [36;1mdocker run --rm --network=none --read-only --memory=8g --cpus=4 \[0m
+verify	Validate sandbox and full official hash	2026-10-31T23:19:27.0255493Z [36;1m  --user 65534:65534 -v /data:/data:ro -v /out:/out:rw sd-track-c:ci[0m
+verify	Validate sandbox and full official hash	2026-10-31T23:19:27.0255732Z [36;1mtest "$(sha256sum /out/aggregates.txt | cut -d' ' -f1)" = \[0m
+verify	Validate sandbox and full official hash	2026-10-31T23:19:27.0255983Z [36;1m  "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"[0m
+verify	Validate sandbox and full official hash	2026-10-31T23:19:27.0256220Z [36;1mtest "$(find /out -maxdepth 1 -type f | wc -l)" -eq 1[0m
+verify	Validate sandbox and full official hash	2026-10-31T23:19:27.0271723Z shell: /usr/bin/bash -e {0}
+verify	Validate sandbox and full official hash	2026-10-31T23:19:27.0271859Z ##[endgroup]
+verify	Paired pinned-compiler PGO comparison	﻿2026-10-31T23:19:27.3131648Z ##[group]Run docker build --network=none --target build -t sd-track-c:pgo-build track-c
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.3132018Z [36;1mdocker build --network=none --target build -t sd-track-c:pgo-build track-c[0m
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.3132279Z [36;1mcontainer_id=$(docker create sd-track-c:pgo-build /bin/true)[0m
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.3132528Z [36;1mdocker cp "$container_id":/join-baseline /tmp/sd-track-c-baseline[0m
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.3132759Z [36;1mdocker cp "$container_id":/join /tmp/sd-track-c[0m
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.3132931Z [36;1mdocker rm "$container_id"[0m
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.3133084Z [36;1mpython3 tests/paired_benchmark.py[0m
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.3148179Z shell: /usr/bin/bash -e {0}
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.3148319Z ##[endgroup]
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.3921978Z #0 building with "default" instance using docker driver
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.3922208Z 
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.3922289Z #1 [internal] load build definition from Dockerfile
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5606051Z #1 transferring dockerfile: 1.02kB done
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5606573Z #1 DONE 0.0s
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5606682Z 
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5607152Z #2 [internal] load metadata for docker.io/library/python:3.13-slim@sha256:d98cc29d3266e535dd9da1099688d9cb3ca4753813571e071763d17725460962
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5608089Z #2 DONE 0.0s
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5608186Z 
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5608493Z #3 [internal] load metadata for docker.io/library/gcc:15@sha256:eb5e64286ad47187b32bda75c6b6916166ecb41da56559b8b09e0001748d2cce
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5608949Z #3 DONE 0.0s
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5609045Z 
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5609128Z #4 [internal] load .dockerignore
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5609344Z #4 transferring context: 2B done
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5609550Z #4 DONE 0.0s
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5609639Z 
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5609949Z #5 [training 1/3] FROM docker.io/library/python:3.13-slim@sha256:d98cc29d3266e535dd9da1099688d9cb3ca4753813571e071763d17725460962
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5610403Z #5 DONE 0.0s
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5610495Z 
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5610764Z #6 [build 1/6] FROM docker.io/library/gcc:15@sha256:eb5e64286ad47187b32bda75c6b6916166ecb41da56559b8b09e0001748d2cce
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5611186Z #6 DONE 0.0s
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5611280Z 
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5611357Z #7 [internal] load build context
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5611569Z #7 transferring context: 63B done
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5611959Z #7 DONE 0.0s
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5612055Z 
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5612136Z #8 [build 3/6] COPY join.cpp .
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5612360Z #8 CACHED
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5612483Z 
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5612681Z #9 [training 3/3] RUN python3 /generator.py --seed 37 --scale full --out /training-data
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5613017Z #9 CACHED
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5613113Z 
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5613260Z #10 [build 4/6] COPY --from=training /training-data /data
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5613509Z #10 CACHED
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5613627Z 
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5613784Z #11 [training 2/3] COPY generator.py /generator.py
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5614056Z #11 CACHED
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5614144Z 
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5614316Z #12 [build 2/6] WORKDIR /src
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5614842Z #12 CACHED
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5614986Z 
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5615264Z #13 [build 5/6] RUN g++ -O3 -march=x86-64-v3 -std=c++17 -DNDEBUG -flto -pthread -static -o /join-baseline join.cpp
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5615676Z #13 CACHED
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5615767Z 
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5616700Z #14 [build 6/6] RUN mkdir /out && g++ -O3 -march=x86-64-v3 -std=c++17 -DNDEBUG -flto -pthread -static -fprofile-generate=/profile -fprofile-update=atomic -o /join join.cpp && /join && g++ -O3 -march=x86-64-v3 -std=c++17 -DNDEBUG -flto -pthread -static -fprofile-use=/profile -fprofile-correction -Werror=missing-profile -Werror=coverage-mismatch -o /join join.cpp
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5618114Z #14 CACHED
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5618208Z 
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5618283Z #15 exporting to image
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:27.5618469Z #15 exporting layers
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:29.0077609Z #15 exporting layers 1.6s done
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:29.0194554Z #15 writing image sha256:8dc940ccc5e3c8e9cd09e68c3b319a5f6dd127df70e204ae1bf77cb2369d5e51 done
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:29.0199926Z #15 naming to docker.io/library/sd-track-c:pgo-build done
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:29.0200245Z #15 DONE 1.6s
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:29.0858967Z 9482419f40506cfdf5e839af6f89824b8935975d7f5174cca92eb70a1a74f911
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:29.1746161Z baseline trial=1 elapsed_ms=65.343 peak_rss_kib=30672
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:29.2344080Z current trial=1 elapsed_ms=59.594 peak_rss_kib=29636
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:29.2930800Z current trial=2 elapsed_ms=58.504 peak_rss_kib=30672
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:29.3551788Z baseline trial=2 elapsed_ms=61.878 peak_rss_kib=42516
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:29.4170805Z baseline trial=3 elapsed_ms=61.712 peak_rss_kib=16708
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:29.4762993Z current trial=3 elapsed_ms=59.037 peak_rss_kib=41228
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:29.5361518Z current trial=4 elapsed_ms=59.652 peak_rss_kib=29976
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:29.6035546Z baseline trial=4 elapsed_ms=67.192 peak_rss_kib=28448
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:29.6667684Z baseline trial=5 elapsed_ms=63.024 peak_rss_kib=30824
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:29.7274534Z current trial=5 elapsed_ms=60.472 peak_rss_kib=29516
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:29.7868448Z current trial=6 elapsed_ms=59.136 peak_rss_kib=29772
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:29.8498467Z baseline trial=6 elapsed_ms=62.826 peak_rss_kib=29096
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:29.9131232Z baseline trial=7 elapsed_ms=63.048 peak_rss_kib=41372
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:29.9738786Z current trial=7 elapsed_ms=60.573 peak_rss_kib=29396
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:30.0353364Z current trial=8 elapsed_ms=61.228 peak_rss_kib=39940
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:30.1007639Z baseline trial=8 elapsed_ms=65.226 peak_rss_kib=42240
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:30.1681436Z baseline trial=9 elapsed_ms=67.230 peak_rss_kib=28908
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:30.2310805Z current trial=9 elapsed_ms=62.725 peak_rss_kib=28476
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:30.2902479Z current trial=10 elapsed_ms=58.965 peak_rss_kib=42440
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:30.3517896Z baseline trial=10 elapsed_ms=61.330 peak_rss_kib=29876
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:30.4146796Z baseline trial=11 elapsed_ms=62.701 peak_rss_kib=30516
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:30.4740222Z current trial=11 elapsed_ms=59.139 peak_rss_kib=40792
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:30.5331506Z current trial=12 elapsed_ms=58.948 peak_rss_kib=42112
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:30.5953556Z baseline trial=12 elapsed_ms=62.008 peak_rss_kib=30692
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:30.5953939Z baseline median_ms=62.925 median_rss_kib=30594
+verify	Paired pinned-compiler PGO comparison	2026-10-31T23:19:30.5954202Z current median_ms=59.367 median_rss_kib=30324
+verify	Paired full-PGO architecture comparison	﻿2026-10-31T23:19:30.6031363Z ##[group]Run staging=$(mktemp -d)
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.6031679Z [36;1mstaging=$(mktemp -d)[0m
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.6032044Z [36;1mgit show f294a882897e2ceb940f8878306b30b80c5e9829:track-c/join.cpp > "$staging/join.cpp"[0m
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.6032491Z [36;1mcp track-c/Dockerfile track-c/generator.py "$staging/"[0m
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.6032874Z [36;1mdocker build --network=none -t sd-track-c:previous-pgo "$staging"[0m
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.6033248Z [36;1mcontainer_id=$(docker create sd-track-c:previous-pgo)[0m
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.6033500Z [36;1mdocker cp "$container_id":/join /tmp/sd-track-c-baseline[0m
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.6033683Z [36;1mdocker rm "$container_id"[0m
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.6033838Z [36;1mpython3 tests/paired_benchmark.py[0m
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.6049136Z shell: /usr/bin/bash -e {0}
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.6049294Z ##[endgroup]
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.6932349Z #0 building with "default" instance using docker driver
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.6932656Z 
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.6932788Z #1 [internal] load build definition from Dockerfile
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.6933121Z #1 DONE 0.0s
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8725140Z 
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8725532Z #1 [internal] load build definition from Dockerfile
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8725840Z #1 transferring dockerfile: 1.02kB done
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8726086Z #1 DONE 0.0s
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8726177Z 
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8726523Z #2 [internal] load metadata for docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8726968Z #2 DONE 0.0s
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8727033Z 
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8727410Z #3 [internal] load metadata for docker.io/library/python:3.13-slim@sha256:d98cc29d3266e535dd9da1099688d9cb3ca4753813571e071763d17725460962
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8727701Z #3 DONE 0.0s
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8727782Z 
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8727974Z #4 [internal] load metadata for docker.io/library/gcc:15@sha256:eb5e64286ad47187b32bda75c6b6916166ecb41da56559b8b09e0001748d2cce
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8728250Z #4 DONE 0.0s
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8728316Z 
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8728370Z #5 [internal] load .dockerignore
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8728516Z #5 transferring context: 2B done
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8728639Z #5 DONE 0.0s
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8728699Z 
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8728885Z #6 [training 1/3] FROM docker.io/library/python:3.13-slim@sha256:d98cc29d3266e535dd9da1099688d9cb3ca4753813571e071763d17725460962
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8729149Z #6 DONE 0.0s
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8729209Z 
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8729393Z #7 [stage-2 1/2] FROM docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8729657Z #7 DONE 0.0s
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8729712Z 
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8729876Z #8 [build 1/6] FROM docker.io/library/gcc:15@sha256:eb5e64286ad47187b32bda75c6b6916166ecb41da56559b8b09e0001748d2cce
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8730312Z #8 DONE 0.0s
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8730370Z 
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8730417Z #9 [internal] load build context
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8730553Z #9 transferring context: 35.89kB done
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8730685Z #9 DONE 0.0s
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8730743Z 
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8730812Z #10 [training 2/3] COPY generator.py /generator.py
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8730964Z #10 CACHED
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8731025Z 
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8731077Z #11 [build 2/6] WORKDIR /src
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8731195Z #11 CACHED
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8731253Z 
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8731381Z #12 [training 3/3] RUN python3 /generator.py --seed 37 --scale full --out /training-data
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8731586Z #12 CACHED
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8731644Z 
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8731695Z #13 [build 3/6] COPY join.cpp .
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8731820Z #13 DONE 0.0s
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8731881Z 
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:30.8731955Z #14 [build 4/6] COPY --from=training /training-data /data
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:31.5628355Z #14 DONE 0.8s
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:31.7138313Z 
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:31.7138932Z #15 [build 5/6] RUN g++ -O3 -march=x86-64-v3 -std=c++17 -DNDEBUG -flto -pthread -static -o /join-baseline join.cpp
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:33.0041597Z #15 DONE 1.4s
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:33.1549928Z 
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:33.1550849Z #16 [build 6/6] RUN mkdir /out && g++ -O3 -march=x86-64-v3 -std=c++17 -DNDEBUG -flto -pthread -static -fprofile-generate=/profile -fprofile-update=atomic -o /join join.cpp && /join && g++ -O3 -march=x86-64-v3 -std=c++17 -DNDEBUG -flto -pthread -static -fprofile-use=/profile -fprofile-correction -Werror=missing-profile -Werror=coverage-mismatch -o /join join.cpp
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:33.8598721Z #16 0.855 lto-wrapper: warning: using serial compilation of 2 LTRANS jobs
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:33.8599226Z #16 0.855 lto-wrapper: note: see the '-flto' option documentation for more information
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:36.9355179Z #16 DONE 3.9s
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:37.3035142Z 
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:37.3035837Z #7 [stage-2 1/2] FROM docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:37.3036396Z #7 CACHED
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:37.4677305Z 
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:37.4677800Z #17 [stage-2 2/2] COPY --from=build /join /join
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:37.4678017Z #17 DONE 0.0s
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:37.4678119Z 
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:37.4678170Z #18 exporting to image
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:37.4678294Z #18 exporting layers
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:38.0025626Z #18 exporting layers 0.7s done
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:38.0203023Z #18 writing image sha256:7f0d09cbb8caa8bbadbff91df96cbfc9c85721651c9061ae0d58819c056d2ea9 done
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:38.0203509Z #18 naming to docker.io/library/sd-track-c:previous-pgo done
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:38.0203773Z #18 DONE 0.7s
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:38.0674730Z 78f781d60674929e940b3714489cbcb007ab6578d62cc7f3d3d95f1ea9396008
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:38.1540706Z baseline trial=1 elapsed_ms=67.202 peak_rss_kib=16776
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:38.2204529Z current trial=1 elapsed_ms=66.188 peak_rss_kib=41140
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:38.2795636Z current trial=2 elapsed_ms=58.906 peak_rss_kib=29856
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:38.3547596Z baseline trial=2 elapsed_ms=74.980 peak_rss_kib=16776
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:38.4235482Z baseline trial=3 elapsed_ms=68.603 peak_rss_kib=16776
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:38.4842846Z current trial=3 elapsed_ms=60.558 peak_rss_kib=29360
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:38.5493534Z current trial=4 elapsed_ms=64.850 peak_rss_kib=27880
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:38.6165004Z baseline trial=4 elapsed_ms=66.960 peak_rss_kib=16776
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:38.6845522Z baseline trial=5 elapsed_ms=67.855 peak_rss_kib=16776
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:38.7431246Z current trial=5 elapsed_ms=58.388 peak_rss_kib=42764
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:38.8065045Z current trial=6 elapsed_ms=63.150 peak_rss_kib=40600
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:38.8754509Z baseline trial=6 elapsed_ms=68.755 peak_rss_kib=16776
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:38.9433830Z baseline trial=7 elapsed_ms=67.719 peak_rss_kib=16776
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:39.0031288Z current trial=7 elapsed_ms=59.546 peak_rss_kib=30904
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:39.0625168Z current trial=8 elapsed_ms=59.193 peak_rss_kib=29880
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:39.1329372Z baseline trial=8 elapsed_ms=70.229 peak_rss_kib=16904
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:39.2015382Z baseline trial=9 elapsed_ms=68.372 peak_rss_kib=16904
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:39.2608211Z current trial=9 elapsed_ms=59.073 peak_rss_kib=41928
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:39.3213402Z current trial=10 elapsed_ms=60.308 peak_rss_kib=42364
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:39.3961688Z baseline trial=10 elapsed_ms=74.642 peak_rss_kib=16904
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:39.4691182Z baseline trial=11 elapsed_ms=72.752 peak_rss_kib=16904
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:39.5279302Z current trial=11 elapsed_ms=58.587 peak_rss_kib=16904
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:39.5892021Z current trial=12 elapsed_ms=61.079 peak_rss_kib=41396
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:39.6584691Z baseline trial=12 elapsed_ms=69.079 peak_rss_kib=16904
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:39.6584987Z baseline median_ms=68.679 median_rss_kib=16776
+verify	Paired full-PGO architecture comparison	2026-10-31T23:19:39.6585158Z current median_ms=59.927 median_rss_kib=35752
+verify	Paired official BEST architecture comparison	﻿2026-10-31T23:19:39.6658264Z ##[group]Run staging=$(mktemp -d)
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.6658485Z [36;1mstaging=$(mktemp -d)[0m
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.6658738Z [36;1mgit show 59e47be4236db4fc246673fec87e25bbd7231780:track-c/join.cpp > "$staging/join.cpp"[0m
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.6659018Z [36;1mcp track-c/Dockerfile track-c/generator.py "$staging/"[0m
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.6659261Z [36;1mdocker build --network=none -t sd-track-c:official-best "$staging"[0m
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.6659524Z [36;1mcontainer_id=$(docker create sd-track-c:official-best)[0m
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.6659742Z [36;1mdocker cp "$container_id":/join /tmp/sd-track-c-baseline[0m
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.6659926Z [36;1mdocker rm "$container_id"[0m
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.6660079Z [36;1mpython3 tests/paired_benchmark.py[0m
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.6675294Z shell: /usr/bin/bash -e {0}
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.6675431Z ##[endgroup]
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.7419852Z #0 building with "default" instance using docker driver
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.7420431Z 
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.7420675Z #1 [internal] load build definition from Dockerfile
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.7420991Z #1 DONE 0.0s
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9201511Z 
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9201774Z #1 [internal] load build definition from Dockerfile
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9202171Z #1 transferring dockerfile: 1.02kB done
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9202401Z #1 DONE 0.0s
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9202552Z 
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9203007Z #2 [internal] load metadata for docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9203512Z #2 DONE 0.0s
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9203607Z 
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9203953Z #3 [internal] load metadata for docker.io/library/python:3.13-slim@sha256:d98cc29d3266e535dd9da1099688d9cb3ca4753813571e071763d17725460962
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9204426Z #3 DONE 0.0s
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9204520Z 
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9204820Z #4 [internal] load metadata for docker.io/library/gcc:15@sha256:eb5e64286ad47187b32bda75c6b6916166ecb41da56559b8b09e0001748d2cce
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9205244Z #4 DONE 0.0s
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9205353Z 
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9205438Z #5 [internal] load .dockerignore
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9205653Z #5 transferring context: 2B done
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9205784Z #5 DONE 0.0s
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9205841Z 
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9206036Z #6 [training 1/3] FROM docker.io/library/python:3.13-slim@sha256:d98cc29d3266e535dd9da1099688d9cb3ca4753813571e071763d17725460962
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9206309Z #6 DONE 0.0s
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9206368Z 
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9206554Z #7 [stage-2 1/2] FROM docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9206820Z #7 DONE 0.0s
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9206878Z 
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9207041Z #8 [build 1/6] FROM docker.io/library/gcc:15@sha256:eb5e64286ad47187b32bda75c6b6916166ecb41da56559b8b09e0001748d2cce
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9207580Z #8 DONE 0.0s
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9207665Z 
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9207743Z #9 [internal] load build context
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9207948Z #9 transferring context: 35.04kB done
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9208145Z #9 DONE 0.0s
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9208202Z 
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9208254Z #10 [build 2/6] WORKDIR /src
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9208580Z #10 CACHED
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9208638Z 
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9208709Z #11 [training 2/3] COPY generator.py /generator.py
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9208861Z #11 CACHED
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9208920Z 
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9209046Z #12 [training 3/3] RUN python3 /generator.py --seed 37 --scale full --out /training-data
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9209256Z #12 CACHED
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9209309Z 
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9209364Z #13 [build 3/6] COPY join.cpp .
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9209489Z #13 DONE 0.0s
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9209547Z 
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:39.9209624Z #14 [build 4/6] COPY --from=training /training-data /data
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:40.8806204Z #14 DONE 1.1s
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:41.0316412Z 
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:41.0317373Z #15 [build 5/6] RUN g++ -O3 -march=x86-64-v3 -std=c++17 -DNDEBUG -flto -pthread -static -o /join-baseline join.cpp
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:42.0012538Z #15 DONE 1.1s
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:42.1594152Z 
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:42.5553152Z #16 [build 6/6] RUN mkdir /out && g++ -O3 -march=x86-64-v3 -std=c++17 -DNDEBUG -flto -pthread -static -fprofile-generate=/profile -fprofile-update=atomic -o /join join.cpp && /join && g++ -O3 -march=x86-64-v3 -std=c++17 -DNDEBUG -flto -pthread -static -fprofile-use=/profile -fprofile-correction -Werror=missing-profile -Werror=coverage-mismatch -o /join join.cpp
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:42.5554114Z #16 0.546 lto-wrapper: warning: using serial compilation of 2 LTRANS jobs
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:42.5554454Z #16 0.546 lto-wrapper: note: see the '-flto' option documentation for more information
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:45.2981564Z #16 DONE 3.3s
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:45.6745410Z 
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:45.6746107Z #7 [stage-2 1/2] FROM docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:45.6746434Z #7 CACHED
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:45.8353727Z 
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:45.8354216Z #17 [stage-2 2/2] COPY --from=build /join /join
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:45.8354462Z #17 DONE 0.0s
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:45.8354528Z 
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:45.8354580Z #18 exporting to image
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:45.8354710Z #18 exporting layers
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:46.0028399Z #18 exporting layers 0.3s done
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:46.0028900Z #18 writing image sha256:98acaa2c8b6827372f753cf1198a4078eda20a06ecc8c6a56c92ede29849a871
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:46.0147591Z #18 writing image sha256:98acaa2c8b6827372f753cf1198a4078eda20a06ecc8c6a56c92ede29849a871 done
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:46.0148046Z #18 naming to docker.io/library/sd-track-c:official-best done
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:46.0148344Z #18 DONE 0.3s
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:46.0624593Z f7275f607577b796b3639963d0dbddc7b0b5cb6baa8a37d85d5430dbffc93c93
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:46.1535269Z baseline trial=1 elapsed_ms=71.500 peak_rss_kib=17148
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:46.2149782Z current trial=1 elapsed_ms=61.221 peak_rss_kib=29372
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:46.2797377Z current trial=2 elapsed_ms=64.547 peak_rss_kib=41096
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:46.3516227Z baseline trial=2 elapsed_ms=71.692 peak_rss_kib=16892
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:46.4298572Z baseline trial=3 elapsed_ms=78.033 peak_rss_kib=16828
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:46.4887461Z current trial=3 elapsed_ms=58.651 peak_rss_kib=30548
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:46.5494540Z current trial=4 elapsed_ms=60.518 peak_rss_kib=16704
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:46.6216855Z baseline trial=4 elapsed_ms=72.029 peak_rss_kib=16704
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:46.6946508Z baseline trial=5 elapsed_ms=72.786 peak_rss_kib=17468
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:46.7526073Z current trial=5 elapsed_ms=57.763 peak_rss_kib=42588
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:46.8160461Z current trial=6 elapsed_ms=63.244 peak_rss_kib=41320
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:46.8874846Z baseline trial=6 elapsed_ms=71.264 peak_rss_kib=16956
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:46.9662002Z baseline trial=7 elapsed_ms=78.477 peak_rss_kib=16832
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:47.0269667Z current trial=7 elapsed_ms=60.558 peak_rss_kib=16832
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:47.0880520Z current trial=8 elapsed_ms=60.887 peak_rss_kib=41420
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:47.1605225Z baseline trial=8 elapsed_ms=72.289 peak_rss_kib=17020
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:47.2358588Z baseline trial=9 elapsed_ms=75.137 peak_rss_kib=16832
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:47.3013651Z current trial=9 elapsed_ms=65.316 peak_rss_kib=40448
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:47.3620270Z current trial=10 elapsed_ms=60.479 peak_rss_kib=41928
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:47.4347802Z baseline trial=10 elapsed_ms=72.558 peak_rss_kib=17276
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:47.5064546Z baseline trial=11 elapsed_ms=71.460 peak_rss_kib=17148
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:47.5674994Z current trial=11 elapsed_ms=60.849 peak_rss_kib=30168
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:47.6260235Z current trial=12 elapsed_ms=58.326 peak_rss_kib=42172
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:47.6984447Z baseline trial=12 elapsed_ms=72.220 peak_rss_kib=16892
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:47.6984823Z baseline median_ms=72.254 median_rss_kib=16924
+verify	Paired official BEST architecture comparison	2026-10-31T23:19:47.6984998Z current median_ms=60.703 median_rss_kib=40772
+verify	Independent full references for the final PGO binary	﻿2026-10-31T23:19:47.7444160Z ##[group]Run python3 tests/check_binary_seeds.py --binary /tmp/sd-track-c --seeds 11 29
+verify	Independent full references for the final PGO binary	2026-10-31T23:19:47.7444518Z [36;1mpython3 tests/check_binary_seeds.py --binary /tmp/sd-track-c --seeds 11 29[0m
+verify	Independent full references for the final PGO binary	2026-10-31T23:19:47.7459996Z shell: /usr/bin/bash -e {0}
+verify	Independent full references for the final PGO binary	2026-10-31T23:19:47.7460136Z ##[endgroup]
+verify	Independent full references for the final PGO binary	2026-10-31T23:20:05.4718643Z full seed 11: three exact comparisons of /tmp/sd-track-c
+verify	Independent full references for the final PGO binary	2026-10-31T23:20:22.9463096Z full seed 29: three exact comparisons of /tmp/sd-track-c
+verify	Post Run actions/checkout@v4	﻿2026-10-31T23:20:22.9598592Z Post job cleanup.
+verify	Post Run actions/checkout@v4	2026-10-31T23:20:23.0135221Z [command]/usr/bin/git version
+verify	Post Run actions/checkout@v4	2026-10-31T23:20:23.0165705Z git version 2.56.0
+verify	Post Run actions/checkout@v4	2026-10-31T23:20:23.0220408Z Temporarily overriding HOME='/home/runner/work/_temp/bd8f5092-54f6-455c-9d5d-94f79444403f' before making global git config changes
+verify	Post Run actions/checkout@v4	2026-10-31T23:20:23.0221051Z Adding repository directory to the temporary git global config as a safe directory
+verify	Post Run actions/checkout@v4	2026-10-31T23:20:23.0223889Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/sd-tc/sd-tc
+verify	Post Run actions/checkout@v4	2026-10-31T23:20:23.0256027Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+verify	Post Run actions/checkout@v4	2026-10-31T23:20:23.0283735Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+verify	Post Run actions/checkout@v4	2026-10-31T23:20:23.0471736Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+verify	Post Run actions/checkout@v4	2026-10-31T23:20:23.0494522Z http.https://github.com/.extraheader
+verify	Post Run actions/checkout@v4	2026-10-31T23:20:23.0502621Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+verify	Post Run actions/checkout@v4	2026-10-31T23:20:23.0532129Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+verify	Post Run actions/checkout@v4	2026-10-31T23:20:23.0727653Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+verify	Post Run actions/checkout@v4	2026-10-31T23:20:23.0763971Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+verify	Complete job	﻿2026-10-31T23:20:23.1074359Z Cleaning up orphan processes
+verify	Complete job	2026-10-31T23:20:23.1301484Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+sanitizers (thread)	Set up job	﻿2026-10-31T23:18:11.9426142Z Current runner version: '2.338.2'
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9458369Z ##[group]Runner Image Provisioner
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9459743Z Hosted Compute Agent
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9460841Z Version: 20261021.618
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9461768Z Commit: 21505ad2541d5be6135ed84fc33697146cf75b8e
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9462502Z Build Date: 2026-10-21T00:45:21Z
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9463328Z Worker ID: {259bffc1-3da1-4125-9904-efdb92e96564}
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9464045Z Region: westus
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9464945Z Cloud: Azure
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9465610Z ##[endgroup]
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9467105Z ##[group]Operating System
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9467864Z Ubuntu
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9468402Z 24.04.5
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9468954Z LTS
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9469525Z ##[endgroup]
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9470082Z ##[group]Runner Image
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9470783Z Image: ubuntu-24.04
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9471359Z Version: 20261025.353.1
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9472498Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261025.353/images/ubuntu/Ubuntu2404-Readme.md
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9474208Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261025.353
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9475551Z ##[endgroup]
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9476740Z ##[group]GITHUB_TOKEN Permissions
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9478766Z Contents: read
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9479397Z Metadata: read
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9480394Z Packages: read
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9481129Z ##[endgroup]
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9484387Z Secret source: Actions
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9485889Z Cache mode: write
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9486577Z Prepare workflow directory
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9934912Z Prepare all required actions
+sanitizers (thread)	Set up job	2026-10-31T23:18:11.9992662Z Getting action download info
+sanitizers (thread)	Set up job	2026-10-31T23:18:12.3317405Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+sanitizers (thread)	Set up job	2026-10-31T23:18:12.5132930Z Complete job name: sanitizers (thread)
+sanitizers (thread)	Run actions/checkout@v4	﻿2026-10-31T23:18:12.6078475Z ##[group]Run actions/checkout@v4
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.6079379Z with:
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.6079862Z   repository: insightlabs38-pixel/sd-tc
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.6083642Z   token: ***
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.6084088Z   ssh-strict: true
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.6084533Z   ssh-user: git
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.6085191Z   persist-credentials: true
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.6085690Z   clean: true
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.6086282Z   sparse-checkout-cone-mode: true
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.6086810Z   fetch-depth: 1
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.6087253Z   fetch-tags: false
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.6087705Z   show-progress: true
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.6088156Z   lfs: false
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.6088586Z   submodules: false
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.6089048Z   set-safe-directory: true
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.6089564Z   allow-unsafe-pr-checkout: false
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.6090382Z ##[endgroup]
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.8677439Z Syncing repository: insightlabs38-pixel/sd-tc
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.8680147Z ##[group]Getting Git version info
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.8680900Z Working directory is '/home/runner/work/sd-tc/sd-tc'
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.8681942Z [command]/usr/bin/git version
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.8800281Z git version 2.56.0
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.8824303Z ##[endgroup]
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.8837769Z Temporarily overriding HOME='/home/runner/work/_temp/dd1ee76d-835b-4b33-8f60-3f4c469acd45' before making global git config changes
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.8840046Z Adding repository directory to the temporary git global config as a safe directory
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.8842110Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/sd-tc/sd-tc
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.8905884Z Deleting the contents of '/home/runner/work/sd-tc/sd-tc'
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.8911330Z ##[group]Initializing the repository
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.8915063Z [command]/usr/bin/git init /home/runner/work/sd-tc/sd-tc
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9032900Z hint: Using 'master' as the name for the initial branch. This default branch name
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9035022Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9036119Z hint: to use in all of your new repositories, which will suppress this warning,
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9037169Z hint: call:
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9037588Z hint:
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9038116Z hint: 	git config --global init.defaultBranch <name>
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9038742Z hint:
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9039330Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9040289Z hint: 'development'. The just-created branch can be renamed via this command:
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9041029Z hint:
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9041454Z hint: 	git branch -m <name>
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9041965Z hint:
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9042602Z hint: Disable this message with "git config set advice.defaultBranchName false"
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9054539Z Initialized empty Git repository in /home/runner/work/sd-tc/sd-tc/.git/
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9066733Z [command]/usr/bin/git remote add origin https://github.com/insightlabs38-pixel/sd-tc
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9156111Z ##[endgroup]
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9176423Z ##[group]Disabling automatic garbage collection
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9186332Z [command]/usr/bin/git config --local gc.auto 0
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9188850Z ##[endgroup]
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9190221Z ##[group]Setting up auth
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9191802Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9236156Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9685179Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9729620Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:12.9975099Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:13.0027998Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:13.0297756Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:13.0354189Z ##[endgroup]
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:13.0355239Z ##[group]Fetching the repository
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:13.0372486Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +90da5461b0c806fafd172ef2f5ca42feb9e0fff8:refs/remotes/origin/frontier/c-padded-short-paths
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:13.3893287Z From https://github.com/insightlabs38-pixel/sd-tc
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:13.3895436Z  * [new ref]         90da5461b0c806fafd172ef2f5ca42feb9e0fff8 -> origin/frontier/c-padded-short-paths
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:13.3900420Z ##[endgroup]
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:13.3901839Z ##[group]Determining the checkout info
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:13.3904026Z ##[endgroup]
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:13.3910657Z [command]/usr/bin/git sparse-checkout disable
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:13.3971869Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:13.4010724Z ##[group]Checking out the ref
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:13.4017897Z [command]/usr/bin/git checkout --progress --force -B frontier/c-padded-short-paths refs/remotes/origin/frontier/c-padded-short-paths
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:13.4106959Z Switched to a new branch 'frontier/c-padded-short-paths'
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:13.4112937Z branch 'frontier/c-padded-short-paths' set up to track 'origin/frontier/c-padded-short-paths'.
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:13.4118264Z ##[endgroup]
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:13.4166895Z [command]/usr/bin/git log -1 --format=%H
+sanitizers (thread)	Run actions/checkout@v4	2026-10-31T23:18:13.4200242Z 90da5461b0c806fafd172ef2f5ca42feb9e0fff8
+sanitizers (thread)	Prepare sandbox paths and sanitizer address space	﻿2026-10-31T23:18:13.4437238Z ##[group]Run sudo mkdir -p /data /out
+sanitizers (thread)	Prepare sandbox paths and sanitizer address space	2026-10-31T23:18:13.4437938Z [36;1msudo mkdir -p /data /out[0m
+sanitizers (thread)	Prepare sandbox paths and sanitizer address space	2026-10-31T23:18:13.4438565Z [36;1msudo chown "$(id -u):$(id -g)" /data /out[0m
+sanitizers (thread)	Prepare sandbox paths and sanitizer address space	2026-10-31T23:18:13.4439233Z [36;1msudo sysctl -w vm.mmap_rnd_bits=28[0m
+sanitizers (thread)	Prepare sandbox paths and sanitizer address space	2026-10-31T23:18:13.4463139Z shell: /usr/bin/bash -e {0}
+sanitizers (thread)	Prepare sandbox paths and sanitizer address space	2026-10-31T23:18:13.4463927Z ##[endgroup]
+sanitizers (thread)	Prepare sandbox paths and sanitizer address space	2026-10-31T23:18:13.4780545Z vm.mmap_rnd_bits = 28
+sanitizers (thread)	Independent references and hostile cases	﻿2026-10-31T23:18:13.4859504Z ##[group]Run python3 tests/qualify_frontier.py --sanitizer='thread'
+sanitizers (thread)	Independent references and hostile cases	2026-10-31T23:18:13.4860430Z [36;1mpython3 tests/qualify_frontier.py --sanitizer='thread'[0m
+sanitizers (thread)	Independent references and hostile cases	2026-10-31T23:18:13.4880080Z shell: /usr/bin/bash -e {0}
+sanitizers (thread)	Independent references and hostile cases	2026-10-31T23:18:13.4880606Z ##[endgroup]
+sanitizers (thread)	Independent references and hostile cases	2026-10-31T23:18:16.0827151Z worked-example: exact, 144 output bytes, sha256=72ed9e59bff2dad354a9fb4cbc2d4b102477f634230b47e86035864c88d27444
+sanitizers (thread)	Independent references and hostile cases	2026-10-31T23:18:16.1338887Z quoted-bom-no-final-terminator: exact, 60 output bytes, sha256=0c084eef633858f79b023d1d767c8c474e73ad5c37f3f587c1145c3aa36e52ec
+sanitizers (thread)	Independent references and hostile cases	2026-10-31T23:18:16.1873280Z colliding-name-hashes: exact, 30 output bytes, sha256=7f1663c6c185848cdcfeffd76a87c54c5ac6c930a726609e04254071a95834c0
+sanitizers (thread)	Independent references and hostile cases	2026-10-31T23:18:16.2399566Z canonical-raw-name-equivalence: exact, 32 output bytes, sha256=e26766ec88917afefd9c0718502ba613c54bb0290a0e4d3f02de77fc996b3701
+sanitizers (thread)	Independent references and hostile cases	2026-10-31T23:18:16.2921062Z wide-unknown-region-id: exact, 68 output bytes, sha256=e3a1aad8d6ae9bdaf4776c35c17c45e6d725a66ad7649f448d0fa22f04e2b1f6
+sanitizers (thread)	Independent references and hostile cases	2026-10-31T23:18:16.3469272Z eight-digit-id-fast-path: exact, 38 output bytes, sha256=0e12e730cfd62e802a2eaa25d66db993367206f35136895305d7514aab17ab9f
+sanitizers (thread)	Independent references and hostile cases	2026-10-31T23:18:16.3979210Z page-tail-empty-name-4095: exact, 32 output bytes, sha256=8a0eee218fc00b5628acf18501af35ebed20a11fdf77d2fceb115bf25fe180e3
+sanitizers (thread)	Independent references and hostile cases	2026-10-31T23:18:16.4479406Z page-tail-empty-name-4096: exact, 32 output bytes, sha256=fe795b51905b072935c9d7b69a4a742ceb7e551be038801ddbece2201d5df78e
+sanitizers (thread)	Independent references and hostile cases	2026-10-31T23:18:16.4986432Z page-tail-empty-name-4097: exact, 32 output bytes, sha256=7c99e0025034e7740269473067aaa37e7bf3b4ac933cdecbcedfa0d5bf4f95f4
+sanitizers (thread)	Independent references and hostile cases	2026-10-31T23:18:16.5489601Z page-tail-empty-name-8192: exact, 32 output bytes, sha256=2ed3b30d126ceff96883ac5a2464d4af5997afdbf9ce0d912014b824c89bb60b
+sanitizers (thread)	Independent references and hostile cases	2026-10-31T23:18:16.6052182Z quote-vector-boundary-and-escaped-pairs: exact, 79 output bytes, sha256=7452e0d9bf1d0f2e9ad8d4ee66a7cdf47c74a9ff5cccbcf16c309a9764d57d2e
+sanitizers (thread)	Independent references and hostile cases	2026-10-31T23:18:16.9607443Z packed-metadata-lengths-and-full-hash-collisions: exact, 115 output bytes, sha256=26631f91ae32b799363bbfff3d21674175ee70f20c2b08e3525d0db689b96dfd
+sanitizers (thread)	Independent references and hostile cases	2026-10-31T23:18:17.1718810Z long-quoted-record-crosses-worker-boundary: exact, 98 output bytes, sha256=e26343acbacaddb7d01c8c0a821f6e4861ddaee5caedda527083e01174421313
+sanitizers (thread)	Independent references and hostile cases	2026-10-31T23:18:17.2133504Z huge-name-arena-1048593: exact, long name and worker boundaries
+sanitizers (thread)	Independent references and hostile cases	2026-10-31T23:18:17.5694169Z huge-name-arena-16777233: exact, long name and worker boundaries
+sanitizers (thread)	Independent references and hostile cases	2026-10-31T23:18:18.5919997Z sharded-name-table-grow: exact, 60 output bytes, sha256=f8af717c6731f00daf15d7be5e37cfb7bd589cfb4ddd005886fd10922fb286c5
+sanitizers (thread)	Independent references and hostile cases	2026-10-31T23:18:18.8142136Z cross-worker-colliding-names: exact, 109 output bytes, sha256=34f1fa808d87d2639010072d341d574e18bd9e65d9cb6cb81be1fee2048917fe
+sanitizers (thread)	Independent references and hostile cases	2026-10-31T23:18:18.9243820Z thread-tiny-seed19: exact, 1197 output bytes, sha256=6e4118916628e4b69adcb8a01b2539f5ca05632b310564d9b4cf2c1c7387a9e8
+sanitizers (thread)	Independent references and hostile cases	2026-10-31T23:18:23.6629176Z thread-sample-seed37: exact, 15405 output bytes, sha256=879315626e7d317b9b5cf45d551551cd711841f5b643cfa941499c93b6708054
+sanitizers (thread)	Post Run actions/checkout@v4	﻿2026-10-31T23:18:23.6915282Z Post job cleanup.
+sanitizers (thread)	Post Run actions/checkout@v4	2026-10-31T23:18:23.7813604Z [command]/usr/bin/git version
+sanitizers (thread)	Post Run actions/checkout@v4	2026-10-31T23:18:23.7861196Z git version 2.56.0
+sanitizers (thread)	Post Run actions/checkout@v4	2026-10-31T23:18:23.7906258Z Temporarily overriding HOME='/home/runner/work/_temp/5b454e4e-34b4-4dea-a362-d65e43586ec4' before making global git config changes
+sanitizers (thread)	Post Run actions/checkout@v4	2026-10-31T23:18:23.7909173Z Adding repository directory to the temporary git global config as a safe directory
+sanitizers (thread)	Post Run actions/checkout@v4	2026-10-31T23:18:23.7911892Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/sd-tc/sd-tc
+sanitizers (thread)	Post Run actions/checkout@v4	2026-10-31T23:18:23.7954349Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+sanitizers (thread)	Post Run actions/checkout@v4	2026-10-31T23:18:23.7994463Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+sanitizers (thread)	Post Run actions/checkout@v4	2026-10-31T23:18:23.8256494Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+sanitizers (thread)	Post Run actions/checkout@v4	2026-10-31T23:18:23.8296405Z http.https://github.com/.extraheader
+sanitizers (thread)	Post Run actions/checkout@v4	2026-10-31T23:18:23.8333420Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+sanitizers (thread)	Post Run actions/checkout@v4	2026-10-31T23:18:23.8377479Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+sanitizers (thread)	Post Run actions/checkout@v4	2026-10-31T23:18:23.8650181Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+sanitizers (thread)	Post Run actions/checkout@v4	2026-10-31T23:18:23.8699420Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+sanitizers (thread)	Complete job	﻿2026-10-31T23:18:23.9101463Z Cleaning up orphan processes
+sanitizers (thread)	Complete job	2026-10-31T23:18:23.9495149Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+sanitizers (address,undefined)	Set up job	﻿2026-10-31T23:18:11.3837904Z Current runner version: '2.338.2'
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3861387Z ##[group]Runner Image Provisioner
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3862310Z Hosted Compute Agent
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3862925Z Version: 20261021.618
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3863531Z Commit: 21505ad2541d5be6135ed84fc33697146cf75b8e
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3864207Z Build Date: 2026-10-21T00:45:21Z
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3864822Z Worker ID: {b02df8b1-bd00-4ae6-a432-4ef7aaea081d}
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3865517Z Region: centralus
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3866051Z Cloud: Azure
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3866556Z ##[endgroup]
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3867993Z ##[group]Operating System
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3868842Z Ubuntu
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3869370Z 24.04.5
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3869907Z LTS
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3870394Z ##[endgroup]
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3870915Z ##[group]Runner Image
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3871472Z Image: ubuntu-24.04
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3872006Z Version: 20261025.353.1
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3873000Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261025.353/images/ubuntu/Ubuntu2404-Readme.md
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3874657Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261025.353
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3875548Z ##[endgroup]
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3876704Z ##[group]GITHUB_TOKEN Permissions
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3879114Z Contents: read
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3879990Z Metadata: read
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3880528Z Packages: read
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3881029Z ##[endgroup]
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3883010Z Secret source: Actions
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3883848Z Cache mode: write
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.3884511Z Prepare workflow directory
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.4189287Z Prepare all required actions
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.4235497Z Getting action download info
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.6650306Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+sanitizers (address,undefined)	Set up job	2026-10-31T23:18:11.8338188Z Complete job name: sanitizers (address,undefined)
+sanitizers (address,undefined)	Run actions/checkout@v4	﻿2026-10-31T23:18:11.9090733Z ##[group]Run actions/checkout@v4
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:11.9091568Z with:
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:11.9092140Z   repository: insightlabs38-pixel/sd-tc
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:11.9096315Z   token: ***
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:11.9096795Z   ssh-strict: true
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:11.9097287Z   ssh-user: git
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:11.9097795Z   persist-credentials: true
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:11.9098825Z   clean: true
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:11.9099423Z   sparse-checkout-cone-mode: true
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:11.9099979Z   fetch-depth: 1
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:11.9100462Z   fetch-tags: false
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:11.9100966Z   show-progress: true
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:11.9101467Z   lfs: false
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:11.9101969Z   submodules: false
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:11.9102464Z   set-safe-directory: true
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:11.9102991Z   allow-unsafe-pr-checkout: false
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:11.9103809Z ##[endgroup]
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1607708Z Syncing repository: insightlabs38-pixel/sd-tc
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1611766Z ##[group]Getting Git version info
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1613586Z Working directory is '/home/runner/work/sd-tc/sd-tc'
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1616434Z [command]/usr/bin/git version
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1645212Z git version 2.56.0
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1663390Z ##[endgroup]
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1677530Z Temporarily overriding HOME='/home/runner/work/_temp/1910e540-1878-4b20-aeae-e048130772ee' before making global git config changes
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1682754Z Adding repository directory to the temporary git global config as a safe directory
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1686237Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/sd-tc/sd-tc
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1730698Z Deleting the contents of '/home/runner/work/sd-tc/sd-tc'
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1736706Z ##[group]Initializing the repository
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1741134Z [command]/usr/bin/git init /home/runner/work/sd-tc/sd-tc
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1892185Z hint: Using 'master' as the name for the initial branch. This default branch name
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1894939Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1897842Z hint: to use in all of your new repositories, which will suppress this warning,
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1901051Z hint: call:
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1902617Z hint:
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1904456Z hint: 	git config --global init.defaultBranch <name>
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1905917Z hint:
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1907341Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1910528Z hint: 'development'. The just-created branch can be renamed via this command:
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1912482Z hint:
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1913517Z hint: 	git branch -m <name>
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1914742Z hint:
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1917392Z hint: Disable this message with "git config set advice.defaultBranchName false"
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1921042Z Initialized empty Git repository in /home/runner/work/sd-tc/sd-tc/.git/
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1927046Z [command]/usr/bin/git remote add origin https://github.com/insightlabs38-pixel/sd-tc
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1961029Z ##[endgroup]
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1964070Z ##[group]Disabling automatic garbage collection
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1966435Z [command]/usr/bin/git config --local gc.auto 0
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1993279Z ##[endgroup]
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1995472Z ##[group]Setting up auth
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.1998478Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.2031382Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.2355094Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.2392473Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.2577324Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.2609023Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.2786231Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.2822134Z ##[endgroup]
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.2823799Z ##[group]Fetching the repository
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.2835088Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +90da5461b0c806fafd172ef2f5ca42feb9e0fff8:refs/remotes/origin/frontier/c-padded-short-paths
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.5650399Z From https://github.com/insightlabs38-pixel/sd-tc
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.5653006Z  * [new ref]         90da5461b0c806fafd172ef2f5ca42feb9e0fff8 -> origin/frontier/c-padded-short-paths
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.5658430Z ##[endgroup]
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.5660614Z ##[group]Determining the checkout info
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.5662765Z ##[endgroup]
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.5664143Z [command]/usr/bin/git sparse-checkout disable
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.5752972Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.5786076Z ##[group]Checking out the ref
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.5791588Z [command]/usr/bin/git checkout --progress --force -B frontier/c-padded-short-paths refs/remotes/origin/frontier/c-padded-short-paths
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.5858776Z Switched to a new branch 'frontier/c-padded-short-paths'
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.5863232Z branch 'frontier/c-padded-short-paths' set up to track 'origin/frontier/c-padded-short-paths'.
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.5867662Z ##[endgroup]
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.5901317Z [command]/usr/bin/git log -1 --format=%H
+sanitizers (address,undefined)	Run actions/checkout@v4	2026-10-31T23:18:12.5924975Z 90da5461b0c806fafd172ef2f5ca42feb9e0fff8
+sanitizers (address,undefined)	Prepare sandbox paths and sanitizer address space	﻿2026-10-31T23:18:12.6175613Z ##[group]Run sudo mkdir -p /data /out
+sanitizers (address,undefined)	Prepare sandbox paths and sanitizer address space	2026-10-31T23:18:12.6177179Z [36;1msudo mkdir -p /data /out[0m
+sanitizers (address,undefined)	Prepare sandbox paths and sanitizer address space	2026-10-31T23:18:12.6178800Z [36;1msudo chown "$(id -u):$(id -g)" /data /out[0m
+sanitizers (address,undefined)	Prepare sandbox paths and sanitizer address space	2026-10-31T23:18:12.6180226Z [36;1msudo sysctl -w vm.mmap_rnd_bits=28[0m
+sanitizers (address,undefined)	Prepare sandbox paths and sanitizer address space	2026-10-31T23:18:12.6199355Z shell: /usr/bin/bash -e {0}
+sanitizers (address,undefined)	Prepare sandbox paths and sanitizer address space	2026-10-31T23:18:12.6200724Z ##[endgroup]
+sanitizers (address,undefined)	Prepare sandbox paths and sanitizer address space	2026-10-31T23:18:12.6455224Z vm.mmap_rnd_bits = 28
+sanitizers (address,undefined)	Independent references and hostile cases	﻿2026-10-31T23:18:12.6562871Z ##[group]Run python3 tests/qualify_frontier.py --sanitizer='address,undefined'
+sanitizers (address,undefined)	Independent references and hostile cases	2026-10-31T23:18:12.6565018Z [36;1mpython3 tests/qualify_frontier.py --sanitizer='address,undefined'[0m
+sanitizers (address,undefined)	Independent references and hostile cases	2026-10-31T23:18:12.6579053Z shell: /usr/bin/bash -e {0}
+sanitizers (address,undefined)	Independent references and hostile cases	2026-10-31T23:18:12.6580029Z ##[endgroup]
+sanitizers (address,undefined)	Independent references and hostile cases	2026-10-31T23:18:17.1644850Z worked-example: exact, 144 output bytes, sha256=72ed9e59bff2dad354a9fb4cbc2d4b102477f634230b47e86035864c88d27444
+sanitizers (address,undefined)	Independent references and hostile cases	2026-10-31T23:18:17.2100351Z quoted-bom-no-final-terminator: exact, 60 output bytes, sha256=0c084eef633858f79b023d1d767c8c474e73ad5c37f3f587c1145c3aa36e52ec
+sanitizers (address,undefined)	Independent references and hostile cases	2026-10-31T23:18:17.2562603Z colliding-name-hashes: exact, 30 output bytes, sha256=7f1663c6c185848cdcfeffd76a87c54c5ac6c930a726609e04254071a95834c0
+sanitizers (address,undefined)	Independent references and hostile cases	2026-10-31T23:18:17.3072766Z canonical-raw-name-equivalence: exact, 32 output bytes, sha256=e26766ec88917afefd9c0718502ba613c54bb0290a0e4d3f02de77fc996b3701
+sanitizers (address,undefined)	Independent references and hostile cases	2026-10-31T23:18:17.3540327Z wide-unknown-region-id: exact, 68 output bytes, sha256=e3a1aad8d6ae9bdaf4776c35c17c45e6d725a66ad7649f448d0fa22f04e2b1f6
+sanitizers (address,undefined)	Independent references and hostile cases	2026-10-31T23:18:17.4031771Z eight-digit-id-fast-path: exact, 38 output bytes, sha256=0e12e730cfd62e802a2eaa25d66db993367206f35136895305d7514aab17ab9f
+sanitizers (address,undefined)	Independent references and hostile cases	2026-10-31T23:18:17.4459789Z page-tail-empty-name-4095: exact, 32 output bytes, sha256=8a0eee218fc00b5628acf18501af35ebed20a11fdf77d2fceb115bf25fe180e3
+sanitizers (address,undefined)	Independent references and hostile cases	2026-10-31T23:18:17.4874206Z page-tail-empty-name-4096: exact, 32 output bytes, sha256=fe795b51905b072935c9d7b69a4a742ceb7e551be038801ddbece2201d5df78e
+sanitizers (address,undefined)	Independent references and hostile cases	2026-10-31T23:18:17.5260447Z page-tail-empty-name-4097: exact, 32 output bytes, sha256=7c99e0025034e7740269473067aaa37e7bf3b4ac933cdecbcedfa0d5bf4f95f4
+sanitizers (address,undefined)	Independent references and hostile cases	2026-10-31T23:18:17.5639855Z page-tail-empty-name-8192: exact, 32 output bytes, sha256=2ed3b30d126ceff96883ac5a2464d4af5997afdbf9ce0d912014b824c89bb60b
+sanitizers (address,undefined)	Independent references and hostile cases	2026-10-31T23:18:17.6059324Z quote-vector-boundary-and-escaped-pairs: exact, 79 output bytes, sha256=7452e0d9bf1d0f2e9ad8d4ee66a7cdf47c74a9ff5cccbcf16c309a9764d57d2e
+sanitizers (address,undefined)	Independent references and hostile cases	2026-10-31T23:18:17.8605646Z packed-metadata-lengths-and-full-hash-collisions: exact, 115 output bytes, sha256=26631f91ae32b799363bbfff3d21674175ee70f20c2b08e3525d0db689b96dfd
+sanitizers (address,undefined)	Independent references and hostile cases	2026-10-31T23:18:18.0223846Z long-quoted-record-crosses-worker-boundary: exact, 98 output bytes, sha256=e26343acbacaddb7d01c8c0a821f6e4861ddaee5caedda527083e01174421313
+sanitizers (address,undefined)	Independent references and hostile cases	2026-10-31T23:18:18.0440203Z huge-name-arena-1048593: exact, long name and worker boundaries
+sanitizers (address,undefined)	Independent references and hostile cases	2026-10-31T23:18:18.3156483Z huge-name-arena-16777233: exact, long name and worker boundaries
+sanitizers (address,undefined)	Independent references and hostile cases	2026-10-31T23:18:18.9225743Z sharded-name-table-grow: exact, 60 output bytes, sha256=f8af717c6731f00daf15d7be5e37cfb7bd589cfb4ddd005886fd10922fb286c5
+sanitizers (address,undefined)	Independent references and hostile cases	2026-10-31T23:18:19.0880724Z cross-worker-colliding-names: exact, 109 output bytes, sha256=34f1fa808d87d2639010072d341d574e18bd9e65d9cb6cb81be1fee2048917fe
+sanitizers (address,undefined)	Independent references and hostile cases	2026-10-31T23:18:19.1757209Z address,undefined-tiny-seed19: exact, 1197 output bytes, sha256=6e4118916628e4b69adcb8a01b2539f5ca05632b310564d9b4cf2c1c7387a9e8
+sanitizers (address,undefined)	Independent references and hostile cases	2026-10-31T23:18:23.0410971Z address,undefined-sample-seed37: exact, 15405 output bytes, sha256=879315626e7d317b9b5cf45d551551cd711841f5b643cfa941499c93b6708054
+sanitizers (address,undefined)	Post Run actions/checkout@v4	﻿2026-10-31T23:18:23.0605098Z Post job cleanup.
+sanitizers (address,undefined)	Post Run actions/checkout@v4	2026-10-31T23:18:23.1422850Z [command]/usr/bin/git version
+sanitizers (address,undefined)	Post Run actions/checkout@v4	2026-10-31T23:18:23.1467856Z git version 2.56.0
+sanitizers (address,undefined)	Post Run actions/checkout@v4	2026-10-31T23:18:23.1497587Z Temporarily overriding HOME='/home/runner/work/_temp/58b32107-1ae0-4ffb-a17a-e16f54d8c07b' before making global git config changes
+sanitizers (address,undefined)	Post Run actions/checkout@v4	2026-10-31T23:18:23.1499174Z Adding repository directory to the temporary git global config as a safe directory
+sanitizers (address,undefined)	Post Run actions/checkout@v4	2026-10-31T23:18:23.1502627Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/sd-tc/sd-tc
+sanitizers (address,undefined)	Post Run actions/checkout@v4	2026-10-31T23:18:23.1537823Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+sanitizers (address,undefined)	Post Run actions/checkout@v4	2026-10-31T23:18:23.1571104Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+sanitizers (address,undefined)	Post Run actions/checkout@v4	2026-10-31T23:18:23.1771735Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+sanitizers (address,undefined)	Post Run actions/checkout@v4	2026-10-31T23:18:23.1795709Z http.https://github.com/.extraheader
+sanitizers (address,undefined)	Post Run actions/checkout@v4	2026-10-31T23:18:23.1820056Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+sanitizers (address,undefined)	Post Run actions/checkout@v4	2026-10-31T23:18:23.1847704Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+sanitizers (address,undefined)	Post Run actions/checkout@v4	2026-10-31T23:18:23.2048879Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+sanitizers (address,undefined)	Post Run actions/checkout@v4	2026-10-31T23:18:23.2078453Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+sanitizers (address,undefined)	Complete job	﻿2026-10-31T23:18:23.2430239Z Cleaning up orphan processes
+sanitizers (address,undefined)	Complete job	2026-10-31T23:18:23.2775464Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
