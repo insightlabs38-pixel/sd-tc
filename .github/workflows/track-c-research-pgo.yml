@@ -1,0 +1,22 @@
+name: C breakthrough pinned PGO matrix
+on:
+  push:
+    branches:
+      - research/c-breakthrough-20261101
+    paths:
+      - research/c-breakthrough-20261101/pgo_matrix.py
+      - .github/workflows/track-c-research-pgo.yml
+jobs:
+  pgo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Prepare mounts
+        run: |
+          sudo mkdir -p /data /out
+          sudo chown "$(id -u):$(id -g)" /data /out
+      - name: Build pinned PGO candidates and compare whole program
+        run: python3 research/c-breakthrough-20261101/pgo_matrix.py
