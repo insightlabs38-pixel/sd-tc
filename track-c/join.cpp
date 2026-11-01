@@ -347,9 +347,9 @@ static void bom(const char *&p, const char *end) {
 }
 
 struct Group {
-    uint64_t id_sum = 0;
+    uint64_t count = 0, id_sum = 0, name_bytes = 0, note_bytes = 0;
     int64_t sum = 0, min = 0, max = 0;
-    uint32_t count = 0, name_bytes = 0, note_bytes = 0, distinct = 0;
+    uint32_t distinct = 0;
     void add(uint64_t id, int64_t amount, uint32_t name_len, uint32_t note_len, bool first) {
         if (!count || amount < min) min = amount;
         if (!count || amount > max) max = amount;
@@ -361,7 +361,6 @@ struct Group {
         distinct += first;
     }
 };
-static_assert(sizeof(Group) == 48, "compact aggregate cell");
 static std::string money(int64_t n) {
     bool negative = n < 0;
     uint64_t mag = negative ? static_cast<uint64_t>(-(n + 1)) + 1 : static_cast<uint64_t>(n);
