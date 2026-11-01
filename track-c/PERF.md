@@ -385,3 +385,11 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - [CI 41321611522](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41321611522) passed seed-1 full reference SHA-256, full holdout seeds 11/29 (three repetitions), hostile quote/hash cases, ASan/UBSan/TSan, pinned offline Docker and sandbox.
 - Direct qualified-champion 12-trial full-PGO paired median **76.761 -> 74.794 ms** (9/12 paired trials faster); fresh Docker cgroup peak **11,026,432 -> 11,026,432 bytes**. Source-only median **83.066 -> 79.634 ms**. Scored physical C++ lines **567 -> 569**, D=1; complete-K runner proxy **+1.25%** assuming a two-line S increase.
 - **Promoted in development repo only**: qualified source blob `cf7e7c3fb12a6054836d5010c391cb63c59e0c48`. Official six-P-core T/M/S/D/K remains unmeasured; Luna controls integration and submissions. Research batch128 measurements on a different earlier architecture are supporting context, not a substitute for this direct comparison.
+
+## Batch index-line prefetch trial (2026-11-01)
+
+- Trial [5fb1f69](https://github.com/insightlabs38-pixel/sd-tc/commit/5fb1f69e2fac407ce18d563c58a449302e2bc7a6) renewed shard-index cache lines for 128 pending records before dictionary probes.
+- [CI 41326701816](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41326701816) passed full reference SHA-256, holdouts 11/29, hostile cases, sanitizers, pinned offline Docker and sandbox. CI now uses qualified baseline 4bcec24.
+- Direct full-PGO 12-trial paired median **74.727 -> 75.780 ms** (+1.41% T); cgroup **11,024,384 -> 11,038,720 bytes** (+0.13% M). Source-only 81.789 -> 82.248 ms.
+- Physical source 569 -> 575 lines, D=1. Approximate complete-K proxy **-0.88%** using physical-line S; no official scoring-box measurement. Rejected.
+- Restored qualified 128-row champion source blob cf7e7c3fb12a6054836d5010c391cb63c59e0c48 in cd25f7e; no redundant restoration CI.
