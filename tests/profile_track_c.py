@@ -26,6 +26,9 @@ def instrument(source, workers):
         ("        std::vector<Group> groups(unmatched + 1);", "        const auto t_parse = std::chrono::steady_clock::now();\n"),
         ("        std::vector<unsigned> order;", "        const auto t_merge = std::chrono::steady_clock::now();\n"),
     ]
+    if "struct Tile {" in source:
+        markers[2] = ("        std::vector<std::unique_ptr<Tile>> tiles;", markers[2][1])
+        markers[3] = ("        std::vector<Group> groups(unmatched+1);", markers[3][1])
     for needle, insertion in markers:
         assert source.count(needle) == 1, needle
         source = source.replace(needle, needle + insertion if needle.startswith("int main") else insertion + needle)
@@ -68,7 +71,8 @@ def main():
         for workers in counts:
             summary = {key: round(statistics.median(row[key] for row in results[workers]), 3)
                        for key in results[workers][0]}
-            print(f"workers={workers} median_of_5 {summary}", flush=True)
+            label = f"parsers={workers} owners={1 if workers == 1 else 2}" if "struct Tile {" in source else f"workers={workers}"
+            print(f"{label} median_of_5 {summary}", flush=True)
 
 
 if __name__ == "__main__":
