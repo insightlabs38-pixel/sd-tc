@@ -390,8 +390,8 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
     };
     static_assert(sizeof(Pending) == 48, "compact pending row");
     try {
-        std::array<Pending, 64> batch;
-        std::array<SharedNames::Slot *, 64> slots;
+        std::array<Pending, 128> batch;
+        std::array<SharedNames::Slot *, 128> slots;
         const char *reclaimed = p;
         while (p < end) {
             unsigned count = 0;
