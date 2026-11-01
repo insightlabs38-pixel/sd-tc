@@ -325,111 +325,162 @@ struct Worker {
 };
 
 __attribute__((target("pclmul")))
-static Field text_pair(const char *&p, const char *end, uint32_t &name_len,
-                       uint32_t &note_len, SharedNames &shared) {
-    const char *start = p;
-    Field name{};
-    uint64_t quote_total = 0, name_quotes = 0, carry = 0;
-    bool have_name = false;
-    const __m256i quote = _mm256_set1_epi8('"'), comma = _mm256_set1_epi8(',');
-    for (const char *block = p; block < end; block += std::min<ptrdiff_t>(64, end - block)) {
-        unsigned bytes = std::min<ptrdiff_t>(64, end - block);
-        alignas(32) char tail[64]{};
-        const char *load = block;
-        if (bytes < 64) { std::memcpy(tail, block, bytes); load = tail; }
-        __m256i a = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(load));
-        __m256i b = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(load + 32));
-        uint64_t quotes = static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(a, quote))) |
-            (uint64_t(static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(b, quote)))) << 32);
-        uint64_t commas = static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(a, comma))) |
-            (uint64_t(static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(b, comma)))) << 32);
-        uint64_t inside = static_cast<uint64_t>(_mm_cvtsi128_si64(_mm_clmulepi64_si128(
-            _mm_cvtsi64_si128(quotes), _mm_set1_epi32(-1), 0)));
-        inside ^= carry;
-        carry = 0 - (inside >> 63);
-        uint64_t separators = commas & ~inside;
-        if (bytes < 64) separators &= (uint64_t(1) << bytes) - 1;
-        while (separators) {
-            unsigned bit = __builtin_ctzll(separators);
-            uint64_t lower = bit == 63 ? UINT64_MAX : (uint64_t(1) << (bit + 1)) - 1;
-            uint64_t total = quote_total + __builtin_popcountll(quotes & lower);
-            const char *finish = block + bit;
-            if (!have_name) {
-                bool quoted = *start == '"';
-                name = {start + quoted, static_cast<uint32_t>(finish - start - 2 * quoted), 0};
-                name_len = static_cast<uint32_t>(finish - start) - total / 2 - quoted;
-                name.hash = raw_hash(name.raw, name.raw_len, end);
-                uint32_t spread = SharedNames::spread(name.hash);
-                auto &shard = shared.shards[spread & 127];
-                __builtin_prefetch(&shard.index[(spread >> 7) & (SharedNames::slots_per_shard - 1)], 0, 1);
-                name_quotes = total;
-                start = finish + 1;
-                have_name = true;
-            } else {
-                bool quoted = *start == '"';
-                note_len = static_cast<uint32_t>(finish - start) - (total - name_quotes) / 2 - quoted;
-                p = finish + 1;
-                return name;
-            }
-            separators &= separators - 1;
-        }
-        quote_total += __builtin_popcountll(quotes);
+
+static const char *next_record(const char *p, const char *end) {
+    for (;;) {
+        const char *lf=static_cast<const char*>(std::memchr(p,'\n',end-p));
+        if (!lf) return end;
+        const char *candidate=lf+1;
+        if (candidate==end) return end;
+        const char *q=candidate;
+        if (end-q>=3 && static_cast<uint8_t>(q[0])==0xef &&
+            static_cast<uint8_t>(q[1])==0xbb && static_cast<uint8_t>(q[2])==0xbf) q+=3;
+        const char *first=q;
+        while (q<end && *q>='0' && *q<='9') ++q;
+        if (q!=first && q<end && *q==',') return candidate;
+        p=candidate;
     }
-    throw std::runtime_error("missing text delimiters");
+}
+
+static Field find_name(const char *&p, const char *end, uint32_t &decoded) {
+    if (p>=end) throw std::runtime_error("missing name");
+    const char *start=p;
+    if (*p!='"') {
+        const char *comma=static_cast<const char*>(std::memchr(p,',',end-p));
+        if (!comma) throw std::runtime_error("missing name delimiter");
+        decoded=static_cast<uint32_t>(comma-p);
+        p=comma+1;
+        return {start,decoded,0};
+    }
+    start=++p;
+    uint32_t doubles=0;
+    while (p<end) {
+        const char *quote=static_cast<const char*>(std::memchr(p,'"',end-p));
+        if (!quote || quote+1>=end) throw std::runtime_error("unterminated name");
+        if (quote[1]=='"') {p=quote+2;++doubles;continue;}
+        if (quote[1]!=',') throw std::runtime_error("missing name separator");
+        uint32_t raw=static_cast<uint32_t>(quote-start);
+        decoded=raw-doubles;
+        p=quote+2;
+        return {start,raw,0};
+    }
+    throw std::runtime_error("missing name close");
+}
+
+static uint32_t count_raw_quotes(const char *p, const char *end) {
+    uint32_t count=0;
+    const __m256i quotes=_mm256_set1_epi8('"');
+    while (end-p>=64) {
+        __m256i x=_mm256_loadu_si256(reinterpret_cast<const __m256i*>(p));
+        __m256i y=_mm256_loadu_si256(reinterpret_cast<const __m256i*>(p+32));
+        count+=__builtin_popcount(static_cast<unsigned>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(x,quotes))));
+        count+=__builtin_popcount(static_cast<unsigned>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(y,quotes))));
+        p+=64;
+    }
+    if (p<end) {
+        alignas(32) char tail[64]{};
+        size_t bytes=end-p;
+        std::memcpy(tail,p,bytes);
+        __m256i x=_mm256_load_si256(reinterpret_cast<const __m256i*>(tail));
+        __m256i y=_mm256_load_si256(reinterpret_cast<const __m256i*>(tail+32));
+        uint64_t mask=static_cast<unsigned>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(x,quotes))) |
+            (uint64_t(static_cast<unsigned>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(y,quotes))))<<32);
+        mask &= bytes==64 ? UINT64_MAX : (uint64_t(1)<<bytes)-1;
+        count+=__builtin_popcountll(mask);
+    }
+    return count;
+}
+
+static std::pair<const char*,const char*> numeric_suffix(const char *begin,const char *end) {
+    size_t size=static_cast<size_t>(end-begin);
+    const char *window=end-std::min<size_t>(32,size);
+    alignas(32) char tail[32]{};
+    const char *src=window;
+    if (size<32) {std::memcpy(tail,window,size);src=tail;}
+    __m256i block=_mm256_loadu_si256(reinterpret_cast<const __m256i*>(src));
+    uint32_t commas=static_cast<uint32_t>(_mm256_movemask_epi8(
+        _mm256_cmpeq_epi8(block,_mm256_set1_epi8(','))));
+    if (size<32) commas &= (uint32_t(1)<<size)-1;
+    if (!commas || __builtin_popcount(commas)<2) throw std::runtime_error("missing numeric suffix");
+    unsigned after=31-__builtin_clz(commas);
+    commas &= ~(uint32_t(1)<<after);
+    unsigned before=31-__builtin_clz(commas);
+    return {window+before,window+after};
+}
+
+static uint32_t note_bytes(const char *start,const char *comma) {
+    if (start==comma) return 0;
+    if (*start!='"') return static_cast<uint32_t>(comma-start);
+    if (comma<=start+1 || comma[-1]!='"') throw std::runtime_error("bad note quote");
+    const char *first=start+1, *last=comma-1;
+    uint32_t quotes=count_raw_quotes(first,last);
+    if (quotes&1) throw std::runtime_error("uneven note escapes");
+    return static_cast<uint32_t>(last-first)-(quotes>>1);
 }
 
 __attribute__((target("pclmul")))
-static void parse_range(const char *p, const char *end, const std::vector<uint8_t> &regions,
-                        unsigned unmatched, Worker &w, SharedNames &shared) {
-    const char *range_begin = p;
+static void parse_range(const char *p,const char *end,const std::vector<uint8_t>& regions,
+                        unsigned unmatched,Worker &w,SharedNames &shared) {
+    const char *range_begin=p;
     struct Pending {
         uint64_t id;
         int64_t amount;
         Field name;
-        uint32_t name_len, note_len;
+        uint32_t name_len,note_len;
         unsigned group;
     };
-    static_assert(sizeof(Pending) == 48, "compact pending row");
+    static_assert(sizeof(Pending)==48,"full solver deferred exact name rows");
     try {
-        std::array<Pending, 64> batch;
-        std::array<SharedNames::Slot *, 64> slots;
-        const char *reclaimed = p;
-        while (p < end) {
-            unsigned count = 0;
+        std::array<Pending,64> batch;
+        std::array<SharedNames::Slot*,64> slots;
+        const char *reclaimed=p;
+        while (p<end) {
+            unsigned count=0;
             do {
-                bom(p, end);
-                uint64_t id = number(p, end);
-                comma(p, end);
-                uint32_t name_len, note_len;
-                Field name = text_pair(p, end, name_len, note_len, shared);
-                uint64_t region = number(p, end);
-                uint32_t region_key = region < regions.size()
-                                          ? static_cast<uint32_t>(region) : UINT32_MAX;
-                if (region_key != UINT32_MAX) __builtin_prefetch(&regions[region_key], 0, 1);
-                comma(p, end);
-                int64_t amount = cents(p, end);
-                unsigned group = region_key != UINT32_MAX && regions[region_key] != UINT8_MAX
-                                     ? regions[region_key] : unmatched;
-                newline(p, end);
-                batch[count++] = Pending{id, amount, name, name_len, note_len, group};
-            } while (count < batch.size() && p < end);
-            // Finish the parse burst before blocking on dictionary index loads.
-            for (unsigned i = 0; i < count; ++i) {
-                slots[i] = shared.prepare(batch[i].name);
-                if (slots[i]) __builtin_prefetch(slots[i], 1, 3);
+                const char *after=next_record(p,end);
+                const char *physical_end=after;
+                if (physical_end>p && physical_end[-1]=='\n') --physical_end;
+                if (physical_end>p && physical_end[-1]=='\r') --physical_end;
+                const char *cursor=p;
+                bom(cursor,physical_end);
+                uint64_t id=number(cursor,physical_end);
+                comma(cursor,physical_end);
+                uint32_t name_len=0;
+                Field name=find_name(cursor,physical_end,name_len);
+                name.hash=raw_hash(name.raw,name.raw_len,physical_end);
+                uint32_t h=SharedNames::spread(name.hash);
+                auto &shard=shared.shards[h & 127];
+                __builtin_prefetch(&shard.index[(h>>7)&(SharedNames::slots_per_shard-1)],0,1);
+                auto suffix=numeric_suffix(cursor,physical_end);
+                uint32_t note_len=note_bytes(cursor,suffix.first);
+                const char *r=suffix.first+1;
+                uint64_t region=number(r,suffix.second);
+                if (r!=suffix.second) throw std::runtime_error("bad region");
+                const char *m=suffix.second+1;
+                int64_t amount=cents(m,physical_end);
+                if (m!=physical_end) throw std::runtime_error("bad cents");
+                uint32_t ri=region<regions.size()?static_cast<uint32_t>(region):UINT32_MAX;
+                unsigned group=ri!=UINT32_MAX && regions[ri]!=UINT8_MAX?regions[ri]:unmatched;
+                batch[count++]=Pending{id,amount,name,name_len,note_len,group};
+                p=after;
+            } while (count<batch.size() && p<end);
+            for (unsigned i=0;i<count;++i) {
+                slots[i]=shared.prepare(batch[i].name);
+                if (slots[i]) __builtin_prefetch(slots[i],1,3);
             }
-            for (unsigned i = 0; i < count; ++i) {
-                const Pending &r = batch[i];
-                w.groups[r.group].add(r.id, r.amount, r.name_len, r.note_len, shared.first(r.name, r.group, slots[i], end));
+            for (unsigned i=0;i<count;++i) {
+                const Pending &q=batch[i];
+                w.groups[q.group].add(q.id,q.amount,q.name_len,q.note_len,
+                                      shared.first(q.name,q.group,slots[i],end));
             }
-            if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
+            if (p-reclaimed>=(1<<20)) discard_consumed(reclaimed,p);
         }
-        const uintptr_t page = static_cast<uintptr_t>(sysconf(_SC_PAGESIZE));
-        const uintptr_t first = (reinterpret_cast<uintptr_t>(range_begin) + page - 1) & ~(page - 1);
-        const uintptr_t last = reinterpret_cast<uintptr_t>(end) & ~(page - 1);
-        if (last > first && munmap(reinterpret_cast<void *>(first), last - first))
+        const uintptr_t page=static_cast<uintptr_t>(sysconf(_SC_PAGESIZE));
+        uintptr_t lo=(reinterpret_cast<uintptr_t>(range_begin)+page-1)&~(page-1);
+        uintptr_t hi=reinterpret_cast<uintptr_t>(end)&~(page-1);
+        if (hi>lo && munmap(reinterpret_cast<void*>(lo),hi-lo))
             throw std::runtime_error("worker munmap");
-    } catch (...) { w.error = std::current_exception(); }
+    } catch (...) {w.error=std::current_exception();}
 }
 
 int main() {
