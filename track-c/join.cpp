@@ -120,17 +120,12 @@ struct SharedNames {
         }
     };
     static_assert(sizeof(Slot) == 56, "compact exact-name slot");
-    struct SpinMutex {
-        std::atomic_flag busy = ATOMIC_FLAG_INIT;
-        void lock() { while (busy.test_and_set(std::memory_order_acquire)) _mm_pause(); }
-        void unlock() { busy.clear(std::memory_order_release); }
-    };
     struct Shard {
         struct Overflow {
             Field field;
             std::array<uint64_t, 4> seen{};
         };
-        SpinMutex mutex;
+        std::mutex mutex;
         std::vector<Overflow> overflow;
         std::array<std::atomic<uint32_t>, slots_per_shard> index{};
         Slot *pool = nullptr;
@@ -184,7 +179,7 @@ struct SharedNames {
             shards[i].pool = storage + i * slots_per_shard;
     }
     __attribute__((noinline, cold)) static bool slow_first(Shard &s, const Field &name, unsigned group, const char *end) {
-        std::lock_guard<SpinMutex> lock(s.mutex);
+        std::lock_guard<std::mutex> lock(s.mutex);
         size_t empty = slots_per_shard;
         auto match = s.probe(name, &empty, true, end);
         Slot *slot = match.first;
