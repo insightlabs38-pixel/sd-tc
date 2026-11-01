@@ -218,7 +218,12 @@ public:
                 slots_[i].store(k, std::memory_order_release);
                 return i;
             }
-            --d; // revisit the slot occupied by the concurrent publisher
+            u64 raced = expected;
+            while (raced == 1) {
+                _mm_pause();
+                raced = slots_[i].load(std::memory_order_acquire);
+            }
+            if (raced == k && equals(exact_[i], s, len)) return i;
         }
         std::lock_guard<std::mutex> lock(overflow_mu_);
         auto [it, fresh] = overflow_.try_emplace(std::string(s, len), SLOTS + static_cast<u32>(overflow_.size()));
