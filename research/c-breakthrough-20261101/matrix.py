@@ -12,6 +12,7 @@ SHAS = {
     "tile12x8_batch256": "7eebdd42392226908b066a430ca23822931d4534",
     "tile12x8_batch512": "06c97813bd0b36060a9fb9c6405e11795b2a56b7",
     "field_scanner_batch128": "52b9e62558b68db8e9e49c4a4a00227f238447d2",
+    "exact_quadprobe": "f766a5c4ce58c2ceafedce48239fc04d4fdb1a93",
 }
 EXPECTED = "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
 os.makedirs("/data", exist_ok=True)
