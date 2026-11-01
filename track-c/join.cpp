@@ -327,7 +327,7 @@ struct Worker {
 
 __attribute__((target("pclmul")))
 static Field text_pair(const char *&p, const char *end, uint32_t &name_len,
-                       uint32_t &note_len, SharedNames &shared) {
+                       uint32_t &note_len) {
     const char *start = p;
     Field name{};
     uint64_t quote_total = 0, name_quotes = 0, carry = 0;
@@ -360,9 +360,6 @@ static Field text_pair(const char *&p, const char *end, uint32_t &name_len,
                                 name_len = fast.raw_len;
                                 note_len = te - ne - 3;
                                 fast.hash = raw_hash(fast.raw, fast.raw_len, end);
-                                uint32_t spread = SharedNames::spread(fast.hash);
-                                auto &shard = shared.shards[spread & 127];
-                                __builtin_prefetch(&shard.index[(spread >> 7) & (SharedNames::slots_per_shard - 1)], 0, 1);
                                 p = block + te + 2;
                                 return fast;
                             }
@@ -387,9 +384,6 @@ static Field text_pair(const char *&p, const char *end, uint32_t &name_len,
                 name = {start + quoted, static_cast<uint32_t>(finish - start - 2 * quoted), 0};
                 name_len = static_cast<uint32_t>(finish - start) - total / 2 - quoted;
                 name.hash = raw_hash(name.raw, name.raw_len, end);
-                uint32_t spread = SharedNames::spread(name.hash);
-                auto &shard = shared.shards[spread & 127];
-                __builtin_prefetch(&shard.index[(spread >> 7) & (SharedNames::slots_per_shard - 1)], 0, 1);
                 name_quotes = total;
                 start = finish + 1;
                 have_name = true;
@@ -428,7 +422,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 uint64_t id = number(p, end);
                 comma(p, end);
                 uint32_t name_len, note_len;
-                Field name = text_pair(p, end, name_len, note_len, shared);
+                Field name = text_pair(p, end, name_len, note_len);
                 uint64_t region = number(p, end);
                 uint32_t region_key = region < regions.size()
                                           ? static_cast<uint32_t>(region) : UINT32_MAX;
