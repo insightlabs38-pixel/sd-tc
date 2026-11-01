@@ -323,3 +323,10 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - [CI 41293459256](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41293459256) passed full seed-1 SHA-256, full holdouts 11/29, hostile overflow/collision tests, sanitizers, offline Docker and sandbox.
 - Direct 12-trial full-PGO paired median **75.955 -> 77.129 ms**; cgroup peak **11,028,480 -> 11,024,384 B**. S and D unchanged. Complete-K runner proxy **-0.76%**. Rejected despite slightly lower M.
 - Restored byte-identical qualified 32-row champion blob `1cfd7405b24cfff6f855f16ef0ad20dda38ad5b7`. No redundant restoration CI. Further substantial architecture work is preferable to smaller batches.
+
+## Simple-quoted field fast-path trial (2026-11-01)
+
+- Candidate [`9b2e754`](https://github.com/insightlabs38-pixel/sd-tc/commit/9b2e754e2ae80a8898d7fc469d535b9bc208f267) used bounded `memchr` to bypass the quote-mask scanner only when both quoted text fields had no escaped quotes. All other records retained the exact SIMD fallback.
+- [CI 41297722005](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41297722005) passed full seed-1 SHA-256, full holdout seeds 11/29 (three repetitions), adversarial cases, ASan/UBSan/TSan, offline Docker and sandbox.
+- Direct champion-versus-candidate 12-trial full-PGO medians **104.628 -> 104.754 ms**, cgroup memory **11,012,096 -> 11,030,528 B**, physical source **540 -> 561 lines**, D=1. Complete-K runner proxy **-0.66%**. Source-only 117.496 -> 116.140 ms is not the pinned release result.
+- **Rejected** despite valid semantics: the libc quote searches duplicate work already efficiently handled by fused AVX2/PCLMUL scanning. Restored exact qualified source blob `1cfd7405b24cfff6f855f16ef0ad20dda38ad5b7` without redundant restoration CI. Official K remains Luna's responsibility.
