@@ -124,5 +124,65 @@
     "cpp_code": 653,
     "build_code": 13,
     "D": 1
+  },
+  "filter": {
+    "S": 741,
+    "cpp_code": 728,
+    "build_code": 13,
+    "D": 1
+  },
+  "filter-private": {
+    "S": 756,
+    "cpp_code": 743,
+    "build_code": 13,
+    "D": 1
+  },
+  "filter-projected": {
+    "S": 814,
+    "cpp_code": 801,
+    "build_code": 13,
+    "D": 1
+  },
+  "epoch": {
+    "S": 666,
+    "cpp_code": 653,
+    "build_code": 13,
+    "D": 1
+  },
+  "epoch-compact-pool": {
+    "S": 725,
+    "cpp_code": 712,
+    "build_code": 13,
+    "D": 1
+  },
+  "epoch-vector-pool": {
+    "S": 845,
+    "cpp_code": 832,
+    "build_code": 13,
+    "D": 1
+  },
+  "tile-pipeline": {
+    "S": 756,
+    "cpp_code": 743,
+    "build_code": 13,
+    "D": 1
+  },
+  "radix-bucket-stream": {
+    "S": 788,
+    "cpp_code": 775,
+    "build_code": 13,
+    "D": 1
+  },
+  "radix-name-stream": {
+    "S": 788,
+    "cpp_code": 775,
+    "build_code": 13,
+    "D": 1
+  },
+  "radix-name": {
+    "S": 806,
+    "cpp_code": 793,
+    "build_code": 13,
+    "D": 1
   }
 }

@@ -1,0 +1,514 @@
+[
+  {
+    "name": "epoch-vector-pool",
+    "trial": 0,
+    "ms": 180.859204,
+    "user_ms": 303.502,
+    "system_ms": 29.572999999999997,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "main-baseline",
+    "trial": 0,
+    "ms": 159.729876,
+    "user_ms": 273.735,
+    "system_ms": 30.948,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-vector",
+    "trial": 0,
+    "ms": 200.980671,
+    "user_ms": 129.02199999999996,
+    "system_ms": 10.738000000000005,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 0,
+    "ms": 149.901638,
+    "user_ms": 259.154,
+    "system_ms": 18.77899999999999,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-compact",
+    "trial": 0,
+    "ms": 186.821725,
+    "user_ms": 110.0850000000001,
+    "system_ms": 13.664999999999997,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-arena",
+    "trial": 0,
+    "ms": 178.195237,
+    "user_ms": 201.1639999999999,
+    "system_ms": 14.818000000000012,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-compact-pool",
+    "trial": 0,
+    "ms": 171.171018,
+    "user_ms": 293.296,
+    "system_ms": 19.176999999999985,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch",
+    "trial": 0,
+    "ms": 186.705562,
+    "user_ms": 216.50199999999998,
+    "system_ms": 20.206000000000003,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-arena",
+    "trial": 1,
+    "ms": 167.96233,
+    "user_ms": 192.13400000000001,
+    "system_ms": 18.333000000000016,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-compact-pool",
+    "trial": 1,
+    "ms": 171.215595,
+    "user_ms": 264.6879999999998,
+    "system_ms": 43.167999999999985,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 1,
+    "ms": 155.308406,
+    "user_ms": 260.68500000000006,
+    "system_ms": 27.793000000000013,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "main-baseline",
+    "trial": 1,
+    "ms": 167.472398,
+    "user_ms": 281.96100000000035,
+    "system_ms": 19.325999999999983,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-compact",
+    "trial": 1,
+    "ms": 193.380927,
+    "user_ms": 134.63999999999965,
+    "system_ms": 15.602000000000004,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch",
+    "trial": 1,
+    "ms": 176.57724,
+    "user_ms": 215.716,
+    "system_ms": 15.30999999999999,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-vector",
+    "trial": 1,
+    "ms": 207.707178,
+    "user_ms": 125.89000000000006,
+    "system_ms": 18.75500000000002,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-vector-pool",
+    "trial": 1,
+    "ms": 171.757326,
+    "user_ms": 305.7889999999999,
+    "system_ms": 11.801999999999978,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "main-baseline",
+    "trial": 2,
+    "ms": 162.615352,
+    "user_ms": 294.60599999999994,
+    "system_ms": 8.02799999999998,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-vector",
+    "trial": 2,
+    "ms": 196.16251,
+    "user_ms": 117.87900000000029,
+    "system_ms": 19.71500000000004,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-arena",
+    "trial": 2,
+    "ms": 175.359897,
+    "user_ms": 202.60600000000028,
+    "system_ms": 19.214999999999982,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-vector-pool",
+    "trial": 2,
+    "ms": 170.420318,
+    "user_ms": 287.7890000000001,
+    "system_ms": 24.218000000000018,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-compact-pool",
+    "trial": 2,
+    "ms": 164.754939,
+    "user_ms": 295.80499999999967,
+    "system_ms": 8.172000000000013,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch",
+    "trial": 2,
+    "ms": 171.312865,
+    "user_ms": 186.9639999999997,
+    "system_ms": 37.37299999999999,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-compact",
+    "trial": 2,
+    "ms": 190.900792,
+    "user_ms": 115.35200000000057,
+    "system_ms": 12.253999999999987,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 2,
+    "ms": 166.979261,
+    "user_ms": 295.62199999999984,
+    "system_ms": 15.905999999999976,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-vector",
+    "trial": 3,
+    "ms": 194.686086,
+    "user_ms": 142.94700000000037,
+    "system_ms": 6.2310000000000425,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-arena",
+    "trial": 3,
+    "ms": 180.309424,
+    "user_ms": 194.76499999999942,
+    "system_ms": 12.739,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-compact",
+    "trial": 3,
+    "ms": 184.174865,
+    "user_ms": 117.73699999999998,
+    "system_ms": 18.62199999999997,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "main-baseline",
+    "trial": 3,
+    "ms": 169.036514,
+    "user_ms": 297.94500000000033,
+    "system_ms": 16.183999999999976,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch",
+    "trial": 3,
+    "ms": 191.337813,
+    "user_ms": 230.64499999999998,
+    "system_ms": 19.144000000000048,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-compact-pool",
+    "trial": 3,
+    "ms": 161.531691,
+    "user_ms": 294.01799999999946,
+    "system_ms": 4.098999999999964,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-vector-pool",
+    "trial": 3,
+    "ms": 172.321813,
+    "user_ms": 299.49200000000076,
+    "system_ms": 16.129999999999978,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 3,
+    "ms": 144.944407,
+    "user_ms": 235.8879999999992,
+    "system_ms": 31.57399999999999,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-vector",
+    "trial": 4,
+    "ms": 193.372589,
+    "user_ms": 116.44500000000058,
+    "system_ms": 15.485000000000081,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch",
+    "trial": 4,
+    "ms": 179.019978,
+    "user_ms": 213.69799999999995,
+    "system_ms": 23.282999999999944,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-compact-pool",
+    "trial": 4,
+    "ms": 170.141474,
+    "user_ms": 282.4089999999995,
+    "system_ms": 22.392999999999997,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 4,
+    "ms": 157.519261,
+    "user_ms": 280.215000000001,
+    "system_ms": 16.793999999999976,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-arena",
+    "trial": 4,
+    "ms": 184.286231,
+    "user_ms": 245.87499999999983,
+    "system_ms": 24.00800000000003,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-vector-pool",
+    "trial": 4,
+    "ms": 171.643731,
+    "user_ms": 316.81199999999876,
+    "system_ms": 4.031000000000007,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "main-baseline",
+    "trial": 4,
+    "ms": 167.10506,
+    "user_ms": 302.7950000000015,
+    "system_ms": 11.942000000000007,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-compact",
+    "trial": 4,
+    "ms": 205.969377,
+    "user_ms": 134.7069999999988,
+    "system_ms": 11.418000000000038,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-arena",
+    "trial": 5,
+    "ms": 219.158784,
+    "user_ms": 294.6270000000002,
+    "system_ms": 13.046999999999919,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 5,
+    "ms": 181.668955,
+    "user_ms": 329.49999999999943,
+    "system_ms": 12.593999999999994,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch",
+    "trial": 5,
+    "ms": 210.828858,
+    "user_ms": 243.87300000000067,
+    "system_ms": 41.713,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-vector",
+    "trial": 5,
+    "ms": 201.349143,
+    "user_ms": 122.12399999999946,
+    "system_ms": 11.149000000000076,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-compact-pool",
+    "trial": 5,
+    "ms": 166.252396,
+    "user_ms": 289.12800000000163,
+    "system_ms": 19.986999999999977,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-vector-pool",
+    "trial": 5,
+    "ms": 164.255118,
+    "user_ms": 291.88299999999856,
+    "system_ms": 11.59599999999994,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-compact",
+    "trial": 5,
+    "ms": 183.494753,
+    "user_ms": 118.89200000000066,
+    "system_ms": 6.62000000000007,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "main-baseline",
+    "trial": 5,
+    "ms": 171.572959,
+    "user_ms": 301.0230000000007,
+    "system_ms": 19.359000000000016,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-compact-pool",
+    "trial": 6,
+    "ms": 185.418905,
+    "user_ms": 326.12799999999885,
+    "system_ms": 12.627999999999972,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "main-baseline",
+    "trial": 6,
+    "ms": 187.992787,
+    "user_ms": 334.9580000000003,
+    "system_ms": 22.050000000000015,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-vector-pool",
+    "trial": 6,
+    "ms": 200.604753,
+    "user_ms": 333.4650000000004,
+    "system_ms": 18.245999999999984,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-arena",
+    "trial": 6,
+    "ms": 176.279321,
+    "user_ms": 214.6019999999993,
+    "system_ms": 17.34800000000003,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-vector",
+    "trial": 6,
+    "ms": 249.201789,
+    "user_ms": 186.03200000000086,
+    "system_ms": 30.47899999999992,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch",
+    "trial": 6,
+    "ms": 254.377163,
+    "user_ms": 342.2679999999989,
+    "system_ms": 38.830000000000034,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-compact",
+    "trial": 6,
+    "ms": 244.036202,
+    "user_ms": 171.72700000000063,
+    "system_ms": 25.52700000000008,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 6,
+    "ms": 157.446422,
+    "user_ms": 252.9149999999998,
+    "system_ms": 41.703999999999965,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 7,
+    "ms": 159.499034,
+    "user_ms": 262.3160000000002,
+    "system_ms": 39.363999999999955,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-arena",
+    "trial": 7,
+    "ms": 186.65303,
+    "user_ms": 216.8949999999992,
+    "system_ms": 24.23200000000003,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "main-baseline",
+    "trial": 7,
+    "ms": 168.412829,
+    "user_ms": 302.3040000000012,
+    "system_ms": 16.037000000000077,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-vector",
+    "trial": 7,
+    "ms": 198.096055,
+    "user_ms": 126.63899999999906,
+    "system_ms": 19.510999999999832,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-compact",
+    "trial": 7,
+    "ms": 194.052609,
+    "user_ms": 142.17499999999995,
+    "system_ms": 14.145999999999992,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch",
+    "trial": 7,
+    "ms": 189.708254,
+    "user_ms": 232.27699999999984,
+    "system_ms": 18.484000000000165,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-vector-pool",
+    "trial": 7,
+    "ms": 173.329588,
+    "user_ms": 308.76700000000136,
+    "system_ms": 12.32499999999992,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "epoch-compact-pool",
+    "trial": 7,
+    "ms": 181.563981,
+    "user_ms": 306.83999999999935,
+    "system_ms": 26.13299999999996,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  }
+]

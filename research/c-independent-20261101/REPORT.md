@@ -269,3 +269,133 @@ through cache-sized worker-owned dictionaries. No dictionary or membership
 update is shared. Persistent per-bucket sets preserve identity across epochs;
 wide descriptors handle long names and offsets without truncation. Its first
 full output matches; phase profiling is underway before further repair.
+
+
+## 06:20 UTC checkpoint: complete repeat filter and serious redistribution repairs
+
+All measurements below are development-machine results on two pinned CPUs
+under a two-CPU quota, not official scoring-machine claims. Sources are in
+`prototypes/`, including diagnostic phase builds; raw receipts are in
+`receipts/`. Each new engine retains exact full-byte collision verification.
+
+### Completed two-pass repeat filter
+
+The private filter passed the existing hostile suite under ASan/UBSan and
+TSan, 64 independently generated differential cases, and the unchanged
+production Docker build with no-network training. Five paired, interleaved
+container runs per independent full seed produced these trimmed means and
+maximum fresh-container cgroup peaks:
+
+| Full seed | Baseline T ms / M bytes | Private filter T ms / M bytes | Relative complete K |
+| --- | --- | --- | --- |
+| 11 | 169.678 / 10,362,880 | 281.195 / 13,340,672 | 0.7210 |
+| 29 | 184.625 / 10,293,248 | 283.558 / 12,857,344 | 0.7535 |
+| 137 | 172.082 / 10,285,056 | 281.002 / 12,845,056 | 0.7307 |
+
+All 30 executions matched their independent reference SHA256. S is 644 for
+baseline and 756 for private filter; D=1 for both. Relative K uses the
+complete T/M/S/D exponents, not throughput alone. The filter is complete,
+correct on the tested cases, and not promoted. Its artifact SHA256 is
+`d0d538eed5790ba53e8bf64ae8ea1baaaeb7a7056d882b15d93032992b2aea3c`.
+
+Thread-clock profiling explains the loss. Shared first-pass sketches cost
+about 299–328 ms CPU; private sketches reduce this to 218–240 ms. Replay
+still costs 285–298 ms CPU with 1,415,459 exact candidates, about 42.6% of
+records. Whole-block projected replay costs about 290–301 ms CPU, despite
+omitting arithmetic and note decoding. This rejects these implementations,
+not every possible two-pass strategy. A compact projection tape might avoid
+reparse, but its allocation/write/read and peak-memory penalties remain to
+be measured; it has not been implemented or claimed as a result.
+
+### Persistent, exclusively owned dictionary reconciliation
+
+The epoch solver parses compact 8-byte descriptors into hash buckets and
+reconciles each bucket through one persistent private exact dictionary.
+There are no shared dictionary or membership updates. It handles large raw
+names and offsets through a wide-descriptor path. Original phase CPU is
+about 194–196 ms parsing and 104–108 ms reconciliation. Whole-epoch barriers,
+repeated thread creation, allocator fragmentation and descriptor capacity
+were avoidable costs, rather than reasons to reject the architecture.
+
+Repairs pool long-name storage per owner, reduce global epochs from 48 to
+16 MiB, and retain a persistent pthread-barrier worker team. Eight interleaved
+PGO runs give median milliseconds:
+
+| Engine | T ms |
+| --- | --- |
+| Preserved baseline | 167.94 |
+| PR14 shared-dictionary hybrid | 157.48 |
+| Original epoch private solver | 188.21 |
+| Pooled arenas, original epoch size | 179.25 |
+| Compact epochs, recreated workers | 192.14 |
+| Compact epochs, persistent workers | 170.66 |
+| Deferred numeric columns, recreated workers | 199.54 |
+| Deferred numeric columns, persistent workers | 172.04 |
+
+The persistent compact solver passed the complete hostile ASan/UBSan and
+TSan suites. Added independent reconciliation cases verify a name repeated
+only across workers, one repeated only across epochs, quoted/unquoted empty
+identity, negative-only groups, and a 128 MiB field crossing the compact
+24-bit offset limit. All matched the unchanged Python oracle. Its production
+Docker measurement is still pending. Short-lived-thread rusage CPU totals
+under-counted work in earlier diagnostics; thread-clock phase sums, rather
+than those rusage totals, support the model.
+
+A further bounded tile pipeline is implemented: three producers partition
+2 MiB tiles into compact streams, while three consumers own dictionary
+buckets. Two tiles per producer bound buffering; input reclamation waits
+for every consumer. This overlaps the two computational stages and removes
+per-epoch global barriers. Qualification and benchmarking are pending.
+
+### Name-major exact radix reduction and sequential scatter
+
+The existing radix solver sorts country/name fingerprints and verifies
+repeated runs. The new `radix-name.cpp` instead groups name fingerprints and
+raw lengths, verifies each complete name exactly, then reduces its country
+membership through a temporary 256-bit set. Hash collisions create multiple
+exact names within a run; no fingerprint is treated as identity.
+
+Seven interleaved native PGO trials measured baseline 165.77 ms, PR14 156.16,
+country/name radix 263.61, name-major radix 253.70. Thread-clock profiles show
+country/name radix: parsing ~214–229 ms CPU, initial cyclic partition ~55–58,
+remaining sort ~138–143, exact reduction ~56–58. Name-major grouping reduces
+remaining sort to ~66–67 ms but increases exact reduction to ~135 ms because
+all occurrences now require verification. This is a measured tradeoff, not a
+claim that sorting is fundamentally uncompetitive.
+
+Both engines now also have complete stream variants. Parsing writes directly
+to 256 bounded-frontier bucket vectors, eliminating the initial cyclic
+partition; bucket-local radix passes use counting and sequential scatter
+instead of in-place permutation cycles. Their end-to-end evaluation is
+pending. The vectors retain the full descriptor relation, so a memory
+penalty is expected and must be included in complete K.
+
+PR14 was merged into sd-tc by external integration during this campaign.
+Its four-vCPU CI full-PGO comparison was almost flat (78.185 -> 77.986 ms)
+and memory increased, so the local speedup does not establish an official
+complete-K win. This research branch changes no submission source. Luna
+alone decides official integration and scoring-box validation.
+
+
+### Completed next comparison
+
+Eight new interleaved native PGO trials: baseline 161.14 ms; PR14 153.89;
+country/name radix stream 165.99; name-major radix stream 203.51;
+persistent private epochs 163.40; tile pipeline 168.77. Sequential scatter
+therefore repairs much of the country/name radix loss (previously ~264 ms).
+The new name-major stream passes the hostile ASan/UBSan suite. The tile
+pipeline passes both ASan/UBSan and TSan suites. These are substantial repairs,
+but none has yet demonstrated a complete-K win.
+
+Production Docker, five paired interleaved runs, full seed 1:
+
+| Engine | Trimmed T ms | Maximum cgroup M bytes | S | Relative K |
+| --- | --- | --- | --- | --- |
+| Preserved baseline | 168.249 | 10,260,480 | 644 | 1 |
+| PR14 | 161.395 | 10,805,248 | 657 | 1.007 |
+| Persistent private epochs | 169.923 | 14,221,312 | 725 | 0.916 |
+
+D=1 throughout; all hashes match. The private engine's arena/buffering repair
+reduces peak from the original ~20.4 MB to ~14.2 MB. Its source/peak penalties
+still outweigh its comparable runtime on this two-CPU host. A separate
+four-vCPU CI qualification is useful before deciding its scaling limit.
