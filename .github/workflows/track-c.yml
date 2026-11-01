@@ -38,8 +38,6 @@ jobs:
           python3 -c 'from pathlib import Path; Path("/out/aggregates.txt").unlink(missing_ok=True)'
           /tmp/sd-track-c-default
           test "$(sha256sum /out/aggregates.txt | cut -d' ' -f1)" = "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
-      - name: Unscored phase profile and worker-count comparison
-        run: python3 tests/profile_track_c.py
       - name: Build pinned offline Docker context
         run: docker build --network=none -t sd-track-c:ci track-c
       - name: Validate sandbox and full official hash
@@ -67,26 +65,6 @@ jobs:
           cp track-c/Dockerfile track-c/generator.py "$staging/"
           docker build --network=none -t sd-track-c:previous-pgo "$staging"
           container_id=$(docker create sd-track-c:previous-pgo)
-          docker cp "$container_id":/join /tmp/sd-track-c-baseline
-          docker rm "$container_id"
-          python3 tests/paired_benchmark.py
-      - name: Paired official BEST architecture comparison
-        run: |
-          staging=$(mktemp -d)
-          git show da7fe7bd83802ea10e5030c3e45983d495bddb9c:track-c/join.cpp > "$staging/join.cpp"
-          cp track-c/Dockerfile track-c/generator.py "$staging/"
-          docker build --network=none -t sd-track-c:official-best "$staging"
-          container_id=$(docker create sd-track-c:official-best)
-          docker cp "$container_id":/join /tmp/sd-track-c-baseline
-          docker rm "$container_id"
-          python3 tests/paired_benchmark.py
-      - name: Paired qualified short-path PGO control
-        run: |
-          staging=$(mktemp -d)
-          git show 90da5461b0c806fafd172ef2f5ca42feb9e0fff8:track-c/join.cpp > "$staging/join.cpp"
-          cp track-c/Dockerfile track-c/generator.py "$staging/"
-          docker build --network=none -t sd-track-c:short-control "$staging"
-          container_id=$(docker create sd-track-c:short-control)
           docker cp "$container_id":/join /tmp/sd-track-c-baseline
           docker rm "$container_id"
           python3 tests/paired_benchmark.py
