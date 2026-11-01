@@ -9,6 +9,8 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Set up official seed 1
         run: |
           sudo mkdir -p /data /out
