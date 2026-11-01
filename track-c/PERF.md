@@ -472,3 +472,11 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Direct qualified-champion full-PGO paired medians: **49.443 -> 48.352 ms** (9/12 faster) and **61.243 -> 60.257 ms** (10/12 faster). Cgroup medians: **10,487,808 -> 10,397,696 B** and **10,240,000 -> 10,231,808 B**.
 - Source remains **564 physical C++ lines**, D=1. Approximate complete-K runner proxies **+1.30% / +0.83%** including T/M/S/D. No official six-P-core measurement yet.
 - **Promoted development champion** source blob `64e6c1f91f8ce859cf75c34990c964754e070b50`; qualified rollback blob `b4ff26f2b04cb06a1d03a923b82359b3b63f2a23`. Luna retains official scoring/integration authority.
+
+## Short-name CRC fast path and collision-fixture qualification (2026-11-01)
+
+- Candidate [9e4676e](https://github.com/insightlabs38-pixel/sd-tc/commit/9e4676e9f897b14e8a834c9874ca2554e5dfecd7) used one CRC32C on zero-padded <=8-byte names; all other hash paths stayed unchanged.
+- [CI 41341716883](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41341716883) passed full reference hash, holdout seeds 11/29, hostile tests, ASan/UBSan/TSan, pinned offline Docker and sandbox.
+- Direct full-PGO paired 12-trial medians **48.333 -> 49.870 ms** (+3.18% runtime); cgroup **10,496,000 -> 10,237,952 B** (-2.46% memory). Physical source **564 -> 571 lines**, D=1; complete-K runner proxy **-1.24%** including T/M/S/D. Source-only 53.167 -> 55.040 ms. Rejected, exact champion blob `64e6c1f91f8ce859cf75c34990c964754e070b50` restored in `832190c`.
+- Review found existing collision fixtures used the obsolete XOR-spread mapping and full-byte CRC for long names; they did not actually force current shard overflow or long-key hash collisions. [4b47a52](https://github.com/insightlabs38-pixel/sd-tc/commit/4b47a525c1c4dbddced3def26b216e1afdc22279) corrected the test model, with 4,200 exact names in one 2,048-slot shard and two distinct 40-byte keys with identical production hash.
+- [CI 41341960343](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41341960343) passed the corrected concentrated overflow and full-hash collision fixtures, full seed-1 reference SHA, holdouts 11/29, sanitizers, pinned offline Docker and sandbox. No scored source change; the champion remains qualified. No official T/M/S/D/K or submission is claimed.
