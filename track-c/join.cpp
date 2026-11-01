@@ -93,11 +93,11 @@ struct SharedNames {
     static uint32_t tag(const Field &f) {
         return (f.hash & 0xfffc0000U) | ((f.raw_len <= 32 ? f.raw_len : 63U) << 12);
     }
-    struct alignas(64) Slot {
-        char key[32]{};
+    struct alignas(8) Slot {
+        char key[24]{};
         std::atomic<uint64_t> seen[4]{};
         bool matches(const Field &f, const char *end) const {
-            if (f.raw_len <= 32) {
+            if (f.raw_len <= 24) {
                 __m256i input;
                 if (end - f.raw >= 32) input = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(f.raw));
                 else {
@@ -105,9 +105,9 @@ struct SharedNames {
                     std::memcpy(tail, f.raw, f.raw_len);
                     input = _mm256_load_si256(reinterpret_cast<const __m256i *>(tail));
                 }
-                __m256i saved = _mm256_load_si256(reinterpret_cast<const __m256i *>(key));
+                __m256i saved = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(key));
                 uint32_t same = static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(saved, input)));
-                uint32_t valid = f.raw_len == 32 ? UINT32_MAX : (uint32_t(1) << f.raw_len) - 1;
+                uint32_t valid = (uint32_t(1) << f.raw_len) - 1;
                 return (same & valid) == valid;
             }
             const char *p;
@@ -118,7 +118,7 @@ struct SharedNames {
                    std::memcmp(p + 4, f.raw + 4, f.raw_len - 4) == 0;
         }
     };
-    static_assert(sizeof(Slot) == 64, "exact AVX2 name slot");
+    static_assert(sizeof(Slot) == 56, "compact exact-name slot");
     struct Shard {
         struct Overflow {
             Field field;
@@ -200,7 +200,7 @@ struct SharedNames {
         }
         if (!match.second) {
             slot = &s.pool[s.used];
-            if (name.raw_len <= 32) std::memcpy(slot->key, name.raw, name.raw_len);
+            if (name.raw_len <= 24) std::memcpy(slot->key, name.raw, name.raw_len);
             else {
                 const char *saved = s.keep(name);
                 std::memcpy(slot->key, &saved, sizeof(saved));
