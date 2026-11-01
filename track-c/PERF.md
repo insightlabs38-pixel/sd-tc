@@ -370,3 +370,11 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Trial `e9fcc00` used 128-bit SIMD equality for raw names <=16 bytes, retaining the exact 256-bit path for lengths 17..32 and the unchanged long-name comparison.
 - Standalone 3.2M-query, 100k-name randomized equality microbenchmark on AMD EPYC (not the official six-P-core box): original AVX2 25.4..34.9 ms; SSE split 38.5..40.1 ms across four runs. This is a microkernel screen, **not** full T/M/S/D/K or a correctness qualification.
 - Additional 13 scored source lines and no demonstrated speedup. Rejected before promotion; restored exact qualified `join.cpp` blob `3b5e1392f49abdbb7fdcf6a36b5866366298143b` in `286b9ce`. A push-triggered CI run may exist, but its status is not visible through the available commit-status/workflow-read interface; no CI pass is claimed.
+
+## Denser shared-name table trial (2026-11-01)
+
+- Trial `f488fb0`: 128 shards x 1024 slots versus the qualified 128 x 2048 table, with unchanged S/D.
+- [CI 41316043568](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41316043568) passed full seed-1 hash, full holdouts 11/29, hostile tests, sanitizers, pinned offline Docker and sandbox.
+- Direct full-PGO paired median **62.749 -> 65.153 ms** (+3.83% T); cgroup median **11,008,000 -> 10,496,000 B** (-4.65% M).
+- Complete-K runner proxy **-0.92%** at unchanged S/D. Reject: reduced index memory does not offset longer probes.
+- Restored exact qualified `join.cpp` blob `3b5e1392f49abdbb7fdcf6a36b5866366298143b` in `f6b7fb9`; no redundant restoration CI.
