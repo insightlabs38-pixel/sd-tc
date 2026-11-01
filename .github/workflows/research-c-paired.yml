@@ -16,6 +16,7 @@ jobs:
           sudo mkdir -p /data /out
           sudo chown "$(id -u):$(id -g)" /data /out
           python3 tests/oracle/generator.py --seed 1 --scale full --out /data
+          chmod 777 /out
       - name: Build exact source-paired pinned GCC15 PGO images
         run: |
           mkdir -p /tmp/c-frozen
