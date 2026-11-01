@@ -399,3 +399,95 @@ D=1 throughout; all hashes match. The private engine's arena/buffering repair
 reduces peak from the original ~20.4 MB to ~14.2 MB. Its source/peak penalties
 still outweigh its comparable runtime on this two-CPU host. A separate
 four-vCPU CI qualification is useful before deciding its scaling limit.
+
+
+## 06:45 UTC checkpoint: pure bounded sort-reduce, pipelines and CI confrontation
+
+The persistent private engine is preserved as draft PR16, commit
+07cf45ba991f001790053671410ca3d4b6f63962. CI run 41280672480 passed all gates,
+including full seeds 11/29, ASan/UBSan, TSan, pinned offline Docker and sandbox.
+Four-vCPU direct full-PGO fused control 65.212 -> 112.747 ms, median fresh
+cgroup peak 11,042,816 -> 14,295,040 B, S657 -> 725, D1: relative K 0.712.
+Thus comparable two-CPU runtime did not predict four-vCPU scaling. Do not
+promote this implementation. Profile worker counts 4/6/12 gave untrained
+97.897/103.596/94.347 ms. Official-machine scaling remains unmeasured.
+
+The bounded pipeline repair is separately preserved as draft PR17, commit
+9603aa6ab7a1d92b6d722471dea497f4cb981d95. Four parsers and two consumers
+balance the measured 2:1 stage CPU ratio; 24-byte inline keys reduce pointer
+lookups. Local eight-trial native PGO medians: b31 162.336 ms, fused154.347,
+original 3+3 pipeline169.114, 4+2 pipeline165.884, 4+2/inline24 pipeline161.933.
+CI 41281228501 passed every gate but direct fused full-PGO76.962 ->103.837 ms,
+median cgroup11,046,912 ->14,960,640 B. Counts in its profile denote parsers
+plus the explicitly listed consumers. Final serial distinct construction
+costs about6 ms there; this is a repair target, not a fundamental lower bound.
+No source from either draft replaced main.
+
+### Full-tape radix and bounded pipeline complete-process memory
+
+Five interleaved production containers, full seed1:
+
+| Engine | Trimmed T ms | Maximum M bytes | S |
+| --- | --- | --- | --- |
+| b31 baseline |171.652|10,309,632|644|
+| fused scanner |155.902|10,940,416|657|
+| sequential-scatter country/name radix |183.886|36,679,680|788|
+| bounded original tile pipeline |176.794|13,348,864|756|
+
+All D=1 and exact output hashes. The tape's allocation/capacity penalty
+outweighs its recovered sorting throughput. Separate production container
+checks on full seeds11/29/137 passed for radix stream, tile stream and private
+epoch engines. Their one-run receipts are correctness evidence, not paired
+performance claims.
+
+### Pure exact sorted catalogs: a genuinely different complete solver
+
+`epoch-sort.cpp` replaces every name hash table with radix-sorted batches and
+persistent sorted exact-name catalogs. Within a bucket, merge scans the old
+catalog once, verifies all candidate names by full bytes, and combines country
+sets. New storage is compacted per bucket before proceeding, bounding the
+peak old/new coexistence. Wide descriptors and exact hash-collision chains
+retain the same correctness guarantees as the private epoch parser.
+
+Original phase CPU: collect26–27 ms, sort38, exact catalog merge107–111.
+The serious repair sorts 8-byte references rather than 24-byte fields,
+prefetches input ahead, and inlines24 canonical bytes. Sorting falls to21–23
+ms and merging91–100 ms. Eight interleaved PGO medians: b31163.001 ms,
+fused154.694, pure sort204.953, repaired sort189.404. The repaired engine
+passes the complete hostile ASan/UBSan suite plus tiny19/sample37. Production
+Docker memory/source qualification is still underway. This quantifies the
+remaining sorting/merge overhead without rejecting cache-efficient sort-reduce
+as a family.
+
+### Additional complete mechanisms
+
+`membership-pipeline.cpp` resolves exact names into compact IDs, then routes
+four-byte(country,ID) records to exclusive country owners with ordinary
+membership bitmaps. It removes shared membership atomics but retains shared
+canonical key publication. It passes hostile ASan/UBSan and TSan suites.
+Eight native PGO medians:170.240 ms versus b31162.336/fused154.347. Queue and
+stage costs still offset the saved atomic work; no promotion.
+
+`cursor.cpp` replaces the structural parser's field-state machine with five
+unrolled cursor pulls per record. It gives157.283 ms versus b31163.001 and
+fused154.694, and passes hostile ASan/UBSan. Explicit PCLMUL inlining gives
+161.591 ms and four-at-a-time numeric columns159.452: these repairs do not
+beat the fused control. One earlier cursor benchmark overlapped a sanitizer
+process and was discarded, not used in the comparisons above.
+
+`borrowed.cpp` eliminates canonical string copying by retaining the mapped
+input. Up to8 exact bytes live inline; longer names reference immutable CSV
+bytes, with full length metadata for long-key tag collisions. Published index
+length tags establish exact lengths through32 bytes. No record pages are
+reclaimed while canonical references remain live. The full hostile ASan/UBSan
+and TSan suites pass. Initial native PGO:171.927 ms versus b31163.298 and
+fused162.252. Its potential advantage is lower allocation and peak private
+memory, not an established runtime win; production cgroup measurement is
+pending. The unchanged official harness explicitly prewarms data before the
+run cgroup exists, so RSS and cgroup M must be reported separately.
+
+The same input-backed representation has also been implemented in exclusively
+owned private dictionaries (`epoch-borrowed*`, `tile-borrowed`). These sources
+are preserved before results; qualification/benchmarking is pending. They
+retain full exact lengths/hashes in each private slot and do not depend on a
+shared dictionary.

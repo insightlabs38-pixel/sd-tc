@@ -184,5 +184,71 @@
     "cpp_code": 793,
     "build_code": 13,
     "D": 1
+  },
+  "borrowed": {
+    "S": 633,
+    "cpp_code": 620,
+    "build_code": 13,
+    "D": 1
+  },
+  "membership-pipeline": {
+    "S": 777,
+    "cpp_code": 764,
+    "build_code": 13,
+    "D": 1
+  },
+  "epoch-sort": {
+    "S": 707,
+    "cpp_code": 694,
+    "build_code": 13,
+    "D": 1
+  },
+  "epoch-sort-compact": {
+    "S": 738,
+    "cpp_code": 725,
+    "build_code": 13,
+    "D": 1
+  },
+  "tile-balanced-inline24": {
+    "S": 756,
+    "cpp_code": 743,
+    "build_code": 13,
+    "D": 1
+  },
+  "cursor": {
+    "S": 649,
+    "cpp_code": 636,
+    "build_code": 13,
+    "D": 1
+  },
+  "cursor-inline": {
+    "S": 649,
+    "cpp_code": 636,
+    "build_code": 13,
+    "D": 1
+  },
+  "cursor-vector": {
+    "S": 762,
+    "cpp_code": 749,
+    "build_code": 13,
+    "D": 1
+  },
+  "epoch-borrowed": {
+    "S": 700,
+    "cpp_code": 687,
+    "build_code": 13,
+    "D": 1
+  },
+  "epoch-borrowed-small": {
+    "S": 700,
+    "cpp_code": 687,
+    "build_code": 13,
+    "D": 1
+  },
+  "tile-borrowed": {
+    "S": 730,
+    "cpp_code": 717,
+    "build_code": 13,
+    "D": 1
   }
 }
