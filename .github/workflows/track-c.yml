@@ -39,7 +39,7 @@ jobs:
           /tmp/sd-track-c-default
           test "$(sha256sum /out/aggregates.txt | cut -d' ' -f1)" = "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
       - name: Unscored phase profile and worker-count comparison
-        run: echo 'Independent exact pipeline: phase profiler has a different source layout'
+        run: echo 'Independent exact pipeline phase profiler unavailable'
       - name: Build pinned offline Docker context
         run: docker build --network=none -t sd-track-c:ci track-c
       - name: Validate sandbox and full official hash
