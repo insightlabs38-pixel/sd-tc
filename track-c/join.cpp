@@ -97,19 +97,6 @@ struct SharedNames {
         char key[32]{};
         std::atomic<uint64_t> seen[4]{};
         bool matches(const Field &f, const char *end) const {
-            if (f.raw_len <= 16) {
-                __m128i input;
-                if (end - f.raw >= 16) input = _mm_loadu_si128(reinterpret_cast<const __m128i *>(f.raw));
-                else {
-                    alignas(16) char tail[16]{};
-                    std::memcpy(tail, f.raw, f.raw_len);
-                    input = _mm_load_si128(reinterpret_cast<const __m128i *>(tail));
-                }
-                __m128i saved = _mm_load_si128(reinterpret_cast<const __m128i *>(key));
-                unsigned same = static_cast<unsigned>(_mm_movemask_epi8(_mm_cmpeq_epi8(saved, input)));
-                unsigned valid = f.raw_len == 16 ? 0xffffU : (1U << f.raw_len) - 1;
-                return (same & valid) == valid;
-            }
             if (f.raw_len <= 32) {
                 __m256i input;
                 if (end - f.raw >= 32) input = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(f.raw));
