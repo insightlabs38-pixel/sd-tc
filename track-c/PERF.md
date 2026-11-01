@@ -464,3 +464,11 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - [CI 41336883538](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41336883538) passed full seed-1 hash, independent holdouts 11/29, hostile cases, ASan/UBSan/TSan, pinned offline Docker and sandbox.
 - Direct qualified-champion full-PGO 12-trial medians **74.122 -> 78.015 ms** (+5.25% T); cgroup **10,250,240 -> 10,237,952 bytes** (-0.12% M). Physical source **564 -> 568 lines**, D=1.
 - Approximate complete-K development proxy **-2.61%**; no official board measurement. **Rejected** and restored qualified champion blob `b4ff26f2b04cb06a1d03a923b82359b3b63f2a23`.
+
+## Direct CRC32C shard/index mapping promotion (2026-11-01)
+
+- Candidate [108a4ad](https://github.com/insightlabs38-pixel/sd-tc/commit/108a4ad099b8ac26e6d2d0bdf9efab067f6bec09) uses the CRC32C hash directly for shard/index placement, removing two XOR-shift mixing operations. Exact-name equality and overflow behavior are unchanged.
+- [CI 41337294610](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41337294610), attempts 1/2, passed full seed-1 SHA, holdouts 11/29, hostile cases, ASan/UBSan/TSan, offline Docker and sandbox.
+- Direct qualified-champion full-PGO paired medians: **49.443 -> 48.352 ms** (9/12 faster) and **61.243 -> 60.257 ms** (10/12 faster). Cgroup medians: **10,487,808 -> 10,397,696 B** and **10,240,000 -> 10,231,808 B**.
+- Source remains **564 physical C++ lines**, D=1. Approximate complete-K runner proxies **+1.30% / +0.83%** including T/M/S/D. No official six-P-core measurement yet.
+- **Promoted development champion** source blob `64e6c1f91f8ce859cf75c34990c964754e070b50`; qualified rollback blob `b4ff26f2b04cb06a1d03a923b82359b3b63f2a23`. Luna retains official scoring/integration authority.
