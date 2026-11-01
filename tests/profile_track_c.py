@@ -30,7 +30,7 @@ def instrument(source, workers):
     for needle, insertion in markers:
         assert source.count(needle) == 1, needle
         source = source.replace(needle, needle + insertion if needle.startswith("int main") else insertion + needle)
-    needle = '        if (fclose(out)) throw std::runtime_error("close output");'
+    needle = re.search(r'        if \(fclose\(out\)\)\s+throw std::runtime_error\("close output"\);', source).group(0)
     assert source.count(needle) == 1
     report = r'''
         const auto t_output = std::chrono::steady_clock::now();
