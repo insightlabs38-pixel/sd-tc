@@ -121,7 +121,10 @@ class ExactNames {
     };
     std::array<Overflow, 128> overflow;
     std::atomic<uint64_t> *keys, *bits;
-    const char **canonical;
+    struct Key {
+        alignas(16) unsigned char bytes[16];
+    };
+    Key *canonical;
     struct Masks {
         unsigned equal, empty, busy;
     };
@@ -147,7 +150,17 @@ class ExactNames {
     }
     bool same(unsigned id, const Field &name, uint64_t key) const {
         (void)key;
-        const char *saved = canonical[id];
+        if (name.raw_len <= 16) {
+            auto input =
+                _mm_loadu_si128(reinterpret_cast<const __m128i *>(name.raw));
+            auto saved = _mm_load_si128(
+                reinterpret_cast<const __m128i *>(canonical[id].bytes));
+            unsigned equal = _mm_movemask_epi8(_mm_cmpeq_epi8(input, saved));
+            unsigned valid = (1U << name.raw_len) - 1;
+            return (equal & valid) == valid;
+        }
+        const char *saved;
+        std::memcpy(&saved, canonical[id].bytes, sizeof(saved));
         return saved == name.raw || !std::memcmp(saved, name.raw, name.raw_len);
     }
     bool claim(unsigned id, const Field &name, uint64_t key) {
@@ -155,19 +168,27 @@ class ExactNames {
         if (!keys[id].compare_exchange_strong(expected, 1,
                                               std::memory_order_acq_rel))
             return false;
-        canonical[id] = name.raw;
+        if (name.raw_len <= 16)
+            std::memcpy(canonical[id].bytes, name.raw, name.raw_len);
+        else
+            std::memcpy(canonical[id].bytes, &name.raw, sizeof(name.raw));
         keys[id].store(key, std::memory_order_release);
         return true;
     }
     void prefetch_canonical(unsigned id, uint64_t key) const {
-        (void)key;
-        __builtin_prefetch(canonical[id], 0, 1);
+        if ((key >> 32) <= 16)
+            __builtin_prefetch(&canonical[id], 0, 1);
+        else {
+            const char *saved;
+            std::memcpy(&saved, canonical[id].bytes, sizeof(saved));
+            __builtin_prefetch(saved, 0, 1);
+        }
     }
 
   public:
     ExactNames() {
         alignas(4096) static std::atomic<uint64_t> key_storage[capacity]{};
-        alignas(4096) static const char *canonical_storage[capacity]{};
+        alignas(4096) static Key canonical_storage[capacity]{};
         alignas(4096) static std::atomic<uint64_t> membership[256 * words]{};
         keys = key_storage;
         canonical = canonical_storage;
@@ -176,8 +197,9 @@ class ExactNames {
     void populate(unsigned task, unsigned tasks, unsigned groups) {
         for (unsigned page = task; page < capacity / 512; page += tasks) {
             keys[page * 512].store(0, std::memory_order_relaxed);
-            canonical[page * 512] = nullptr;
         }
+        for (unsigned page = task; page < capacity / 256; page += tasks)
+            canonical[page * 256].bytes[0] = 0;
         for (unsigned page = task; page < groups * words / 512; page += tasks)
             bits[page * 512].store(0, std::memory_order_relaxed);
     }

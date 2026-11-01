@@ -18,3 +18,16 @@ This is a challenger for CI/scoring-host validation, not an official score.
 Rollback: source-equivalent official champion e253190 (PR14), immutable
 official6917275, source SHA25690ff49b2dbf26bc3d33e62c6e2e86ed990f19280e6b99d3e8dfca7426ec7ac65.
 Luna alone handles official integration; do not promote on local speed alone.
+
+### Inline16 canonical repair
+
+PR18 original is not a winner: CI41291768401 passes all gates, but direct
+fullPGO champion84.839ms versus114.479ms. Median fresh-container cgroup
+11,028,480 versus8,925,184; relative complete K approximately0.87.
+
+This branch stores all name bytes inline through16, retaining full-byte
+verification for longer names. The locator still includes the full length.
+Publication and all-byte identity are unchanged. Hostile ASan/UBSan/TSan pass.
+Seven interleaved pinned Docker full1 runs: champion153.562ms/M11,005,952
+versus inline16131.101ms/M9,601,024 (middle5, maximum cgroup peak). Canonical
+S and independent-seed/CI comparisons are pending; no official-score claim.
