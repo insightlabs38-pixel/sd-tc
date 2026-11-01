@@ -426,17 +426,17 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 uint64_t region = number(p, end);
                 uint32_t region_key = region < regions.size()
                                           ? static_cast<uint32_t>(region) : UINT32_MAX;
+                if (region_key != UINT32_MAX) __builtin_prefetch(&regions[region_key], 0, 1);
                 comma(p, end);
                 int64_t amount = cents(p, end);
+                unsigned group = region_key != UINT32_MAX && regions[region_key] != UINT8_MAX
+                                     ? regions[region_key] : unmatched;
                 newline(p, end);
-                batch[count++] = Pending{id, amount, name, name_len, note_len, region_key};
+                batch[count++] = Pending{id, amount, name, name_len, note_len, group};
             } while (count < batch.size() && p < end);
             // Parse ahead, then resolve and prefetch the exact-name dictionary.
             for (unsigned i = 0; i < count; ++i) {
-                Pending &r = batch[i];
-                uint32_t key = r.group;
-                r.group = key != UINT32_MAX && regions[key] != UINT8_MAX ? regions[key] : unmatched;
-                slots[i] = shared.prepare(r.name);
+                slots[i] = shared.prepare(batch[i].name);
                 if (slots[i]) {
                     __builtin_prefetch(slots[i], 0, 3);
                     __builtin_prefetch(&slots[i]->seen[batch[i].group >> 6], 1, 3);
