@@ -495,3 +495,9 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - [CI 41347661028](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41347661028), attempts 1/2, passed full seed-1 hash, holdouts 11/29, hostile cases, ASan/UBSan/TSan, pinned offline Docker and sandbox.
 - Direct full-PGO 12-trial paired medians **72.899 -> 72.593 ms** and **72.910 -> 73.229 ms**; cgroup medians **10,430,464 -> 10,233,856 B** and **10,254,336 -> 10,254,336 B**. Complete-K development proxies **+0.59% / -0.22%**.
 - **Rejected** due contradictory independent measurements and no replicated K gain. Restored qualified key-first champion blob `64e6c1f91f8ce859cf75c34990c964754e070b50`; no redundant restoration CI.
+
+## 48-byte inline-key name-slot trial (2026-11-01)
+
+- [CI 41351958200](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41351958200) passed seed-1 full reference, independent full holdouts 11/29, hostile collisions/overflow, 16/17-byte key boundaries, ASan/UBSan/TSan, pinned offline Docker and sandbox.
+- Replaced 56-byte slots with 48-byte slots; names up to 16 bytes remain inline, longer names use exact arena-backed comparison. Full-PGO paired medians **61.440 -> 63.600 ms**; cgroup median **10,283,008 -> 10,508,288 B**; physical source **564 -> 563 lines**, D=1.
+- Complete-K development proxy **-2.11%**. Rejected: extra long-name indirection and arena pressure outweighed slot-size savings. Restored qualified source blob `64e6c1f91f8ce859cf75c34990c964754e070b50`; no redundant restoration CI. Official T/M/S/D/K unchanged and unmeasured for this candidate.
