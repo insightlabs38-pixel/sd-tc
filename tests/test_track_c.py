@@ -158,6 +158,17 @@ def quote_vector_boundary_stress():
         note = b'"' + b"B" * width + b'""Q\nR"'
         rows.extend(str(i).encode() + b"," + name + b"," + note + b",7,-0.05\r\n")
         rows.extend(str(i + 100).encode() + b"," + name + b"," + note + b",8,1.00\n")
+    # Exercise every bit position of a 64-byte quote mask, including escaped
+    # quote pairs straddling bits 63/0 and a quoted embedded LF.
+    for width in range(64):
+        name = b'"' + b"A" * width + b'""Z"'
+        note = b'"' + b"B" * (63 - width) + b'""Q\nR"'
+        rows.extend(str(1000 + width).encode() + b"," + name + b"," + note +
+                    b",7,-0.05\r\n")
+        name = b'""'
+        note = b'"' + b"B" * width + b'""Q\nR"'
+        rows.extend(str(2000 + width).encode() + b"," + name + b"," + note +
+                    b",8,0.00\n")
     DATA.joinpath("records.csv").write_bytes(rows)
     check_case("quote-vector-boundary-and-escaped-pairs")
 
