@@ -325,57 +325,81 @@ struct Worker {
 };
 
 __attribute__((target("pclmul")))
-static Field text_pair(const char *&p, const char *end, uint32_t &name_len,
-                       uint32_t &note_len, SharedNames &shared) {
-    const char *start = p;
-    Field name{};
-    uint64_t quote_total = 0, name_quotes = 0, carry = 0;
-    bool have_name = false;
-    const __m256i quote = _mm256_set1_epi8('"'), comma = _mm256_set1_epi8(',');
-    for (const char *block = p; block < end; block += std::min<ptrdiff_t>(64, end - block)) {
-        unsigned bytes = std::min<ptrdiff_t>(64, end - block);
-        alignas(32) char tail[64]{};
-        const char *load = block;
-        if (bytes < 64) { std::memcpy(tail, block, bytes); load = tail; }
-        __m256i a = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(load));
-        __m256i b = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(load + 32));
-        uint64_t quotes = static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(a, quote))) |
-            (uint64_t(static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(b, quote)))) << 32);
-        uint64_t commas = static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(a, comma))) |
-            (uint64_t(static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(b, comma)))) << 32);
-        uint64_t inside = static_cast<uint64_t>(_mm_cvtsi128_si64(_mm_clmulepi64_si128(
-            _mm_cvtsi64_si128(quotes), _mm_set1_epi32(-1), 0)));
-        inside ^= carry;
-        carry = 0 - (inside >> 63);
-        uint64_t separators = commas & ~inside;
-        if (bytes < 64) separators &= (uint64_t(1) << bytes) - 1;
-        while (separators) {
-            unsigned bit = __builtin_ctzll(separators);
-            uint64_t lower = bit == 63 ? UINT64_MAX : (uint64_t(1) << (bit + 1)) - 1;
-            uint64_t total = quote_total + __builtin_popcountll(quotes & lower);
-            const char *finish = block + bit;
-            if (!have_name) {
-                bool quoted = *start == '"';
-                name = {start + quoted, static_cast<uint32_t>(finish - start - 2 * quoted), 0};
-                name_len = static_cast<uint32_t>(finish - start) - total / 2 - quoted;
-                name.hash = raw_hash(name.raw, name.raw_len, end);
-                uint32_t spread = SharedNames::spread(name.hash);
-                auto &shard = shared.shards[spread & 127];
-                __builtin_prefetch(&shard.index[(spread >> 7) & (SharedNames::slots_per_shard - 1)], 0, 1);
-                name_quotes = total;
-                start = finish + 1;
-                have_name = true;
-            } else {
-                bool quoted = *start == '"';
-                note_len = static_cast<uint32_t>(finish - start) - (total - name_quotes) / 2 - quoted;
-                p = finish + 1;
-                return name;
+
+static Field read_text_avx2(const char *&p, const char *end, uint32_t &decoded) {
+    if (p >= end) throw std::runtime_error("text field missing");
+    if (*p != '"') {
+        if (*p == ',') { const char *v=p++; decoded=0; return {v, 0, 0}; }
+        const char *start = p;
+        while (p < end) {
+            unsigned remaining = static_cast<unsigned>(std::min<ptrdiff_t>(64, end - p));
+            alignas(32) char tail[64]{};
+            const char *q = p;
+            if (remaining < 64) { std::memcpy(tail, p, remaining); q=tail; }
+            __m256i comma=_mm256_set1_epi8(',');
+            uint64_t mask=static_cast<unsigned>(_mm256_movemask_epi8(
+                _mm256_cmpeq_epi8(_mm256_loadu_si256(reinterpret_cast<const __m256i*>(q)),comma))) |
+                (uint64_t(static_cast<unsigned>(_mm256_movemask_epi8(
+                _mm256_cmpeq_epi8(_mm256_loadu_si256(reinterpret_cast<const __m256i*>(q+32)),comma)))) << 32);
+            if (mask && __builtin_ctzll(mask) < remaining) {
+                p += __builtin_ctzll(mask);
+                decoded=static_cast<uint32_t>(p-start);
+                ++p;
+                return {start, decoded, 0};
             }
-            separators &= separators - 1;
+            p += remaining;
         }
-        quote_total += __builtin_popcountll(quotes);
+        throw std::runtime_error("missing unquoted comma");
     }
-    throw std::runtime_error("missing text delimiters");
+    ++p;
+    const char *start=p;
+    uint32_t pairs=0;
+    const __m256i quote=_mm256_set1_epi8('"');
+    while (p < end) {
+        unsigned remaining=static_cast<unsigned>(std::min<ptrdiff_t>(64,end-p));
+        alignas(32) char tail[64]{};
+        const char *q=p;
+        if (remaining < 64) {std::memcpy(tail,p,remaining);q=tail;}
+        uint64_t mask=static_cast<unsigned>(_mm256_movemask_epi8(
+            _mm256_cmpeq_epi8(_mm256_loadu_si256(reinterpret_cast<const __m256i*>(q)),quote))) |
+            (uint64_t(static_cast<unsigned>(_mm256_movemask_epi8(
+            _mm256_cmpeq_epi8(_mm256_loadu_si256(reinterpret_cast<const __m256i*>(q+32)),quote)))) << 32);
+        if (remaining < 64) mask &= (uint64_t(1) << remaining)-1;
+        bool restart=false;
+        while (mask) {
+            unsigned i=__builtin_ctzll(mask);
+            const char *hit=p+i;
+            if (hit+1 < end && hit[1]=='"') {
+                ++pairs;
+                if (i+1 < remaining) {
+                    mask &= ~(uint64_t(3) << i);
+                } else {
+                    p=hit+2;
+                    restart=true;
+                    break;
+                }
+            } else {
+                if (hit+1>=end || hit[1]!=',') throw std::runtime_error("invalid quoted text delimiter");
+                uint32_t raw=static_cast<uint32_t>(hit-start);
+                decoded=raw-pairs;
+                p=hit+2;
+                return {start,raw,0};
+            }
+        }
+        if (!restart) p+=remaining;
+    }
+    throw std::runtime_error("unterminated quoted text");
+}
+
+static Field text_pair(const char *&p, const char *end,
+                       uint32_t &name_len, uint32_t &note_len, SharedNames &shared) {
+    Field name=read_text_avx2(p,end,name_len);
+    name.hash=raw_hash(name.raw,name.raw_len,end);
+    uint32_t spread=SharedNames::spread(name.hash);
+    auto &shard=shared.shards[spread & 127];
+    __builtin_prefetch(&shard.index[(spread >> 7) & (SharedNames::slots_per_shard - 1)],0,1);
+    read_text_avx2(p,end,note_len);
+    return name;
 }
 
 __attribute__((target("pclmul")))
