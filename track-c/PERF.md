@@ -425,3 +425,10 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Direct 56-byte champion full-PGO paired medians: **61.932 -> 61.616 ms** (9/12 faster), **74.178 -> 73.949 ms** (6/12 faster); cgroup **10,229,760 -> 10,278,912 B** and **10,250,240 -> 10,301,440 B**.
 - Source **570 -> 564 physical C++ lines**, D=1; approximate complete-K runner proxies **+0.32% / +0.21%** including T/M/S/D. Small gain near timing noise, not official scoring-box K.
 - **Promoted development champion** source blob `b02c0e99543f228462b75840be8e1f13cfcb6b26`; qualified rollback `d5e0becb4a61f7363c4d1a94c73dd83dcb69436a`. Luna owns official integration.
+
+## Deferred region-join batch trial (2026-11-01)
+
+- Candidate [4e5c38d](https://github.com/insightlabs38-pixel/sd-tc/commit/4e5c38d06985946847497c08625aa54dab86001c) moves region-to-country lookup from the parser loop into the 128-row dictionary-probe phase.
+- [CI 41332781590](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41332781590) passed full seed-1 hash, holdouts 11/29, hostile cases, sanitizers, offline Docker and sandbox.
+- Direct qualified champion full-PGO 12-trial median **48.240 -> 48.112 ms** (5/12 paired faster); cgroup **10,242,048 -> 10,487,808 B** (+2.40% M). Source 564 -> 564 lines; D=1.
+- Complete-K runner proxy **-0.34%** at unchanged S/D, and speed difference is not convincing. **Rejected**; exact champion blob `b02c0e99543f228462b75840be8e1f13cfcb6b26` restored in `20d3472`.
