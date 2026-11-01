@@ -302,3 +302,9 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Same-source instrumented source-only GH runner: workers 4 **80.514 ms / 41,808 KiB** vs workers 6 **81.510 ms / 44,940 KiB**. Runner has four vCPUs; the official scoring box has six P-cores, so this is not evidence that four workers improve official K.
 - Paired full-PGO against the older fused-scanner six-worker baseline (not the new hash champion): **77.548 -> 75.968 ms**; cgroup **11,028,480 -> 11,018,240 B**. Confounded by the head-tail hash improvement and runner topology, not a direct official T/M/S/D/K comparison.
 - Rejected for automatic promotion; source restored byte-identically to qualified six-worker hash champion `1cfd7405b24cfff6f855f16ef0ad20dda38ad5b7` at `eff1c947`. Optional Luna official-box trial only if useful; no redundant restoration CI.
+
+## Sixteen-row prefetch batch trial (2026-11-01)
+
+- Trial `8ccd918` changed the six-worker, full-PGO champion's batch capacity 32 -> 16 rows, with no other solution changes.
+- A new CI run was not observable through the available GitHub commit-status/workflow-read interface; no correctness, T/M/S/D or K receipt is claimed.
+- **Not promoted**: commit `83c889a` restored exact qualified champion source blob `1cfd7405b24cfff6f855f16ef0ad20dda38ad5b7` on `main`.
