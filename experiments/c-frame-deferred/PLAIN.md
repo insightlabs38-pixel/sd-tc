@@ -10,3 +10,9 @@ CI41255591511 same-source pair favored untrained78.309 vs PGO82.951ms;
 local restricted containers conflicted: plain244.223CPUms vs PGO235.160CPUms.
 Do not promote on that mixed evidence; qualify actual release choices directly.
 Rollback is complete PGO contextf0b0434/e5d6fad, not only its source file.
+
+CI https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41257643216 passed
+all gates and actual plain-release full11/29 x3. Direct actual Frame PGO control
+65.606->69.787ms, cgroup10,483,712->10,479,616B, S637->632,D1.
+Complete runnerK ratio approximately0.971 (-2.9%): reject plain release.
+Current main da7fe7b retains the qualified PGO Frame sourcec4b41459.

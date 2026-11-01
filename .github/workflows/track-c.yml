@@ -56,7 +56,7 @@ jobs:
           container_id=$(docker create sd-track-c:ci)
           docker cp "$container_id":/join /tmp/sd-track-c
           docker rm "$container_id"
-      - name: Paired full-PGO architecture comparison
+      - name: Paired production main release comparison
         run: |
           staging=$(mktemp -d)
           git show f294a882897e2ceb940f8878306b30b80c5e9829:track-c/join.cpp > "$staging/join.cpp"
@@ -102,7 +102,7 @@ jobs:
           python3 tests/paired_benchmark.py
       - name: Paired restricted cgroup memory against Frame PGO control
         run: python3 tests/paired_cgroup.py sd-track-c:frame-control sd-track-c:ci
-      - name: Independent full references for the final PGO binary
+      - name: Independent full references for the final release binary
         if: hashFiles('track-c/generator.py') != ''
         run: python3 tests/check_binary_seeds.py --binary /tmp/sd-track-c --seeds 11 29
   sanitizers:
