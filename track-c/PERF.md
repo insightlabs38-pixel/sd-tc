@@ -338,3 +338,10 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Direct champion-versus-candidate full-PGO paired medians **77.017 -> 75.639 ms** (11/12 faster) and independent **82.285 -> 80.238 ms** (11/12 faster). Cgroup peaks **10,993,664 -> 11,026,432 B** and **11,016,192 -> 11,036,672 B**.
 - Physical source **540 -> 567 lines**, D=1. Complete-K runner proxies **+0.11% / +0.49%**, including T/M/S/D; these are modest, repeatable gains, not official scoring-box K. Source-only and untrained comparisons are not used for promotion.
 - **Promoted development champion** source blob `3b5e1392f49abdbb7fdcf6a36b5866366298143b`. CI now compares against this exact source; previous twice-qualified `1cfd7405b24cfff6f855f16ef0ad20dda38ad5b7` remains rollback. Luna must measure official six-P-core T/M/S/D/K before submission.
+
+## Two-mask simple-quoted note trial (2026-11-01)
+
+- [CI 41301985445](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41301985445) passed full seed-1 SHA-256, independent full holdouts 11/29, exhaustive 0..127 simple-quote boundary fixtures, ASan/UBSan/TSan, offline Docker and sandbox.
+- Added a second 64-byte quote mask only when the first mask contains the name closing and note opening quotes but not the note closing quote.
+- Direct qualified-champion full-PGO paired median **99.901 -> 100.708 ms**; fresh cgroup **11,034,624 -> 11,018,240 B**; physical source **567 -> 577 lines**, D=1. Approximate complete-K runner proxy **-0.63%**. Rejected.
+- Restored exact qualified champion blob `3b5e1392f49abdbb7fdcf6a36b5866366298143b`. Retained the new boundary regression; no redundant restoration CI.
