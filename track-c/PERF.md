@@ -393,3 +393,11 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Direct full-PGO 12-trial paired median **74.727 -> 75.780 ms** (+1.41% T); cgroup **11,024,384 -> 11,038,720 bytes** (+0.13% M). Source-only 81.789 -> 82.248 ms.
 - Physical source 569 -> 575 lines, D=1. Approximate complete-K proxy **-0.88%** using physical-line S; no official scoring-box measurement. Rejected.
 - Restored qualified 128-row champion source blob cf7e7c3fb12a6054836d5010c391cb63c59e0c48 in cd25f7e; no redundant restoration CI.
+
+## Dynamic multi-chunk scheduling trial (2026-11-01)
+
+- Trial [212699f](https://github.com/insightlabs38-pixel/sd-tc/commit/212699f54feb938ba17d64d7dfd822ace6063a35) split the full record range into 24 exact record-boundary chunks, dynamically claimed by six workers; each worker retained private aggregates.
+- [CI 41327177516](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41327177516) passed full seed-1 SHA, full holdouts 11/29, hostile quote/BOM cases, ASan/UBSan/TSan, pinned offline Docker and sandbox.
+- Direct 128-row champion full-PGO paired median **73.576 -> 74.033 ms** (+0.62% T), cgroup **11,022,336 -> 11,034,624 bytes** (+0.11% M). Source-only median 79.616 -> 80.023 ms.
+- Physical source 569 -> 578 lines, D=1; approximate complete-K proxy **-0.57%** using physical-line S. Four-vCPU runner does not establish six-P-core results, but there is no qualifying gain. Rejected.
+- Restored exact qualified source blob cf7e7c3fb12a6054836d5010c391cb63c59e0c48 in 0659a0d; no redundant restoration CI. Further scheduling sweeps are lower priority than parser/dictionary architecture.
