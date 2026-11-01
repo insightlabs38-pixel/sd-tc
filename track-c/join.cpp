@@ -424,7 +424,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 slots[i] = shared.prepare(r.name);
                 if (slots[i]) {
                     __builtin_prefetch(slots[i], 0, 3);
-                    __builtin_prefetch(&slots[i]->seen[r.group >> 6], 0, 3);
+                    __builtin_prefetch(&slots[i]->seen[r.group >> 6], 1, 3);
                 }
             }
             for (unsigned i = 0; i < count; ++i) {
