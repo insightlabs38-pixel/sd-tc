@@ -439,7 +439,13 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 newline(p, end);
                 batch[count++] = Pending{id, amount, name, name_len, note_len, group};
             } while (count < batch.size() && p < end);
-            // Parse ahead, then resolve and prefetch the exact-name dictionary.
+            // Renew index cache lines for the entire batch before dependent probes.
+            for (unsigned i = 0; i < count; ++i) {
+                uint32_t spread = SharedNames::spread(batch[i].name.hash);
+                auto &shard = shared.shards[spread & (shared.shards.size() - 1)];
+                __builtin_prefetch(&shard.index[(spread >> SharedNames::shard_bits) &
+                    (SharedNames::slots_per_shard - 1)], 0, 1);
+            }
             for (unsigned i = 0; i < count; ++i) {
                 slots[i] = shared.prepare(batch[i].name);
                 if (slots[i]) {
