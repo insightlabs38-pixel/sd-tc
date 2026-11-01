@@ -316,3 +316,10 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Direct 12-trial full-PGO paired medians **64.069 -> 63.938 ms**, cgroup peak **11,098,112 -> 11,546,624 B**; unchanged source S (540 physical lines) and D=1. Complete-K runner proxy **-0.69%**. Rejected despite 0.20% faster T.
 - Earlier 16-row batch trial [CI 41288724025](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41288724025) also completed successfully, resolving its previous CI-visibility blocker; no direct complete-K evidence justified promotion.
 - Restored exact qualified six-worker source blob `1cfd7405b24cfff6f855f16ef0ad20dda38ad5b7`; no redundant restoration CI. Official scoring-box measurements remain Luna's responsibility.
+
+## Direct sixteen-row batch qualification (2026-11-01)
+
+- Commit `95874a5` requalified 16-row name-prefetch batches against the exact six-worker, 32-row champion using corrected direct PGO controls.
+- [CI 41293459256](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41293459256) passed full seed-1 SHA-256, full holdouts 11/29, hostile overflow/collision tests, sanitizers, offline Docker and sandbox.
+- Direct 12-trial full-PGO paired median **75.955 -> 77.129 ms**; cgroup peak **11,028,480 -> 11,024,384 B**. S and D unchanged. Complete-K runner proxy **-0.76%**. Rejected despite slightly lower M.
+- Restored byte-identical qualified 32-row champion blob `1cfd7405b24cfff6f855f16ef0ad20dda38ad5b7`. No redundant restoration CI. Further substantial architecture work is preferable to smaller batches.
