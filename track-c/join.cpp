@@ -330,40 +330,79 @@ struct Worker {
     explicit Worker(size_t group_count) : groups(group_count) { }
 };
 
-static inline Field csv_text(const char *&p, const char *end, uint32_t &logical_len, bool need_hash) {
-    if (p >= end) throw std::runtime_error("missing text field");
-    if (*p == '"') {
-        const char *raw = ++p;
-        uint32_t escapes = 0;
-        for (;;) {
-            const char *q = static_cast<const char *>(std::memchr(p, '"', end - p));
-            if (!q) throw std::runtime_error("unterminated quote");
-            if (q + 1 < end && q[1] == '"') {
-                ++escapes;
-                p = q + 2;
-                continue;
-            }
-            if (q + 1 >= end || q[1] != ',') throw std::runtime_error("bad quoted delimiter");
-            const uint32_t raw_len = static_cast<uint32_t>(q - raw);
-            logical_len = raw_len - escapes;
-            p = q + 2;
-            return Field{raw, raw_len, need_hash ? raw_hash(raw, raw_len, end) : 0};
-        }
-    }
-    const char *raw = p;
-    const char *q = static_cast<const char *>(std::memchr(p, ',', end - p));
-    if (!q) throw std::runtime_error("missing text comma");
-    const uint32_t raw_len = static_cast<uint32_t>(q - raw);
-    logical_len = raw_len;
-    p = q + 1;
-    return Field{raw, raw_len, need_hash ? raw_hash(raw, raw_len, end) : 0};
-}
-
+__attribute__((target("pclmul")))
 static Field text_pair(const char *&p, const char *end, uint32_t &name_len,
                        uint32_t &note_len) {
-    Field name = csv_text(p, end, name_len, true);
-    (void)csv_text(p, end, note_len, false);
-    return name;
+    const char *start = p;
+    Field name{};
+    uint64_t quote_total = 0, name_quotes = 0, carry = 0;
+    bool have_name = false;
+    const __m256i quote = _mm256_set1_epi8('"'), comma = _mm256_set1_epi8(',');
+    for (const char *block = p; block < end; block += std::min<ptrdiff_t>(64, end - block)) {
+        unsigned bytes = std::min<ptrdiff_t>(64, end - block);
+        alignas(32) char tail[64]{};
+        const char *load = block;
+        if (bytes < 64) { std::memcpy(tail, block, bytes); load = tail; }
+        __m256i a = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(load));
+        __m256i b = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(load + 32));
+        uint64_t quotes = static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(a, quote))) |
+            (uint64_t(static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(b, quote)))) << 32);
+        uint64_t commas = static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(a, comma))) |
+            (uint64_t(static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(b, comma)))) << 32);
+        // Four structural quotes certify two unescaped quoted fields.
+        if (block == p && (quotes & 1)) {
+            uint64_t q = quotes & ~uint64_t(1);
+            if (q) {
+                unsigned ne = __builtin_ctzll(q);
+                if (ne + 2 < bytes && block[ne + 1] == ',' && block[ne + 2] == '"') {
+                    q &= q - 1;
+                    if (q && static_cast<unsigned>(__builtin_ctzll(q)) == ne + 2) {
+                        q &= q - 1;
+                        if (q) {
+                            unsigned te = __builtin_ctzll(q);
+                            if (te + 1 < bytes && block[te + 1] == ',') {
+                                Field fast{p + 1, ne - 1, 0};
+                                name_len = fast.raw_len;
+                                note_len = te - ne - 3;
+                                fast.hash = raw_hash(fast.raw, fast.raw_len, end);
+                                p = block + te + 2;
+                                return fast;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        uint64_t inside = static_cast<uint64_t>(_mm_cvtsi128_si64(_mm_clmulepi64_si128(
+            _mm_cvtsi64_si128(quotes), _mm_set1_epi32(-1), 0)));
+        inside ^= carry;
+        carry = 0 - (inside >> 63);
+        uint64_t separators = commas & ~inside;
+        if (bytes < 64) separators &= (uint64_t(1) << bytes) - 1;
+        while (separators) {
+            unsigned bit = __builtin_ctzll(separators);
+            uint64_t lower = bit == 63 ? UINT64_MAX : (uint64_t(1) << (bit + 1)) - 1;
+            uint64_t total = quote_total + __builtin_popcountll(quotes & lower);
+            const char *finish = block + bit;
+            if (!have_name) {
+                bool quoted = *start == '"';
+                name = {start + quoted, static_cast<uint32_t>(finish - start - 2 * quoted), 0};
+                name_len = static_cast<uint32_t>(finish - start) - total / 2 - quoted;
+                name.hash = raw_hash(name.raw, name.raw_len, end);
+                name_quotes = total;
+                start = finish + 1;
+                have_name = true;
+            } else {
+                bool quoted = *start == '"';
+                note_len = static_cast<uint32_t>(finish - start) - (total - name_quotes) / 2 - quoted;
+                p = finish + 1;
+                return name;
+            }
+            separators &= separators - 1;
+        }
+        quote_total += __builtin_popcountll(quotes);
+    }
+    throw std::runtime_error("missing text delimiters");
 }
 
 __attribute__((target("pclmul")))

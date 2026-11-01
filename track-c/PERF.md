@@ -515,3 +515,10 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - [CI 41357219120](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41357219120) passed full seed-1 SHA, full holdouts 11/29, adversarial overflow/collision tests, ASan/UBSan/TSan, pinned offline Docker and sandbox.
 - Direct champion-relative full-PGO 12-pair medians: **72.765 -> 81.153 ms** (+11.53% T); cgroup median **10,235,904 -> 10,260,480 B** (+0.24% M). Physical source **570 -> 575 lines**, D=1; complete-K runner proxy **-5.48%**.
 - **Rejected.** Restored exact previously qualified champion blob `0b6a6ef559781147f07ac541631ed36faeddac09`. No redundant restoration CI; official six-P-core T/M/S/D/K not measured.
+
+## Delimiter-driven CSV parser trial (2026-11-01)
+
+- Candidate [40ff5b3](https://github.com/insightlabs38-pixel/sd-tc/commit/40ff5b372f604bc23239a250a23dae8b962e6dea) replaces the AVX2/PCLMUL quote-parity parser with direct quoted-field delimiter scanning via `memchr`, counting doubled-quote escapes exactly. Physical source drops 570 -> 531 lines.
+- [CI 41357614885](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41357614885) passed full seed-1 reference SHA, full holdouts 11/29, hostile BOM/quote/long-name/overflow cases, ASan/UBSan/TSan, pinned offline Docker and sandbox.
+- Direct qualified-champion full-PGO 12-pair medians **94.532 -> 98.945 ms** (+4.67% T); cgroup median **10,237,952 -> 10,299,392 B** (+0.60% M). D=1; source reduction contributes +1.07% alone, but complete-K runner proxy **-1.33%**.
+- **Rejected.** Restored exact qualified source blob `0b6a6ef559781147f07ac541631ed36faeddac09`. Keep vector quote-parity path; no redundant restoration CI and no official six-P-core measurement.
