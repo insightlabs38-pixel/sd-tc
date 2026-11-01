@@ -141,7 +141,7 @@ def money_swar_boundaries():
 def page_boundary_tail_stress():
     DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n")
     header = b"\xef\xbb\xbfid,name,note,region_id,amount\r\n"
-    lead, tail = b'1,"pad","', b'",7,1.00\r\n'
+    lead, tail = b'1,"a","', b'",7,1.00\r\n'
     last = b'2,"a",,7,0.00\r\n'
     padding = (-len(header) - len(lead) - len(tail) - len(last)) % 4096
     records = header + lead + b"x" * padding + tail + last
