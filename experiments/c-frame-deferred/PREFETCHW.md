@@ -12,3 +12,9 @@ PR13 115.650ms/235.160CPUms/10,219,520B;
 write+PRFCHW110.401ms/228.844CPUms/10,186,752B,S637/D1 unchanged.
 Complete local K proxy+2.4%; official6P/12T transfer not established.
 All full seed1 hashes exact. Actual release qualification/performance pending CI.
+
+CI https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41257744144 passed
+all gates, final full11/29 x3 and explicit prefetchw opcode assertion.
+Direct Frame control65.589->65.420ms,cgroup10,496,000B both,S637/D1 both.
+Complete runnerK+0.13%, within timing noise. Correct/qualified but not established
+as a scoring improvement; no PR. Keep available for controlled high-core trials.
