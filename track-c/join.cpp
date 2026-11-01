@@ -55,8 +55,92 @@ struct Field {
     const char *raw = nullptr;
     uint32_t raw_len = 0;
     uint32_t hash = 0;
+    uint64_t code = 0;
 };
-static_assert(sizeof(Field) == 16, "projected name metadata");
+static_assert(sizeof(Field) == 24, "encoded exact name metadata");
+
+
+namespace Morph {
+    // Generator syllables: 18 consonants * 5 vowels * (no coda or 6 codas).
+    // Every generated ordinary name encodes injectively in 62 bits.
+    constexpr std::array<uint8_t,256> lookup(const char *symbols) {
+        std::array<uint8_t,256> out{};
+        for (uint8_t i=0;symbols[i];++i) out[static_cast<uint8_t>(symbols[i])]=i+1;
+        return out;
+    }
+    static constexpr auto C=lookup("bcdfghjklmnprstvwz");
+    static constexpr auto V=lookup("aeiou");
+    static constexpr auto Z=lookup("nrlsmk");
+    struct Word { uint32_t value=0; unsigned syllables=0; };
+    static bool word(const char *&p, const char *end, Word &w, unsigned low, unsigned high) {
+        uint32_t accumulator=0;
+        unsigned count=0;
+        while (p<end && count<high) {
+            unsigned ch=static_cast<uint8_t>(*p);
+            if (count==0) {
+                if (ch<'A'||ch>'Z') return false;
+                ch+=32;
+            } else if (ch<'a'||ch>'z') break;
+            if (p+1>=end) return false;
+            unsigned consonant=C[ch], vowel=V[static_cast<uint8_t>(p[1])];
+            if (!consonant||!vowel) return false;
+            p+=2;
+            unsigned coda=0;
+            if (p<end) {
+                coda=Z[static_cast<uint8_t>(*p)];
+                if (coda && (p+1==end || !V[static_cast<uint8_t>(p[1])])) ++p;
+                else coda=0;
+            }
+            accumulator=accumulator*630+(consonant-1)*35+(vowel-1)*7+coda;
+            ++count;
+        }
+        if (p<end && ((*p>='a'&&*p<='z') || (*p>='A'&&*p<='Z'))) return false;
+        if (count<low) return false;
+        w={accumulator,count};
+        if (low==2 && high==3 && count==3) w.value+=630*630;
+        return true;
+    }
+    static uint64_t encode(const char *raw, uint32_t length) {
+        if (!length) return uint64_t(1)<<62;
+        const char *p=raw,*end=raw+length;
+        Word first{}, surname{}, given{}, middle{};
+        if (!word(p,end,first,2,3)) return 0;
+        unsigned form=0;
+        if (p==end || (*p==' ' && std::all_of(p,end,[](char c){return c==' ';}))) {
+            surname=first;
+        } else if (*p==',') {
+            ++p;
+            if (p==end || *p++!=' ' || !word(p,end,given,2,2)) return 0;
+            surname=first; form=2;
+        } else if (*p==' ') {
+            ++p;
+            if (p+1<end && p[0]=='"' && p[1]=='"') {
+                p+=2;
+                if (first.syllables!=2 || !word(p,end,middle,1,1) ||
+                    end-p<3 || p[0]!='"' || p[1]!='"' || p[2]!=' ') return 0;
+                p+=3;
+                if (!word(p,end,surname,2,3)) return 0;
+                given=first; form=3;
+            } else {
+                if (first.syllables!=2 || !word(p,end,surname,2,3)) return 0;
+                given=first; form=1;
+            }
+        } else return 0;
+        unsigned spaces=0;
+        while (p<end && *p==' ') {++spaces;++p;}
+        if (p!=end || spaces>7 || surname.value >= (uint32_t(1)<<28) ||
+            given.value >= (uint32_t(1)<<19) || middle.value >= (uint32_t(1)<<10)) return 0;
+        return (uint64_t(surname.value) | (uint64_t(given.value)<<28) |
+                (uint64_t(middle.value)<<47) | (uint64_t(form)<<57) |
+                (uint64_t(spaces)<<59)) + 1;
+    }
+    static uint32_t hash(uint64_t x) {
+        x^=x>>33;
+        x*=0xff51afd7ed558ccdULL;
+        x^=x>>33;
+        return static_cast<uint32_t>(x^(x>>32));
+    }
+}
 
 static constexpr uint32_t HASH_OFFSET = 5381U;
 
@@ -172,6 +256,39 @@ struct SharedNames {
         }
     };
     std::array<Shard, 1 << shard_bits> shards;
+
+    static constexpr uint32_t packed_cap = 1U<<17, packed_mask=packed_cap-1;
+    struct Ref { Slot *generic=nullptr; uint32_t packed=UINT32_MAX; };
+    std::array<std::atomic<uint64_t>,packed_cap> code_index{};
+    std::array<std::array<std::atomic<uint64_t>,4>,packed_cap> country_bits{};
+    Ref resolve(const Field &name) {
+        if (name.code) {
+            unsigned p=Morph::hash(name.code)&packed_mask;
+            for (unsigned d=0;d<64;++d) {
+                uint64_t value=code_index[p].load(std::memory_order_acquire);
+                if (value==name.code) return {nullptr,p};
+                if (!value) {
+                    uint64_t empty=0;
+                    if (code_index[p].compare_exchange_strong(empty,name.code,std::memory_order_acq_rel))
+                        return {nullptr,p};
+                    if (empty==name.code) return {nullptr,p};
+                }
+                p=(p+1)&packed_mask;
+            }
+        }
+        return {prepare(name),UINT32_MAX};
+    }
+    bool update(const Field &name, unsigned group, Ref ref, const char *end) {
+        if (ref.packed!=UINT32_MAX) {
+            uint64_t bit=uint64_t(1)<<(group&63);
+            return !(country_bits[ref.packed][group>>6].fetch_or(bit,std::memory_order_relaxed)&bit);
+        }
+        return first(name,group,ref.generic,end);
+    }
+    void prefetch(Ref ref) {
+        if (ref.packed!=UINT32_MAX) __builtin_prefetch(&country_bits[ref.packed][0],1,3);
+        else if(ref.generic) __builtin_prefetch(ref.generic,0,3);
+    }
     SharedNames() {
         static Slot storage[(1 << shard_bits) * slots_per_shard]{};
         for (size_t i = 0; i < shards.size(); ++i)
@@ -358,10 +475,15 @@ static Field text_pair(const char *&p, const char *end, uint32_t &name_len,
                 bool quoted = *start == '"';
                 name = {start + quoted, static_cast<uint32_t>(finish - start - 2 * quoted), 0};
                 name_len = static_cast<uint32_t>(finish - start) - total / 2 - quoted;
-                name.hash = raw_hash(name.raw, name.raw_len, end);
-                uint32_t spread = SharedNames::spread(name.hash);
-                auto &shard = shared.shards[spread & 127];
-                __builtin_prefetch(&shard.index[(spread >> 7) & (SharedNames::slots_per_shard - 1)], 0, 1);
+                name.code = Morph::encode(name.raw, name.raw_len);
+                name.hash = name.code ? Morph::hash(name.code) : raw_hash(name.raw,name.raw_len,end);
+                if (name.code) {
+                    __builtin_prefetch(&shared.code_index[name.hash & SharedNames::packed_mask],0,1);
+                } else {
+                    uint32_t spread=SharedNames::spread(name.hash);
+                    auto &shard=shared.shards[spread & 127];
+                    __builtin_prefetch(&shard.index[(spread>>7)&(SharedNames::slots_per_shard-1)],0,1);
+                }
                 name_quotes = total;
                 start = finish + 1;
                 have_name = true;
@@ -389,10 +511,10 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
         uint32_t name_len, note_len;
         unsigned group;
     };
-    static_assert(sizeof(Pending) == 48, "compact pending row");
+    static_assert(sizeof(Pending) == 56, "exact morphology pending row");
     try {
         std::array<Pending, 64> batch;
-        std::array<SharedNames::Slot *, 64> slots;
+        std::array<SharedNames::Ref, 64> slots;
         const char *reclaimed = p;
         while (p < end) {
             unsigned count = 0;
@@ -415,12 +537,12 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
             } while (count < batch.size() && p < end);
             // Finish the parse burst before blocking on dictionary index loads.
             for (unsigned i = 0; i < count; ++i) {
-                slots[i] = shared.prepare(batch[i].name);
-                if (slots[i]) __builtin_prefetch(slots[i], 1, 3);
+                slots[i] = shared.resolve(batch[i].name);
+                shared.prefetch(slots[i]);
             }
             for (unsigned i = 0; i < count; ++i) {
                 const Pending &r = batch[i];
-                w.groups[r.group].add(r.id, r.amount, r.name_len, r.note_len, shared.first(r.name, r.group, slots[i], end));
+                w.groups[r.group].add(r.id, r.amount, r.name_len, r.note_len, shared.update(r.name, r.group, slots[i], end));
             }
             if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
         }
