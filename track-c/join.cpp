@@ -135,7 +135,8 @@ u64 money(const char* s, const char* e) {
 // byte of the 8 bytes at p XOR ','.
 const char* comma_after(const char* p) {
     u64 x = load8(p) ^ 0x2C2C2C2C2C2C2C2C;
-    return p + __builtin_ctzll((x - 0x0101010101010101) & ~x & 0x8080808080808080) / 8;
+    u64 comma_mask = (x - 0x0101010101010101) & ~x & 0x8080808080808080;
+    return comma_mask ? p + __builtin_ctzll(comma_mask) / 8 : find(p, ',');
 }
 
 // The text field (name or note) at p, moving p past its comma: its raw bytes
