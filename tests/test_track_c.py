@@ -186,7 +186,11 @@ def packed_metadata_stress():
             longer = candidate
             break
     assert longer is not None
-    names = [left, right, short, longer] + [b"Z" * n for n in range(34)]
+    # Equal-length names with identical first/last eight bytes must remain distinct.
+    head, tail = b"abcdefgh", b"qrstuvwx"
+    inline = [head + mid + tail for mid in (b"ABCD", b"WXYZ")]
+    arena = [head + mid + tail for mid in (b"A" * 24, b"B" * 24)]
+    names = [left, right, short, longer, *inline, *arena] + [b"Z" * n for n in range(34)]
     DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n8,BBB\n")
     rows = bytearray(b"id,name,note,region_id,amount\n")
     for i in range(70000):
