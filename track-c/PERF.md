@@ -501,3 +501,10 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - [CI 41351958200](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41351958200) passed seed-1 full reference, independent full holdouts 11/29, hostile collisions/overflow, 16/17-byte key boundaries, ASan/UBSan/TSan, pinned offline Docker and sandbox.
 - Replaced 56-byte slots with 48-byte slots; names up to 16 bytes remain inline, longer names use exact arena-backed comparison. Full-PGO paired medians **61.440 -> 63.600 ms**; cgroup median **10,283,008 -> 10,508,288 B**; physical source **564 -> 563 lines**, D=1.
 - Complete-K development proxy **-2.11%**. Rejected: extra long-name indirection and arena pressure outweighed slot-size savings. Restored qualified source blob `64e6c1f91f8ce859cf75c34990c964754e070b50`; no redundant restoration CI. Official T/M/S/D/K unchanged and unmeasured for this candidate.
+
+## Batched name-index prefetch before slot resolution (2026-11-01)
+
+- [CI 41352276058](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41352276058), attempts 1 and 2, passed full seed-1 reference hash, independent full holdouts 11/29, hostile collisions/overflow and quote boundaries, ASan/UBSan/TSan, pinned offline Docker and sandbox.
+- Prefetches each 128-row batch's initial shard-index cache lines before the dependent exact-name probe/slot-prefetch pass. Direct full-PGO 12-pair medians: **60.107 -> 58.987 ms** (8/12 pairs faster) and **72.877 -> 72.397 ms** (6/12 pairs faster).
+- Cgroup peaks **10,250,240 -> 10,244,096 B** and **10,244,096 -> 10,237,952 B**; physical source **564 -> 570 lines**, D=1. Complete-K development proxies **+0.80% / +0.18%**. Source-only medians also improved in both runs; performance variance remains material.
+- **Promoted as a modest twice-qualified development gain**, source blob `0b6a6ef559781147f07ac541631ed36faeddac09`. Previous qualified champion `64e6c1f91f8ce859cf75c34990c964754e070b50` remains rollback. Luna must verify official six-P-core T/M/S/D/K before integration; no official submission here.
