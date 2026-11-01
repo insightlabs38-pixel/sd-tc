@@ -1,3 +1,4 @@
+#include <sys/prctl.h>
 #include <immintrin.h>
 #include <algorithm>
 #include <array>
@@ -91,74 +92,28 @@ static uint32_t raw_hash(const char *p, size_t n, const char *end) {
     return h;
 }
 
-static const char *find_quote(const char *p, const char *end) {
-    const __m256i quote32 = _mm256_set1_epi8('"');
-    while (end - p >= 32) {
-        __m256i block = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(p));
-        unsigned mask = static_cast<unsigned>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(block, quote32)));
-        if (mask) return p + __builtin_ctz(mask);
-        p += 32;
-    }
-    const __m128i quote16 = _mm_set1_epi8('"');
-    while (end - p >= 16) {
-        __m128i block = _mm_loadu_si128(reinterpret_cast<const __m128i *>(p));
-        unsigned mask = static_cast<unsigned>(_mm_movemask_epi8(_mm_cmpeq_epi8(block, quote16)));
-        if (mask) return p + __builtin_ctz(mask);
-        p += 16;
-    }
-    for (; p < end; ++p) if (*p == '"') return p;
-    return nullptr;
-}
-
-static Field text_field(const char *&p, const char *end, bool need_hash, uint32_t &length) {
-    Field f{};
-    length = 0;
-    bool quoted = p < end && *p == '"';
-    if (quoted) {
-        ++p;
-        f.raw = p;
-        for (;;) {
-            const char *q = find_quote(p, end);
-            if (!q) throw std::runtime_error("unclosed quote");
-            length += static_cast<uint32_t>(q - p);
-            if (q + 1 < end && q[1] == '"') {
-                ++length;
-                p = q + 2;
-                continue;
-            }
-            f.raw_len = static_cast<uint32_t>(q - f.raw);
-            f.hash = need_hash ? raw_hash(f.raw, f.raw_len, end) : HASH_OFFSET;
-            p = q + 1;
-            return f;
-        }
-    }
-    f.raw = p;
-    while (p < end && *p != ',' && *p != '\r' && *p != '\n') {
-        ++p;
-        ++length;
-    }
-    f.raw_len = length;
-    f.hash = need_hash ? raw_hash(f.raw, f.raw_len, end) : HASH_OFFSET;
-    return f;
-}
-
 struct SharedNames {
     static constexpr unsigned shard_bits = 7;
     static constexpr size_t slots_per_shard = 1 << 11;
     static uint32_t spread(uint32_t h) { return h ^ (h >> 11) ^ (h >> 22); }
     static uint32_t tag(const Field &f) {
-        return (f.hash & 0xfffe0000U) | ((f.raw_len <= 16 ? f.raw_len : 31U) << 12);
+        return (f.hash & 0xfffc0000U) | ((f.raw_len <= 32 ? f.raw_len : 63U) << 12);
     }
-    struct Slot {
-        char key[16]{};
+    struct alignas(64) Slot {
+        char key[32]{};
         std::atomic<uint64_t> seen[4]{};
         bool matches(const Field &f, const char *end) const {
-            if (f.raw_len <= 16) {
-                if (end - f.raw < 16) return std::memcmp(key, f.raw, f.raw_len) == 0;
-                __m128i a = _mm_loadu_si128(reinterpret_cast<const __m128i *>(key));
-                __m128i b = _mm_loadu_si128(reinterpret_cast<const __m128i *>(f.raw));
-                unsigned same = static_cast<unsigned>(_mm_movemask_epi8(_mm_cmpeq_epi8(a, b)));
-                unsigned valid = 0xffffU >> (16 - f.raw_len);
+            if (f.raw_len <= 32) {
+                __m256i input;
+                if (end - f.raw >= 32) input = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(f.raw));
+                else {
+                    alignas(32) char tail[32]{};
+                    std::memcpy(tail, f.raw, f.raw_len);
+                    input = _mm256_load_si256(reinterpret_cast<const __m256i *>(tail));
+                }
+                __m256i saved = _mm256_load_si256(reinterpret_cast<const __m256i *>(key));
+                uint32_t same = static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(saved, input)));
+                uint32_t valid = f.raw_len == 32 ? UINT32_MAX : (uint32_t(1) << f.raw_len) - 1;
                 return (same & valid) == valid;
             }
             const char *p;
@@ -169,7 +124,7 @@ struct SharedNames {
                    std::memcmp(p + 4, f.raw + 4, f.raw_len - 4) == 0;
         }
     };
-    static_assert(sizeof(Slot) == 48, "packed inline name slot");
+    static_assert(sizeof(Slot) == 64, "exact AVX2 name slot");
     struct Shard {
         struct Overflow {
             Field field;
@@ -251,7 +206,7 @@ struct SharedNames {
         }
         if (!match.second) {
             slot = &s.pool[s.used];
-            if (name.raw_len <= 16) std::memcpy(slot->key, name.raw, name.raw_len);
+            if (name.raw_len <= 32) std::memcpy(slot->key, name.raw, name.raw_len);
             else {
                 const char *saved = s.keep(name);
                 std::memcpy(slot->key, &saved, sizeof(saved));
@@ -375,6 +330,61 @@ struct Worker {
     explicit Worker(size_t group_count) : groups(group_count) { }
 };
 
+__attribute__((target("pclmul")))
+static Field text_pair(const char *&p, const char *end, uint32_t &name_len,
+                       uint32_t &note_len, SharedNames &shared) {
+    const char *start = p;
+    Field name{};
+    uint64_t quote_total = 0, name_quotes = 0, carry = 0;
+    bool have_name = false;
+    const __m256i quote = _mm256_set1_epi8('"'), comma = _mm256_set1_epi8(',');
+    for (const char *block = p; block < end; block += std::min<ptrdiff_t>(64, end - block)) {
+        unsigned bytes = std::min<ptrdiff_t>(64, end - block);
+        alignas(32) char tail[64]{};
+        const char *load = block;
+        if (bytes < 64) { std::memcpy(tail, block, bytes); load = tail; }
+        __m256i a = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(load));
+        __m256i b = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(load + 32));
+        uint64_t quotes = static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(a, quote))) |
+            (uint64_t(static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(b, quote)))) << 32);
+        uint64_t commas = static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(a, comma))) |
+            (uint64_t(static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(b, comma)))) << 32);
+        uint64_t inside = static_cast<uint64_t>(_mm_cvtsi128_si64(_mm_clmulepi64_si128(
+            _mm_cvtsi64_si128(quotes), _mm_set1_epi32(-1), 0)));
+        inside ^= carry;
+        carry = 0 - (inside >> 63);
+        uint64_t separators = commas & ~inside;
+        if (bytes < 64) separators &= (uint64_t(1) << bytes) - 1;
+        while (separators) {
+            unsigned bit = __builtin_ctzll(separators);
+            uint64_t lower = bit == 63 ? UINT64_MAX : (uint64_t(1) << (bit + 1)) - 1;
+            uint64_t total = quote_total + __builtin_popcountll(quotes & lower);
+            const char *finish = block + bit;
+            if (!have_name) {
+                bool quoted = *start == '"';
+                name = {start + quoted, static_cast<uint32_t>(finish - start - 2 * quoted), 0};
+                name_len = static_cast<uint32_t>(finish - start) - total / 2 - quoted;
+                name.hash = raw_hash(name.raw, name.raw_len, end);
+                uint32_t spread = SharedNames::spread(name.hash);
+                auto &shard = shared.shards[spread & 127];
+                __builtin_prefetch(&shard.index[(spread >> 7) & (SharedNames::slots_per_shard - 1)], 0, 1);
+                name_quotes = total;
+                start = finish + 1;
+                have_name = true;
+            } else {
+                bool quoted = *start == '"';
+                note_len = static_cast<uint32_t>(finish - start) - (total - name_quotes) / 2 - quoted;
+                p = finish + 1;
+                return name;
+            }
+            separators &= separators - 1;
+        }
+        quote_total += __builtin_popcountll(quotes);
+    }
+    throw std::runtime_error("missing text delimiters");
+}
+
+__attribute__((target("pclmul")))
 static void parse_range(const char *p, const char *end, const std::vector<uint8_t> &regions,
                         unsigned unmatched, Worker &w, SharedNames &shared) {
     struct Pending {
@@ -395,15 +405,8 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 bom(p, end);
                 uint64_t id = number(p, end);
                 comma(p, end);
-                uint32_t name_len;
-                Field name = text_field(p, end, true, name_len);
-                uint32_t spread = SharedNames::spread(name.hash);
-                auto &shard = shared.shards[spread & 127];
-                __builtin_prefetch(&shard.index[(spread >> 7) & (SharedNames::slots_per_shard - 1)], 0, 1);
-                comma(p, end);
-                uint32_t note_len;
-                (void)text_field(p, end, false, note_len);
-                comma(p, end);
+                uint32_t name_len, note_len;
+                Field name = text_pair(p, end, name_len, note_len, shared);
                 uint64_t region = number(p, end);
                 uint32_t region_key = region < regions.size()
                                           ? static_cast<uint32_t>(region) : UINT32_MAX;
@@ -432,6 +435,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
 
 int main() {
     try {
+        (void)prctl(PR_SET_THP_DISABLE, 1, 0, 0, 0);
         File lookup("/data/regions.csv");
         const char *p = lookup.data, *end = p + lookup.size;
         const char *header = "region_id,country\n";
