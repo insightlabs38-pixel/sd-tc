@@ -104,15 +104,24 @@ u64 fold(u64 v, size_t n) {
     return (v * 10000 + (v >> 32)) & 0xFFFFFFFF;
 }
 
-// The value of the 1 to 8 decimal digits in [s, e).
-u64 digits(const char* s, const char* e) { return fold(load8(e - 8), e - s); }
+// Fast generated widths, with exact fallback for long adversarial integers.
+u64 digits(const char* s, const char* e) {
+    size_t n = e - s;
+    if (n <= 8) return fold(load8(e - 8), n);
+    u64 value = 0;
+    for (const char* p = s; p < e; ++p) value = value * 10 + u64(*p - '0');
+    return value;
+}
 
-// An amount's value in cents, from its digits [s, e) with the dot third from
-// the end: at most 7 digits (99999.99), so the eight bytes ending at e, with
-// the dot's byte dropped, are one number.
+// The generated amounts contain <=5 integer digits; preserve full-width cents.
 u64 money(const char* s, const char* e) {
-    u64 w = load8(e - 8);
-    return fold((w & 0xFFFFFFFFFF) << 8 | (w & 0xFFFF000000000000), e - s - 1);
+    size_t n = e - s;
+    if (n <= 8) {
+        u64 w = load8(e - 8);
+        return fold((w & 0xFFFFFFFFFF) << 8 | (w & 0xFFFF000000000000), n - 1);
+    }
+    const char* point = e - 3;
+    return digits(s, point) * 100 + u64(point[1] - '0') * 10 + u64(point[2] - '0');
 }
 
 // The first c at or after p (one is known to follow). 64 bytes at a time:
