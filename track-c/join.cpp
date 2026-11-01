@@ -211,9 +211,18 @@ public:
     // A published fingerprint is never accepted without bytewise identity.
     u32 id(u64 k, const char* s, u32 len) {
         const u32 first = (k >> (64 - BITS)) & ~3u;
-        for (u32 d = 0; d < SLOTS; ++d) {
-            u32 i = (first + d) & (SLOTS - 1);
-            u64 state = slots_[i].load(std::memory_order_acquire);
+        for (u32 d = 0; d < SLOTS; d += 4) {
+            u32 group = (first + d) & (SLOTS - 1);
+            // Four independent acquire loads expose cache-line latency in parallel.
+            u64 states[4] = {
+                slots_[group].load(std::memory_order_acquire),
+                slots_[(group + 1) & (SLOTS-1)].load(std::memory_order_acquire),
+                slots_[(group + 2) & (SLOTS-1)].load(std::memory_order_acquire),
+                slots_[(group + 3) & (SLOTS-1)].load(std::memory_order_acquire)
+            };
+            for (u32 lane = 0; lane != 4; ++lane) {
+            u32 i = (group + lane) & (SLOTS - 1);
+            u64 state = states[lane];
             while (state == 1) {
                 _mm_pause();
                 state = slots_[i].load(std::memory_order_acquire);
@@ -238,6 +247,7 @@ public:
                 raced = slots_[i].load(std::memory_order_acquire);
             }
             if (raced == k && equals(exact_[i], s, len)) return i;
+            }
         }
         return overflow_id(s, len);
     }
