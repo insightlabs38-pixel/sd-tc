@@ -213,7 +213,9 @@ struct SharedNames {
                                  std::memory_order_release);
         }
         const uint64_t mask = 1ULL << (group & 63);
-        return !(slot->seen[group >> 6].fetch_or(mask, std::memory_order_relaxed) & mask);
+        auto &cell = slot->seen[group >> 6];
+        if (cell.load(std::memory_order_relaxed) & mask) return false;
+        return !(cell.fetch_or(mask, std::memory_order_relaxed) & mask);
     }
     Slot *prepare(const Field &name) {
         Shard &s = shards[spread(name.hash) & (shards.size() - 1)];
@@ -225,7 +227,9 @@ struct SharedNames {
             return slow_first(s, name, group, end);
         }
         const uint64_t mask = 1ULL << (group & 63);
-        return !(slot->seen[group >> 6].fetch_or(mask, std::memory_order_relaxed) & mask);
+        auto &cell = slot->seen[group >> 6];
+        if (cell.load(std::memory_order_relaxed) & mask) return false;
+        return !(cell.fetch_or(mask, std::memory_order_relaxed) & mask);
     }
 
 };
