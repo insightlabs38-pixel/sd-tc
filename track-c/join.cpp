@@ -423,8 +423,6 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 comma(p, end);
                 uint32_t name_len, note_len;
                 Field name = text_pair(p, end, name_len, note_len);
-                const uint32_t h = name.hash;
-                __builtin_prefetch(&shared.shards[h & 127].index[(h >> 7) & 2047], 0, 1);
                 uint64_t region = number(p, end);
                 uint32_t region_key = region < regions.size()
                                           ? static_cast<uint32_t>(region) : UINT32_MAX;

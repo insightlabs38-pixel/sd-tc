@@ -481,3 +481,10 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Review found existing collision fixtures used the obsolete XOR-spread mapping and full-byte CRC for long names; they did not actually force current shard overflow or long-key hash collisions. [4b47a52](https://github.com/insightlabs38-pixel/sd-tc/commit/4b47a525c1c4dbddced3def26b216e1afdc22279) corrected the test model, with 4,200 exact names in one 2,048-slot shard and two distinct 40-byte keys with identical production hash.
 - [CI 41341960343](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41341960343) passed the corrected concentrated overflow and full-hash collision fixtures, full seed-1 reference SHA, holdouts 11/29, sanitizers, pinned offline Docker and sandbox. No scored source change; the champion remains qualified. No official T/M/S/D/K or submission is claimed.
 - [CI 41342247143](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41342247143) additionally ran the actual 4,200-name concentrated overflow fixture under **both TSan and ASan/UBSan**; both passed exact reference bytes. Full verify, Docker, seed-1 and holdout seeds 11/29 also passed. Champion source remained unchanged.
+
+## Parser-stage name-index prefetch trial (2026-11-01)
+
+- Candidate [ed5b86b](https://github.com/insightlabs38-pixel/sd-tc/commit/ed5b86b7914b9751d98035c0d3bf33b1a4ed17b2) prefetched the sharded name-index slot immediately after CSV name hashing, before parsing the region and amount.
+- [CI 41347301633](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41347301633) passed full seed-1 hash, holdout seeds 11/29, hostile cases, ASan/UBSan/TSan, pinned offline Docker and sandbox.
+- Direct champion full-PGO 12-trial median **60.762 -> 61.196 ms** (+0.71% T); cgroup peak **10,270,720 -> 10,242,048 bytes** (-0.28% M); source **564 -> 566 physical lines**, D=1. Complete-K runner proxy **-0.35%**; rejected.
+- Restored exact qualified source blob `64e6c1f91f8ce859cf75c34990c964754e070b50`. The source-only 65.703 -> 65.125 ms and pinned PGO-vs-untrained 63.033 -> 60.894 ms are not the direct full-PGO champion comparison.
