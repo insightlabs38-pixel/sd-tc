@@ -58,6 +58,13 @@ def crc32c(data):
     return value
 
 
+def cpp_hash(data):
+    # Match join.cpp's short-key padding and long-key first/last CRC32C.
+    if len(data) <= 16:
+        return crc32c(data)
+    return crc32c(data[:8] + data[-8:] + len(data).to_bytes(4, 'little'))
+
+
 def handwritten():
     bom = b"\xef\xbb\xbf"
     DATA.joinpath("regions.csv").write_bytes(
@@ -181,14 +188,14 @@ def quote_vector_boundary_stress():
 
 def packed_metadata_stress():
     prefix = b"A" * 32
-    left, right = prefix + b"HWIGCKWZQ", prefix + b"BUBZVTFQS"
-    assert crc32c(left) == crc32c(right)
+    left, right = prefix + b"WTOYYGIC", prefix + b"OZWVMSKI"
+    assert cpp_hash(left) == cpp_hash(right)
     short = b"A" * 17
-    target = crc32c(short) & 0xfffe0000
+    target = cpp_hash(short) & 0xfffe0000
     longer = None
     for i in range(300000):
         candidate = short + str(i).encode()
-        if crc32c(candidate) & 0xfffe0000 == target:
+        if cpp_hash(candidate) & 0xfffe0000 == target:
             longer = candidate
             break
     assert longer is not None
@@ -284,8 +291,7 @@ def concentrated_shard_stress():
     for i in range(1500000):
         value = f"n{i}"
         h = crc32c(value.encode())
-        spread = h ^ (h >> 11) ^ (h >> 22)
-        if (spread & 255) == 0:
+        if (h & 127) == 0:
             names.append(value)
             if len(names) == 4200:
                 break
