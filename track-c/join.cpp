@@ -410,18 +410,17 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 if (region_key != UINT32_MAX) __builtin_prefetch(&regions[region_key], 0, 1);
                 comma(p, end);
                 int64_t amount = cents(p, end);
-                newline(p, end);
-                batch[count++] = Pending{id, amount, name, name_len, note_len, region_key};
-            } while (count < batch.size() && p < end);
-            for (unsigned i = 0; i < count; ++i) {
-                Pending &r = batch[i];
-                r.group = r.group < regions.size() && regions[r.group] != UINT8_MAX ? regions[r.group] : unmatched;
-                slots[i] = shared.prepare(r.name);
-                if (slots[i]) {
-                    __builtin_prefetch(slots[i], 0, 3);
-                    __builtin_prefetch(&slots[i]->seen[r.group >> 6], 1, 3);
+                unsigned group = region_key != UINT32_MAX && regions[region_key] != UINT8_MAX
+                                     ? regions[region_key] : unmatched;
+                SharedNames::Slot *slot = shared.prepare(name);
+                if (slot) {
+                    __builtin_prefetch(slot, 0, 3);
+                    __builtin_prefetch(&slot->seen[group >> 6], 1, 3);
                 }
-            }
+                newline(p, end);
+                batch[count] = Pending{id, amount, name, name_len, note_len, group};
+                slots[count++] = slot;
+            } while (count < batch.size() && p < end);
             for (unsigned i = 0; i < count; ++i) {
                 const Pending &r = batch[i];
                 w.groups[r.group].add(r.id, r.amount, r.name_len, r.note_len, shared.first(r.name, r.group, slots[i], end));
