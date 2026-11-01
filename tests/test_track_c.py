@@ -244,13 +244,13 @@ def merge_collision_stress():
 
 
 def concentrated_shard_stress():
-    # Exercise the collision-safe overflow path with >4096 names in one shard.
+    # Exercise the collision-safe overflow path with >2048 names in one shard.
     names = []
-    for i in range(400000):
+    for i in range(1500000):
         value = f"n{i}"
         h = crc32c(value.encode())
         spread = h ^ (h >> 11) ^ (h >> 22)
-        if (spread & 63) == 0:
+        if (spread & 255) == 0:
             names.append(value)
             if len(names) == 4200:
                 break

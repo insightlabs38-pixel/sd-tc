@@ -123,7 +123,7 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
 }
 
 struct SharedNames {
-    static constexpr unsigned shard_bits = 7;
+    static constexpr unsigned shard_bits = 8;
     static constexpr size_t slots_per_shard = 1 << 11;
     static uint32_t spread(uint32_t h) { return h ^ (h >> 11) ^ (h >> 22); }
     static uint32_t tag(const Field &f) {
@@ -349,8 +349,8 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 comma(p, end);
                 Field name = text_field(p, end, true);
                 uint32_t spread = SharedNames::spread(name.hash);
-                auto &shard = shared.shards[spread & 127];
-                __builtin_prefetch(&shard.index[(spread >> 7) & (SharedNames::slots_per_shard - 1)], 0, 1);
+                auto &shard = shared.shards[spread & (shared.shards.size() - 1)];
+                __builtin_prefetch(&shard.index[(spread >> SharedNames::shard_bits) & (SharedNames::slots_per_shard - 1)], 0, 1);
                 comma(p, end);
                 Field note = text_field(p, end, false);
                 comma(p, end);
