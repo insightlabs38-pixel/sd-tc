@@ -1,0 +1,36 @@
+name: C controlled full-PGO paired comparison
+on:
+  push:
+    branches: ["research/c-breakthrough-20261101*"]
+    paths: ["track-c/**", ".github/workflows/research-c-paired.yml"]
+jobs:
+  paired:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up official seed 1
+        run: |
+          sudo mkdir -p /data /out
+          sudo chown "$(id -u):$(id -g)" /data /out
+          python3 tests/oracle/generator.py --seed 1 --scale full --out /data
+      - name: Build exact source-paired pinned GCC15 PGO images
+        run: |
+          mkdir -p /tmp/c-frozen
+          git show f46c57e795e06ae8e69caf842f6d72aa9f74b4a2:track-c/join.cpp > /tmp/c-frozen/join.cpp
+          cp track-c/Dockerfile track-c/generator.py /tmp/c-frozen/
+          sha256sum /tmp/c-frozen/join.cpp track-c/join.cpp
+          wc -l /tmp/c-frozen/join.cpp track-c/join.cpp
+          docker build --network=none -t c-control /tmp/c-frozen
+          docker build --network=none -t c-candidate track-c
+          for item in "c-control baseline" "c-candidate current"; do
+            set -- $item
+            cid=$(docker create "$1")
+            docker cp "$cid":/join "/tmp/sd-track-c-$2"
+            docker rm "$cid"
+          done
+          mv /tmp/sd-track-c-current /tmp/sd-track-c
+      - name: Alternating full-scale exact timing
+        run: python3 tests/paired_benchmark.py
+      - name: Paired fresh-container memory
+        run: python3 tests/paired_cgroup.py c-control c-candidate
