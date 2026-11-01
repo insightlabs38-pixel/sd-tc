@@ -9,6 +9,7 @@
 #include <cstring>
 #include <exception>
 #include <memory>
+#include <new>
 #include <mutex>
 #include <thread>
 #include <unordered_map>
@@ -86,147 +87,138 @@ static uint32_t raw_hash(const char *p, size_t n, const char *end) {
     return _mm_crc32_u32(h, static_cast<uint32_t>(n));
 }
 
+
 struct SharedNames {
-    static constexpr unsigned shard_bits = 7;
-    static constexpr size_t slots_per_shard = 1 << 11;
+    static constexpr unsigned bits = 17;
+    static constexpr size_t capacity = size_t(1) << bits, mask = capacity - 1;
     static uint32_t spread(uint32_t h) { return h ^ (h >> 11) ^ (h >> 22); }
-    static uint32_t tag(const Field &f) {
-        return (f.hash & 0xfffc0000U) | ((f.raw_len <= 32 ? f.raw_len : 63U) << 12);
-    }
     struct alignas(64) Slot {
-        char key[32]{};
+        // One cache line holds exact identity, publication and membership.
+        std::atomic<uint64_t> signature{};
+        char key[24]{};
         std::atomic<uint64_t> seen[4]{};
-        bool matches(const Field &f, const char *end) const {
-            if (f.raw_len <= 32) {
-                __m256i input;
-                if (end - f.raw >= 32) input = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(f.raw));
-                else {
-                    alignas(32) char tail[32]{};
-                    std::memcpy(tail, f.raw, f.raw_len);
-                    input = _mm256_load_si256(reinterpret_cast<const __m256i *>(tail));
-                }
-                __m256i saved = _mm256_load_si256(reinterpret_cast<const __m256i *>(key));
-                uint32_t same = static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(saved, input)));
-                uint32_t valid = f.raw_len == 32 ? UINT32_MAX : (uint32_t(1) << f.raw_len) - 1;
-                return (same & valid) == valid;
+        bool matches(const Field &f, const char *) const {
+            if (key[23] != char(-1)) {
+                return static_cast<unsigned char>(key[23]) == f.raw_len &&
+                       std::memcmp(key, f.raw, f.raw_len) == 0;
             }
-            const char *p;
-            uint32_t length;
-            std::memcpy(&p, key, sizeof(p));
-            std::memcpy(&length, key + 8, sizeof(length));
-            return length == f.raw_len && std::memcmp(key + 12, f.raw, 4) == 0 &&
-                   std::memcmp(p + 4, f.raw + 4, f.raw_len - 4) == 0;
+            uint32_t len;
+            const char *saved;
+            std::memcpy(&len, key + 8, sizeof(len));
+            if (len != f.raw_len || std::memcmp(key + 12, f.raw, 11)) return false;
+            std::memcpy(&saved, key, sizeof(saved));
+            return std::memcmp(saved + 11, f.raw + 11, len - 11) == 0;
         }
     };
-    static_assert(sizeof(Slot) == 64, "exact AVX2 name slot");
-    struct Shard {
-        struct Overflow {
-            Field field;
-            std::array<uint64_t, 4> seen{};
-        };
+    static_assert(sizeof(Slot) == 64, "exact one-cacheline name+presence");
+    struct Overflow {
+        std::array<uint64_t,4> seen{};
+    };
+    struct ArenaShard {
         std::mutex mutex;
-        std::vector<Overflow> overflow;
-        std::array<std::atomic<uint32_t>, slots_per_shard> index{};
-        Slot *pool = nullptr;
-        uint16_t used = 0;
-        std::vector<std::unique_ptr<char[]>> arena;
+        std::vector<std::unique_ptr<char[]>> storage;
+        std::unordered_map<std::string,Overflow> overflow;
         char *cursor = nullptr;
-        size_t remaining = 0;
+        size_t remain = 0;
         const char *keep(const Field &f) {
             constexpr size_t block = 1 << 15;
-            if (!f.raw_len) return f.raw;
+            std::lock_guard<std::mutex> lock(mutex);
             if (f.raw_len > block) {
-                arena.emplace_back(new char[f.raw_len]);
-                std::memcpy(arena.back().get(), f.raw, f.raw_len);
-                return arena.back().get();
+                storage.emplace_back(new char[f.raw_len]);
+                std::memcpy(storage.back().get(), f.raw, f.raw_len);
+                return storage.back().get();
             }
-            if (f.raw_len > remaining) {
-                arena.emplace_back(new char[block]);
-                cursor = arena.back().get();
-                remaining = block;
+            if (f.raw_len > remain) {
+                storage.emplace_back(new char[block]);
+                cursor = storage.back().get();
+                remain = block;
             }
-            char *dst = cursor;
-            std::memcpy(dst, f.raw, f.raw_len);
+            const char *ret = cursor;
+            std::memcpy(cursor, f.raw, f.raw_len);
             cursor += f.raw_len;
-            remaining -= f.raw_len;
-            return dst;
+            remain -= f.raw_len;
+            return ret;
         }
-        std::pair<Slot *, bool> probe(const Field &f, size_t *empty = nullptr, bool verify = true, const char *end = nullptr) {
-            const uint32_t signature = tag(f);
-            size_t i = (spread(f.hash) >> shard_bits) & (slots_per_shard - 1);
-            for (size_t n = 0; n < slots_per_shard; ++n) {
-                uint32_t entry = index[i].load(std::memory_order_acquire);
-                uint16_t id = static_cast<uint16_t>(entry & 0xfffU);
-                if (!id) {
-                    if (empty) *empty = i;
-                    return {nullptr, false};
-                }
-                if ((entry & 0xfffff000U) == signature) {
-                    Slot &slot = pool[id - 1];
-                    if (!verify || slot.matches(f, end))
-                        return {&slot, true};
-                }
-                i = (i + 1) & (slots_per_shard - 1);
-            }
-            return {nullptr, false};
+        bool overflow_first(const Field &f, unsigned group) {
+            std::lock_guard<std::mutex> lock(mutex);
+            auto &words = overflow[std::string(f.raw, f.raw_len)].seen;
+            uint64_t bit = uint64_t(1) << (group & 63);
+            uint64_t &word = words[group >> 6];
+            bool fresh = !(word & bit);
+            word |= bit;
+            return fresh;
         }
     };
-    std::array<Shard, 1 << shard_bits> shards;
-    SharedNames() {
-        static Slot storage[(1 << shard_bits) * slots_per_shard]{};
-        for (size_t i = 0; i < shards.size(); ++i)
-            shards[i].pool = storage + i * slots_per_shard;
+    // Empty and publishing states are distinct. The payload hash is a filter,
+    // never an identity proof: matches() compares every relevant input byte.
+    static uint64_t signature(const Field &f) {
+        uint64_t h = (uint64_t(f.hash) << 32) | f.raw_len;
+        return h < 2 ? h + 2 : h;
     }
-    __attribute__((noinline, cold)) static bool slow_first(Shard &s, const Field &name, unsigned group, const char *end) {
-        std::lock_guard<std::mutex> lock(s.mutex);
-        size_t empty = slots_per_shard;
-        auto match = s.probe(name, &empty, true, end);
-        Slot *slot = match.first;
-        if (!match.second && empty == slots_per_shard) {
-            const uint64_t bit = 1ULL << (group & 63);
-            for (auto &entry : s.overflow) {
-                if (entry.field.hash != name.hash || entry.field.raw_len != name.raw_len || std::memcmp(entry.field.raw, name.raw, name.raw_len)) continue;
-                uint64_t &cell = entry.seen[group >> 6];
-                bool fresh = !(cell & bit);
-                cell |= bit;
-                return fresh;
+    std::array<Slot, capacity> table{};
+    std::array<ArenaShard, 128> arenas;
+    Slot *prepare(const Field &f) {
+        size_t pos = spread(f.hash) & mask;
+        uint64_t tag = signature(f);
+        for (unsigned probe = 0; probe < 64; ++probe) {
+            Slot &slot = table[pos];
+            uint64_t state = slot.signature.load(std::memory_order_acquire);
+            while (state == 1) {
+                _mm_pause();
+                state = slot.signature.load(std::memory_order_acquire);
             }
-            s.overflow.emplace_back();
-            auto &entry = s.overflow.back();
-            entry.field = name;
-            entry.field.raw = s.keep(name);
-            entry.seen[group >> 6] |= bit;
-            return true;
+            if (!state) return nullptr;
+            if (state == tag) return &slot;
+            pos = (pos + 1) & mask;
         }
-        if (!match.second) {
-            slot = &s.pool[s.used];
-            if (name.raw_len <= 32) std::memcpy(slot->key, name.raw, name.raw_len);
-            else {
-                const char *saved = s.keep(name);
-                std::memcpy(slot->key, &saved, sizeof(saved));
-                uint32_t length = name.raw_len;
-                std::memcpy(slot->key + 8, &length, sizeof(length));
-                std::memcpy(slot->key + 12, name.raw, 4);
+        return nullptr;
+    }
+    bool first(const Field &f, unsigned group, Slot *slot, const char *end) {
+        if (!slot || !slot->matches(f, end)) {
+            slot = find_or_publish(f);
+            if (!slot) return arenas[spread(f.hash) & 127].overflow_first(f, group);
+        }
+        uint64_t bit = uint64_t(1) << (group & 63);
+        return !(slot->seen[group >> 6].fetch_or(bit, std::memory_order_relaxed) & bit);
+    }
+    Slot *find_or_publish(const Field &f) {
+        size_t pos = spread(f.hash) & mask;
+        uint64_t tag = signature(f);
+        for (unsigned probe = 0; probe < 64; ++probe) {
+            Slot &slot = table[pos];
+            uint64_t state = slot.signature.load(std::memory_order_acquire);
+            if (!state) {
+                uint64_t expected = 0;
+                if (slot.signature.compare_exchange_strong(expected, 1, std::memory_order_acq_rel)) {
+                    try {
+                        if (f.raw_len <= 23) {
+                            std::memcpy(slot.key, f.raw, f.raw_len);
+                            slot.key[23] = static_cast<char>(f.raw_len);
+                        } else {
+                            const char *stored = arenas[spread(f.hash) & 127].keep(f);
+                            std::memcpy(slot.key, &stored, sizeof(stored));
+                            std::memcpy(slot.key + 8, &f.raw_len, sizeof(f.raw_len));
+                            std::memcpy(slot.key + 12, f.raw, 11);
+                            slot.key[23] = char(-1);
+                        }
+                        slot.signature.store(tag, std::memory_order_release);
+                        return &slot;
+                    } catch (...) {
+                        slot.signature.store(0, std::memory_order_release);
+                        throw;
+                    }
+                }
+                state = expected;
             }
-            s.index[empty].store(tag(name) | ++s.used,
-                                 std::memory_order_release);
+            while (state == 1) {
+                _mm_pause();
+                state = slot.signature.load(std::memory_order_acquire);
+            }
+            if (state == tag && slot.matches(f, nullptr)) return &slot;
+            pos = (pos + 1) & mask;
         }
-        const uint64_t mask = 1ULL << (group & 63);
-        return !(slot->seen[group >> 6].fetch_or(mask, std::memory_order_relaxed) & mask);
+        return nullptr;
     }
-    Slot *prepare(const Field &name) {
-        Shard &s = shards[spread(name.hash) & (shards.size() - 1)];
-        return s.probe(name, nullptr, false).first;
-    }
-    bool first(const Field &name, unsigned group, Slot *slot, const char *end) {
-        if (!slot || !slot->matches(name, end)) {
-            Shard &s = shards[spread(name.hash) & (shards.size() - 1)];
-            return slow_first(s, name, group, end);
-        }
-        const uint64_t mask = 1ULL << (group & 63);
-        return !(slot->seen[group >> 6].fetch_or(mask, std::memory_order_relaxed) & mask);
-    }
-
 };
 
 static uint64_t number(const char *&p, const char *end) {
@@ -359,9 +351,7 @@ static Field text_pair(const char *&p, const char *end, uint32_t &name_len,
                 name = {start + quoted, static_cast<uint32_t>(finish - start - 2 * quoted), 0};
                 name_len = static_cast<uint32_t>(finish - start) - total / 2 - quoted;
                 name.hash = raw_hash(name.raw, name.raw_len, end);
-                uint32_t spread = SharedNames::spread(name.hash);
-                auto &shard = shared.shards[spread & 127];
-                __builtin_prefetch(&shard.index[(spread >> 7) & (SharedNames::slots_per_shard - 1)], 0, 1);
+                __builtin_prefetch(&shared.table[SharedNames::spread(name.hash) & SharedNames::mask], 0, 1);
                 name_quotes = total;
                 start = finish + 1;
                 have_name = true;
