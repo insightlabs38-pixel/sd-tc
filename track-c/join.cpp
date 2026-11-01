@@ -327,27 +327,6 @@ struct Worker {
 __attribute__((target("pclmul")))
 static Field text_pair(const char *&p, const char *end, uint32_t &name_len,
                        uint32_t &note_len, SharedNames &shared) {
-    // Common quoted fields without escaped quotes can bypass the mask scanner.
-    if (p < end && *p == '"') {
-        const char *name_end = static_cast<const char *>(std::memchr(p + 1, '"', end - p - 1));
-        if (name_end && name_end + 1 < end && name_end[1] == ',') {
-            const char *note = name_end + 2;
-            if (note < end && *note == '"') {
-                const char *note_end = static_cast<const char *>(std::memchr(note + 1, '"', end - note - 1));
-                if (note_end && note_end + 1 < end && note_end[1] == ',') {
-                    Field fast{p + 1, static_cast<uint32_t>(name_end - p - 1), 0};
-                    name_len = fast.raw_len;
-                    note_len = static_cast<uint32_t>(note_end - note - 1);
-                    fast.hash = raw_hash(fast.raw, fast.raw_len, end);
-                    uint32_t spread = SharedNames::spread(fast.hash);
-                    auto &shard = shared.shards[spread & 127];
-                    __builtin_prefetch(&shard.index[(spread >> 7) & (SharedNames::slots_per_shard - 1)], 0, 1);
-                    p = note_end + 2;
-                    return fast;
-                }
-            }
-        }
-    }
     const char *start = p;
     Field name{};
     uint64_t quote_total = 0, name_quotes = 0, carry = 0;
