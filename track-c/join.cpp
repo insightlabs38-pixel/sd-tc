@@ -404,8 +404,6 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 uint32_t note_len;
                 (void)text_field(p, end, false, note_len);
                 comma(p, end);
-                SharedNames::Slot *slot = shared.prepare(name);
-                if (slot) __builtin_prefetch(slot, 0, 3);
                 uint64_t region = number(p, end);
                 uint32_t region_key = region < regions.size()
                                           ? static_cast<uint32_t>(region) : UINT32_MAX;
@@ -414,7 +412,11 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 int64_t amount = cents(p, end);
                 unsigned group = region_key != UINT32_MAX && regions[region_key] != UINT8_MAX
                                      ? regions[region_key] : unmatched;
-                if (slot) __builtin_prefetch(&slot->seen[group >> 6], 1, 3);
+                SharedNames::Slot *slot = shared.prepare(name);
+                if (slot) {
+                    __builtin_prefetch(slot, 0, 3);
+                    __builtin_prefetch(&slot->seen[group >> 6], 1, 3);
+                }
                 newline(p, end);
                 batch[count] = Pending{id, amount, name, name_len, note_len, group};
                 slots[count++] = slot;
