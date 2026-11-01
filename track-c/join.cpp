@@ -415,6 +415,11 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 SharedNames::Slot *slot = shared.prepare(name);
                 if (slot) {
                     __builtin_prefetch(slot, 0, 3);
+                    if (name.raw_len > 16) {
+                        const char *stored;
+                        std::memcpy(&stored, slot->key, sizeof(stored));
+                        __builtin_prefetch(stored + 4, 0, 1);
+                    }
                     __builtin_prefetch(&slot->seen[group >> 6], 1, 3);
                 }
                 newline(p, end);
