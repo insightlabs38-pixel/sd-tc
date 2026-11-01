@@ -397,6 +397,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
         while (p < end) {
             unsigned count = 0;
             do {
+                _mm_prefetch(p + 2048, _MM_HINT_T0);
                 bom(p, end);
                 uint64_t id = number(p, end);
                 comma(p, end);
