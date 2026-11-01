@@ -94,8 +94,8 @@ struct SharedNames {
         return (f.hash & 0xfffc0000U) | ((f.raw_len <= 32 ? f.raw_len : 63U) << 12);
     }
     struct alignas(8) Slot {
-        char key[24]{};
         std::atomic<uint64_t> seen[4]{};
+        char key[24]{};
         bool matches(const Field &f, const char *end) const {
             if (f.raw_len <= 24) {
                 __m256i input;
@@ -438,7 +438,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
             for (unsigned i = 0; i < count; ++i) {
                 slots[i] = shared.prepare(batch[i].name);
                 if (slots[i]) {
-                    __builtin_prefetch(slots[i], 0, 3);
+                    __builtin_prefetch(slots[i]->key, 0, 3);
                     __builtin_prefetch(&slots[i]->seen[batch[i].group >> 6], 1, 3);
                 }
             }
