@@ -37,3 +37,18 @@ jobs:
         run: python3 tests/paired_benchmark.py
       - name: Paired fresh-container memory
         run: python3 tests/paired_cgroup.py c-control c-candidate
+
+      - name: Build exact no-prefetch tile control
+        run: |
+          mkdir -p /tmp/c-tile
+          git show a137469cf6ebd18bed7e4f61375c283798b55493:track-c/join.cpp > /tmp/c-tile/join.cpp
+          cp track-c/Dockerfile track-c/generator.py /tmp/c-tile/
+          sha256sum /tmp/c-tile/join.cpp track-c/join.cpp
+          docker build --network=none -t c-tile /tmp/c-tile
+          cid=$(docker create c-tile)
+          docker cp "$cid":/join /tmp/sd-track-c-baseline
+          docker rm "$cid"
+      - name: Direct tile vs tile plus 2KB prefetch full-seed timing
+        run: python3 tests/paired_benchmark.py
+      - name: Direct tile vs prefetch fresh-container memory
+        run: python3 tests/paired_cgroup.py c-tile c-candidate
