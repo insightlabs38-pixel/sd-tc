@@ -279,3 +279,10 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Exact source qualification, independent full holdouts and CI receipts are
   recorded in the campaign report. Luna alone evaluates official T/M/S/D/K;
   preserve b31de392 main and c4b41459 official sources as rollback.
+
+## Fused-scanner boundary qualification and reclaim trial (2026-11-01)
+
+- [CI 41277146572](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41277146572) passed full hashes, holdouts, sanitizers and offline Docker after exhaustive 64-bit quote-mask boundary regression; source remained qualified fused scanner `0772ace04e358868f0b060b178d6ab77e93a15ab`.
+- [CI 41277229285](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41277229285) passed the same gates for 512 KiB record-page reclamation, compared directly with fused-scanner commit `d459dcc`.
+- Direct full-PGO paired median **66.697 -> 67.051 ms**, cgroup median **11,003,904 -> 11,030,528 bytes**, unchanged S/D; complete-K proxy **-0.31%**. Source-only **71.113 -> 72.534 ms**. Reject.
+- Restored exact qualified fused-scanner source; retained quote-mask regression and direct-champion CI baseline. Official T/M/S/D/K remains Luna's responsibility.
