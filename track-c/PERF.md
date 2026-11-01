@@ -239,3 +239,9 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Narrowed spec-bounded count, distinct and byte-length accumulators to 32 bits, reducing each worker's aggregate cell from 64 to 48 bytes without narrowing 64-bit id or money totals.
 - Direct qualified-champion full-PGO paired median **78.186 -> 78.993 ms**, cgroup **10,500,096 -> 10,498,048 B**, physical source **543 -> 544 lines**, D=1; estimated complete-K proxy **-0.54%**.
 - Source-only **87.537 -> 87.603 ms**. Rejected: aggregate cells are not the dominant cache-pressure source; restored byte-identical qualified source blob `b31de39258eec335f79e14a0568a325d4ad2c732`. No redundant restoration CI.
+
+## Deferred aggregation and long-name prefetch trials (2026-11-01)
+
+- [CI 41265183196](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41265183196) passed full seed-1 SHA-256, holdouts 11/29, hostile cases, sanitizers, offline Docker and sandbox. Moving private group arithmetic before the atomic name membership check: full-PGO **83.060 -> 82.019 ms**, cgroup **10,244,096 -> 10,489,856 B**, physical source **543 -> 545 lines**, D=1; complete-K runner proxy **+0.10%**, too small relative to variability to promote.
+- [CI 41265503908](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41265503908) passed the same gates for added long-name arena prefetch. Direct qualified-champion full-PGO **83.035 -> 83.833 ms**, cgroup **10,483,712 -> 10,485,760 B**, source **543 -> 550 lines**, D=1; complete-K proxy **-0.67%**. Source-only **92.265 -> 94.333 ms**. Rejected.
+- Restored exact twice-qualified source blob `b31de39258eec335f79e14a0568a325d4ad2c732`; CI comparison baseline remains commit `981d23c`. No redundant restoration CI.
