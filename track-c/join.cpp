@@ -1,5 +1,23 @@
-#include <sys/prctl.h>
-#include <immintrin.h>
+// Research adaptation of MIT-licensed manusingh090/speed-demon-2026-entry.
+// Exact collision-verified keys, a bounded shared key arena and overflow identities.
+// Architecture intentionally independent of HighVelocity's production shared table.
+// Speed Demon 2026, Track C (Join).
+//
+// Both files are memory-mapped, and every phase is cut into pieces that any
+// thread of one pool claims; a phase starts once the one before is done:
+//  1. regions.csv is split by lines; each thread flags the country codes it
+//     sees. Countries get indices 1..N in code order (0 is _UNMATCHED).
+//  2. Each thread fills its slice of a direct table region_id -> country index.
+//  3. records.csv is split at CRLFs: the generator never writes a CR inside
+//     quotes, so the byte after a CRLF always starts a record. Each record is
+//     read field by field: the id's comma is found in one 8-byte word, a quoted
+//     field's end by stepping through the bit mask of its quotes (a "" pair is
+//     an escape), so commas and LFs inside quotes cost nothing, and the region's
+//     comma and the LF in one 32-byte compare each. Numbers are decoded
+//     eight digits at a time. Sums go to the thread's own per-country totals. Names
+//     go through a shared lock-free intern table to dense ids, which are marked
+//     in one bitset per country; both steps are prefetched records ahead. A
+//     mark that sets a new bit adds one to the country's distinct names.
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -7,534 +25,492 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <exception>
-#include <memory>
-#include <mutex>
-#include <thread>
-#include <unordered_map>
 #include <fcntl.h>
-#include <stdexcept>
+#include <immintrin.h>
 #include <string>
+#include <mutex>
+#include <unordered_map>
+#include <unordered_set>
+#include <string_view>
 #include <sys/mman.h>
-#include <sys/stat.h>
+#include <sys/prctl.h>
+#include <thread>
 #include <unistd.h>
 #include <vector>
 
-struct File {
-    const char *data;
-    size_t size, mapped;
-    explicit File(const char *path) {
-        int fd = open(path, O_RDONLY);
-        if (fd < 0) throw std::runtime_error(std::string("open ") + path);
-        struct stat st;
-        if (fstat(fd, &st)) throw std::runtime_error("fstat");
-        size = st.st_size;
-        size_t page = static_cast<size_t>(sysconf(_SC_PAGESIZE));
-        mapped = (size + page - 1) / page * page + page;
-        data = static_cast<const char *>(mmap(nullptr, mapped, PROT_READ, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0));
-        if (data == MAP_FAILED) { close(fd); throw std::runtime_error("reserve mmap"); }
-        if (size && mmap(const_cast<char *>(data), size, PROT_READ, MAP_PRIVATE | MAP_FIXED, fd, 0) == MAP_FAILED) {
-            munmap(const_cast<char *>(data), mapped); close(fd); throw std::runtime_error("file mmap");
-        }
-        close(fd);
-    }
-    ~File() { munmap(const_cast<char *>(data), mapped); }
-};
+using u8 = uint8_t;
+using u16 = uint16_t;
+using u32 = uint32_t;
+using u64 = uint64_t;
+using i64 = int64_t;
 
-static void discard_consumed(const char *&cursor, const char *end) {
-    static const uintptr_t page = static_cast<uintptr_t>(sysconf(_SC_PAGESIZE));
-    uintptr_t lo = (reinterpret_cast<uintptr_t>(cursor) + page - 1) & ~(page - 1);
-    uintptr_t hi = reinterpret_cast<uintptr_t>(end) & ~(page - 1);
-    if (hi > lo) {
-        (void)madvise(reinterpret_cast<void *>(lo), hi - lo, MADV_DONTNEED);
-        cursor = reinterpret_cast<const char *>(hi);
-    }
+// Zero-filled anonymous memory; pages are charged only once touched.
+template <class T>
+T* zeroed(size_t n) {
+    void* p = mmap(nullptr, n * sizeof(T), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (p == MAP_FAILED) { perror("mmap"); _exit(1); }
+    return static_cast<T*>(p);
 }
 
-struct Field {
-    const char *raw = nullptr;
-    uint32_t raw_len = 0;
-    uint32_t hash = 0;
-};
-static_assert(sizeof(Field) == 16, "projected name metadata");
-
-static constexpr uint32_t HASH_OFFSET = 5381U;
-
-static uint32_t raw_hash(const char *p, size_t n, const char *end) {
-    if (n <= 16) {
-        alignas(16) static const unsigned char mask[32] = {
-            255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
-            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-        __m128i key;
-        if (end - p >= 16) {
-            key = _mm_loadu_si128(reinterpret_cast<const __m128i *>(p));
-        } else {
-            alignas(16) unsigned char tail[16] = {};
-            std::memcpy(tail, p, n);
-            key = _mm_load_si128(reinterpret_cast<const __m128i *>(tail));
-        }
-        key = _mm_and_si128(key, _mm_loadu_si128(
-            reinterpret_cast<const __m128i *>(mask + 16 - n)));
-        uint32_t h = static_cast<uint32_t>(_mm_crc32_u64(HASH_OFFSET, static_cast<uint64_t>(_mm_cvtsi128_si64(key))));
-        return static_cast<uint32_t>(_mm_crc32_u64(h, static_cast<uint64_t>(_mm_extract_epi64(key, 1))));
-    }
-    uint64_t first, last;
-    std::memcpy(&first, p, 8);
-    std::memcpy(&last, p + n - 8, 8);
-    uint32_t h = static_cast<uint32_t>(_mm_crc32_u64(HASH_OFFSET, first));
-    h = static_cast<uint32_t>(_mm_crc32_u64(h, last));
-    return _mm_crc32_u32(h, static_cast<uint32_t>(n));
+// A table that every thread writes all over is populated up front: faulting
+// it in page by page from twelve threads at once made the threads queue on
+// the kernel's page-table locks (about 12% of all cycles), and each page was
+// faulted twice, once on its first read (the shared zero page) and again on
+// its first write. Thread t of n populates its share of the n pieces in one
+// call, so the work is spread too. (Without MADV_POPULATE_WRITE the pages
+// are simply faulted in later.)
+template <class T>
+void populate_share(T* p, size_t n, int t, int nthreads) {
+    const size_t pages = (n * sizeof(T) + 4095) / 4096, from = pages * t / nthreads, to = pages * (t + 1) / nthreads;
+    if (to > from) madvise(reinterpret_cast<char*>(p) + from * 4096, (to - from) * 4096, MADV_POPULATE_WRITE);
 }
 
-struct SharedNames {
-    static constexpr unsigned shard_bits = 7;
-    static constexpr size_t slots_per_shard = 1 << 11;
-    static uint32_t spread(uint32_t h) { return h ^ (h >> 11) ^ (h >> 22); }
-    static uint32_t tag(const Field &f) {
-        return (f.hash & 0xfffc0000U) | ((f.raw_len <= 32 ? f.raw_len : 63U) << 12);
+// Map a file over a spare zero page, so 64-byte loads past its end are safe.
+const char* map_file(const char* path, size_t& size) {
+    int fd = open(path, O_RDONLY);
+    if (fd < 0) { perror(path); _exit(1); }
+    size = lseek(fd, 0, SEEK_END);
+    auto* p = static_cast<char*>(
+        mmap(nullptr, size + 4096, PROT_READ, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0));
+    if (size && mmap(p, size, PROT_READ, MAP_PRIVATE | MAP_FIXED, fd, 0) == MAP_FAILED) {
+        perror("mmap");
+        _exit(1);
     }
-    struct alignas(64) Slot {
-        char key[32]{};
-        std::atomic<uint64_t> seen[4]{};
-        bool matches(const Field &f, const char *end) const {
-            if (f.raw_len <= 32) {
-                __m256i input;
-                if (end - f.raw >= 32) input = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(f.raw));
-                else {
-                    alignas(32) char tail[32]{};
-                    std::memcpy(tail, f.raw, f.raw_len);
-                    input = _mm256_load_si256(reinterpret_cast<const __m256i *>(tail));
-                }
-                __m256i saved = _mm256_load_si256(reinterpret_cast<const __m256i *>(key));
-                uint32_t same = static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(saved, input)));
-                uint32_t valid = f.raw_len == 32 ? UINT32_MAX : (uint32_t(1) << f.raw_len) - 1;
-                return (same & valid) == valid;
+    close(fd);
+    return p;
+}
+
+u64 load8(const char* p) {
+    u64 v;
+    memcpy(&v, p, 8);
+    return v;
+}
+
+// Bit i is set when byte i of the 32 at p equals c.
+u32 match32(const char* p, char c) {
+    __m256i v = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(p));
+    return _mm256_movemask_epi8(_mm256_cmpeq_epi8(v, _mm256_set1_epi8(c)));
+}
+
+
+// The value of the last n (1 to 8) of the eight digit bytes in v (the first
+// byte is the lowest): reduced to digit values, the bytes before them masked
+// to leading zeros, then folded in pairs, quads and halves.
+u64 fold(u64 v, size_t n) {
+    v &= 0x0F0F0F0F0F0F0F0F & ~u64(0) << 8 * (8 - n);
+    v = (v * 10 + (v >> 8)) & 0x00FF00FF00FF00FF;
+    v = (v * 100 + (v >> 16)) & 0x0000FFFF0000FFFF;
+    return (v * 10000 + (v >> 32)) & 0xFFFFFFFF;
+}
+
+// The value of the 1 to 8 decimal digits in [s, e).
+u64 digits(const char* s, const char* e) { return fold(load8(e - 8), e - s); }
+
+// An amount's value in cents, from its digits [s, e) with the dot third from
+// the end: at most 7 digits (99999.99), so the eight bytes ending at e, with
+// the dot's byte dropped, are one number.
+u64 money(const char* s, const char* e) {
+    u64 w = load8(e - 8);
+    return fold((w & 0xFFFFFFFFFF) << 8 | (w & 0xFFFF000000000000), e - s - 1);
+}
+
+// The first c at or after p (one is known to follow). 64 bytes at a time:
+// a note is often longer than 32, and the loop's exit is then predictable.
+[[gnu::always_inline]] inline const char* find(const char* p, char c) {
+    for (;; p += 64)
+        if (u64 m = match32(p, c) | u64(match32(p + 32, c)) << 32) return p + __builtin_ctzll(m);
+}
+
+// The comma after a number of at most 7 digits starting at p: the lowest zero
+// byte of the 8 bytes at p XOR ','.
+const char* comma_after(const char* p) {
+    u64 x = load8(p) ^ 0x2C2C2C2C2C2C2C2C;
+    return p + __builtin_ctzll((x - 0x0101010101010101) & ~x & 0x8080808080808080) / 8;
+}
+
+// The text field (name or note) at p, moving p past its comma: its raw bytes
+// (between the quotes, if quoted) and its value's length (one byte less per
+// "" pair).
+struct Text {
+    const char* at;
+    u32 raw, length;
+};
+
+[[gnu::always_inline]] inline Text text(const char*& p) {
+    const char* s = p;
+    if (*s != '"') {
+        p = find(s, ',') + 1;
+        return {s, u32(p - 1 - s), u32(p - 1 - s)};
+    }
+    // The quotes after the opening one, 64 bytes at a time, are stepped
+    // through on their bit mask: a quote followed by another is a "" pair,
+    // the first one that is not closes the field.
+    u32 pairs = 0;
+    const char* q = s + 1;
+    for (u64 m = match32(q, '"') | u64(match32(q + 32, '"')) << 32;;) {
+        u32 i = m ? __builtin_ctzll(m) : 64;
+        if (i >= 63) {  // none, or the byte after it is out of view: move on
+            q += i;
+            m = match32(q, '"') | u64(match32(q + 32, '"')) << 32;
+            continue;
+        }
+        if (!(m >> (i + 1) & 1)) {
+            q += i;
+            break;
+        }
+        ++pairs;
+        m &= m - 1;
+        m &= m - 1;
+    }
+    p = q + 2;
+    return {s + 1, u32(q - s - 1), u32(q - s - 1 - pairs)};
+}
+
+// Names, interned by their raw bytes between the quotes. Escaping is one to
+// one, so equal raw bytes mean equal values (and the empty name is one value
+// whether quoted or not). A name's key is a 64-bit hash of those bytes and
+// their length; two of the 100,000 pool names share one with a chance of
+// about 3 in 10^10. A key's slot in the open-addressed table is the name's id;
+// an empty slot is claimed with a compare-and-swap. At 8 bytes a slot the
+// table is 1 MB, small enough to stay in a core's L2 while the input streams
+// past, and eight slots share a cache line, so a probe rarely leaves it.
+
+class NameTable {
+public:
+    static constexpr u32 BITS = 17, SLOTS = 1u << BITS;
+    static u64 key(const char* s, u32 len) {
+        static constexpr char KEEP[32] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+        __m128i head = _mm_loadu_si128(reinterpret_cast<const __m128i*>(s));
+        head = _mm_and_si128(head, _mm_loadu_si128(reinterpret_cast<const __m128i*>(KEEP + 16 - std::min(len, 16u))));
+        u64 h = (u64(_mm_cvtsi128_si64(head)) * 0x9E3779B97F4A7C15ull ^ len) + u64(_mm_extract_epi64(head, 1)) * 0xBF58476D1CE4E5B9ull;
+        for (u32 i = 16; i < len; i += 8) {
+            u64 w = load8(s + i);
+            if (len - i < 8) w &= (u64(1) << 8 * (len - i)) - 1;
+            h = (h ^ w) * 0x94D049BB133111EBull;
+        }
+        h = (h ^ h >> 31) * 0xD6E8FEB86659FD93ull;
+        h ^= h >> 32;
+        return h > 1 ? h : h + 2;  // 0 marks a free slot
+    }
+
+
+    void prefetch(u64 k) const {
+        __builtin_prefetch(&slots_[(k >> (64 - BITS)) & (SLOTS-1)], 0, 1);
+    }
+    // A published fingerprint is never accepted without bytewise identity.
+    u32 id(u64 k, const char* s, u32 len) {
+        const u32 first = (k >> (64 - BITS)) & ~3u;
+        for (u32 d = 0; d < SLOTS; ++d) {
+            u32 i = (first + d) & (SLOTS - 1);
+            u64 state = slots_[i].load(std::memory_order_acquire);
+            while (state == 1) {
+                _mm_pause();
+                state = slots_[i].load(std::memory_order_acquire);
             }
-            const char *p;
-            uint32_t length;
-            std::memcpy(&p, key, sizeof(p));
-            std::memcpy(&length, key + 8, sizeof(length));
-            return length == f.raw_len && std::memcmp(key + 12, f.raw, 4) == 0 &&
-                   std::memcmp(p + 4, f.raw + 4, f.raw_len - 4) == 0;
+            if (state == k && equals(exact_[i], s, len)) return i;
+            if (state) continue;
+            u64 expected = 0;
+            if (slots_[i].compare_exchange_strong(expected, 1, std::memory_order_acq_rel)) {
+                Exact& e = exact_[i];
+                e.len = len;
+                std::memcpy(e.prefix, s, std::min(len, 16u));
+                if (len > 16) e.tail = copy_tail(s + 16, len - 16);
+                slots_[i].store(k, std::memory_order_release);
+                return i;
+            }
+            --d; // revisit the slot occupied by the concurrent publisher
         }
+        std::lock_guard<std::mutex> lock(overflow_mu_);
+        auto [it, fresh] = overflow_.try_emplace(std::string(s, len), SLOTS + static_cast<u32>(overflow_.size()));
+        return it->second;
+    }
+    void populate(int t, int n) const {
+        populate_share(slots_, SLOTS, t, n);
+        populate_share(exact_, SLOTS, t, n);
+    }
+    ~NameTable() {
+        for (void* p : exceptional_) free(p);
+    }
+private:
+    struct Exact {
+        u32 len = 0;
+        char prefix[16]{};
+        const char* tail = nullptr;
     };
-    static_assert(sizeof(Slot) == 64, "exact AVX2 name slot");
-    struct Shard {
-        struct Overflow {
-            Field field;
-            std::array<uint64_t, 4> seen{};
-        };
-        std::mutex mutex;
-        std::vector<Overflow> overflow;
-        std::array<std::atomic<uint32_t>, slots_per_shard> index{};
-        Slot *pool = nullptr;
-        uint16_t used = 0;
-        std::vector<std::unique_ptr<char[]>> arena;
-        char *cursor = nullptr;
-        size_t remaining = 0;
-        const char *keep(const Field &f) {
-            constexpr size_t block = 1 << 15;
-            if (!f.raw_len) return f.raw;
-            if (f.raw_len > block) {
-                arena.emplace_back(new char[f.raw_len]);
-                std::memcpy(arena.back().get(), f.raw, f.raw_len);
-                return arena.back().get();
-            }
-            if (f.raw_len > remaining) {
-                arena.emplace_back(new char[block]);
-                cursor = arena.back().get();
-                remaining = block;
-            }
-            char *dst = cursor;
-            std::memcpy(dst, f.raw, f.raw_len);
-            cursor += f.raw_len;
-            remaining -= f.raw_len;
+    static bool equals(const Exact& e, const char* s, u32 len) {
+        if (e.len != len) return false;
+        u32 n = std::min(len, 16u);
+        return !std::memcmp(e.prefix, s, n) &&
+            (len <= 16 || !std::memcmp(e.tail, s + 16, len - 16));
+    }
+    const char* copy_tail(const char* src, u32 len) {
+        u64 offset = next_tail_.fetch_add(len, std::memory_order_relaxed);
+        if (offset < ARENA_BYTES && len <= ARENA_BYTES - offset) {
+            char* dst = tail_arena_ + offset;
+            std::memcpy(dst, src, len);
             return dst;
         }
-        std::pair<Slot *, bool> probe(const Field &f, size_t *empty = nullptr, bool verify = true, const char *end = nullptr) {
-            const uint32_t signature = tag(f);
-            size_t i = (spread(f.hash) >> shard_bits) & (slots_per_shard - 1);
-            for (size_t n = 0; n < slots_per_shard; ++n) {
-                uint32_t entry = index[i].load(std::memory_order_acquire);
-                uint16_t id = static_cast<uint16_t>(entry & 0xfffU);
-                if (!id) {
-                    if (empty) *empty = i;
-                    return {nullptr, false};
-                }
-                if ((entry & 0xfffff000U) == signature) {
-                    Slot &slot = pool[id - 1];
-                    if (!verify || slot.matches(f, end))
-                        return {&slot, true};
-                }
-                i = (i + 1) & (slots_per_shard - 1);
-            }
-            return {nullptr, false};
-        }
-    };
-    std::array<Shard, 1 << shard_bits> shards;
-    SharedNames() {
-        static Slot storage[(1 << shard_bits) * slots_per_shard]{};
-        for (size_t i = 0; i < shards.size(); ++i)
-            shards[i].pool = storage + i * slots_per_shard;
+        char* dst = static_cast<char*>(malloc(len));
+        if (!dst) { fputs("name arena allocation failed\n", stderr); _exit(1); }
+        std::memcpy(dst, src, len);
+        { std::lock_guard<std::mutex> lock(overflow_mu_); exceptional_.push_back(dst); }
+        return dst;
     }
-    __attribute__((noinline, cold)) static bool slow_first(Shard &s, const Field &name, unsigned group, const char *end) {
-        std::lock_guard<std::mutex> lock(s.mutex);
-        size_t empty = slots_per_shard;
-        auto match = s.probe(name, &empty, true, end);
-        Slot *slot = match.first;
-        if (!match.second && empty == slots_per_shard) {
-            const uint64_t bit = 1ULL << (group & 63);
-            for (auto &entry : s.overflow) {
-                if (entry.field.hash != name.hash || entry.field.raw_len != name.raw_len || std::memcmp(entry.field.raw, name.raw, name.raw_len)) continue;
-                uint64_t &cell = entry.seen[group >> 6];
-                bool fresh = !(cell & bit);
-                cell |= bit;
-                return fresh;
-            }
-            s.overflow.emplace_back();
-            auto &entry = s.overflow.back();
-            entry.field = name;
-            entry.field.raw = s.keep(name);
-            entry.seen[group >> 6] |= bit;
-            return true;
-        }
-        if (!match.second) {
-            slot = &s.pool[s.used];
-            if (name.raw_len <= 32) std::memcpy(slot->key, name.raw, name.raw_len);
-            else {
-                const char *saved = s.keep(name);
-                std::memcpy(slot->key, &saved, sizeof(saved));
-                uint32_t length = name.raw_len;
-                std::memcpy(slot->key + 8, &length, sizeof(length));
-                std::memcpy(slot->key + 12, name.raw, 4);
-            }
-            s.index[empty].store(tag(name) | ++s.used,
-                                 std::memory_order_release);
-        }
-        const uint64_t mask = 1ULL << (group & 63);
-        return !(slot->seen[group >> 6].fetch_or(mask, std::memory_order_relaxed) & mask);
-    }
-    Slot *prepare(const Field &name) {
-        Shard &s = shards[spread(name.hash) & (shards.size() - 1)];
-        return s.probe(name, nullptr, false).first;
-    }
-    bool first(const Field &name, unsigned group, Slot *slot, const char *end) {
-        if (!slot || !slot->matches(name, end)) {
-            Shard &s = shards[spread(name.hash) & (shards.size() - 1)];
-            return slow_first(s, name, group, end);
-        }
-        const uint64_t mask = 1ULL << (group & 63);
-        return !(slot->seen[group >> 6].fetch_or(mask, std::memory_order_relaxed) & mask);
-    }
-
+    static constexpr u64 ARENA_BYTES = 1ull << 24;
+    std::atomic<u64>* slots_ = zeroed<std::atomic<u64>>(SLOTS);
+    Exact* exact_ = zeroed<Exact>(SLOTS);
+    char* tail_arena_ = zeroed<char>(ARENA_BYTES);
+    std::atomic<u64> next_tail_{0};
+    std::mutex overflow_mu_;
+    std::unordered_map<std::string,u32> overflow_;
+    std::vector<void*> exceptional_;
 };
 
-static uint64_t number(const char *&p, const char *end) {
-    if (end - p >= 8) { // SWAR ASCII fast path, with scalar fallback for long integers.
-        uint64_t w;
-        std::memcpy(&w, p, 8);
-        const uint64_t bad = ((w + 0x4646464646464646ULL) |
-                              (w - 0x3030303030303030ULL)) & 0x8080808080808080ULL;
-        const unsigned digits = bad ? __builtin_ctzll(bad) / 8 : 8;
-        if (digits && (digits < 8 || p + 8 == end ||
-                       static_cast<unsigned>(static_cast<unsigned char>(p[8])) - '0' > 9)) {
-            uint64_t x = (w << ((8 - digits) * 8)) |
-                         (digits == 8 ? 0 : 0x3030303030303030ULL >> (digits * 8));
-            x -= 0x3030303030303030ULL;
-            x = (x * 10 + (x >> 8)) & 0x00ff00ff00ff00ffULL;
-            x = (x * 100 + (x >> 16)) & 0x0000ffff0000ffffULL;
-            x = (x * 10000 + (x >> 32)) & 0xffffffffULL;
-            p += digits;
-            return x;
-        }
-    }
-    const char *start = p;
-    uint64_t n = 0;
-    while (p < end) {
-        unsigned digit = static_cast<unsigned char>(*p) - '0';
-        if (digit > 9) break;
-        n = n * 10 + digit;
-        ++p;
-    }
-    if (p == start) throw std::runtime_error("missing integer");
-    return n;
-}
-static int64_t cents(const char *&p, const char *end) {
-    bool neg = p < end && *p == '-';
-    if (neg) ++p;
-    if (end - p >= 8) {
-        uint64_t word; std::memcpy(&word, p, 8);
-        uint64_t dots = word ^ 0x2e2e2e2e2e2e2e2eULL;
-        dots = (dots - 0x0101010101010101ULL) & ~dots & 0x8080808080808080ULL;
-        unsigned dot = dots ? __builtin_ctzll(dots) / 8 : 8;
-        if (dot && dot <= 5 && end - p >= dot + 3) {
-            uint64_t lower = (1ULL << (dot * 8)) - 1;
-            uint64_t x = ((word & lower) | ((word >> 8) & ~lower)) << ((6 - dot) * 8);
-            x &= 0x0f0f0f0f0f0f0f0fULL;
-            x = (x * 10 + (x >> 8)) & 0x00ff00ff00ff00ffULL;
-            x = (x * 100 + (x >> 16)) & 0x0000ffff0000ffffULL;
-            int64_t value = static_cast<int64_t>((x * 10000 + (x >> 32)) & 0xffffffffULL);
-            p += dot + 3; return neg ? -value : value;
-        }
-    }
-    int64_t n = static_cast<int64_t>(number(p, end));
-    if (p + 2 >= end || *p++ != '.') throw std::runtime_error("bad decimal");
-    int64_t fraction = (p[0] - '0') * 10 + (p[1] - '0');
-    p += 2;
-    return neg ? -(n * 100 + fraction) : n * 100 + fraction;
-}
-static void comma(const char *&p, const char *end) {
-    if (p == end || *p++ != ',') throw std::runtime_error("missing comma");
-}
-static void newline(const char *&p, const char *end) {
-    p += (p < end && *p == '\r');
-    if (p < end && *p++ != '\n') throw std::runtime_error("missing LF");
-}
-static void bom(const char *&p, const char *end) {
-    if (end - p >= 3 && static_cast<unsigned char>(p[0]) == 0xef &&
-        static_cast<unsigned char>(p[1]) == 0xbb && static_cast<unsigned char>(p[2]) == 0xbf) p += 3;
-}
-
-struct Group {
-    uint64_t count = 0, id_sum = 0, name_bytes = 0, note_bytes = 0;
-    int64_t sum = 0, min = 0, max = 0;
-    uint32_t distinct = 0;
-    void add(uint64_t id, int64_t amount, uint32_t name_len, uint32_t note_len, bool first) {
-        if (!count || amount < min) min = amount;
-        if (!count || amount > max) max = amount;
-        ++count;
-        id_sum += id;
-        sum += amount;
-        name_bytes += name_len;
-        note_bytes += note_len;
-        distinct += first;
-    }
-};
-static std::string money(int64_t n) {
-    bool negative = n < 0;
-    uint64_t mag = negative ? static_cast<uint64_t>(-(n + 1)) + 1 : static_cast<uint64_t>(n);
-    std::string s = (negative ? "-" : "") + std::to_string(mag / 100) + ".";
-    if (mag % 100 < 10) s += '0';
-    return s + std::to_string(mag % 100);
-}
-
-struct Worker {
-    std::vector<Group> groups;
-    std::exception_ptr error;
-    explicit Worker(size_t group_count) : groups(group_count) { }
+// One country's running aggregates (per thread, summed at the end).
+struct Totals {
+    u64 count = 0, id_sum = 0, name_bytes = 0, note_bytes = 0, distinct = 0;
+    i64 amount_sum = 0, amount_min = INT64_MAX, amount_max = INT64_MIN;
 };
 
-__attribute__((target("pclmul")))
-static Field text_pair(const char *&p, const char *end, uint32_t &name_len,
-                       uint32_t &note_len, SharedNames &shared) {
-    const char *start = p;
-    Field name{};
-    uint64_t quote_total = 0, name_quotes = 0, carry = 0;
-    bool have_name = false;
-    const __m256i quote = _mm256_set1_epi8('"'), comma = _mm256_set1_epi8(',');
-    for (const char *block = p; block < end; block += std::min<ptrdiff_t>(64, end - block)) {
-        unsigned bytes = std::min<ptrdiff_t>(64, end - block);
-        alignas(32) char tail[64]{};
-        const char *load = block;
-        if (bytes < 64) { std::memcpy(tail, block, bytes); load = tail; }
-        __m256i a = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(load));
-        __m256i b = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(load + 32));
-        uint64_t quotes = static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(a, quote))) |
-            (uint64_t(static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(b, quote)))) << 32);
-        uint64_t commas = static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(a, comma))) |
-            (uint64_t(static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(b, comma)))) << 32);
-        uint64_t inside = static_cast<uint64_t>(_mm_cvtsi128_si64(_mm_clmulepi64_si128(
-            _mm_cvtsi64_si128(quotes), _mm_set1_epi32(-1), 0)));
-        inside ^= carry;
-        carry = 0 - (inside >> 63);
-        uint64_t separators = commas & ~inside;
-        if (bytes < 64) separators &= (uint64_t(1) << bytes) - 1;
-        while (separators) {
-            unsigned bit = __builtin_ctzll(separators);
-            uint64_t lower = bit == 63 ? UINT64_MAX : (uint64_t(1) << (bit + 1)) - 1;
-            uint64_t total = quote_total + __builtin_popcountll(quotes & lower);
-            const char *finish = block + bit;
-            if (!have_name) {
-                bool quoted = *start == '"';
-                name = {start + quoted, static_cast<uint32_t>(finish - start - 2 * quoted), 0};
-                name_len = static_cast<uint32_t>(finish - start) - total / 2 - quoted;
-                name.hash = raw_hash(name.raw, name.raw_len, end);
-                uint32_t spread = SharedNames::spread(name.hash);
-                auto &shard = shared.shards[spread & 127];
-                __builtin_prefetch(&shard.index[(spread >> 7) & (SharedNames::slots_per_shard - 1)], 0, 1);
-                name_quotes = total;
-                start = finish + 1;
-                have_name = true;
-            } else {
-                bool quoted = *start == '"';
-                note_len = static_cast<uint32_t>(finish - start) - (total - name_quotes) / 2 - quoted;
-                p = finish + 1;
-                return name;
-            }
-            separators &= separators - 1;
+// Which names each country has: one bitset over name ids per country, shared
+// by all threads. Most marks are first sightings, so they are atomic ORs.
+struct NamesSeen {
+    static constexpr u32 WORDS = NameTable::SLOTS / 64;
+    std::atomic<u64>* bits = zeroed<std::atomic<u64>>(256 * WORDS);
+    std::mutex overflow_mu;
+    std::unordered_set<u64> overflow_seen;
+    std::atomic<u64>& word(u32 c, u32 name) { return bits[c * WORDS + name / 64]; }
+    void prefetch(u32 c, u32 name) { if (name < NameTable::SLOTS) __builtin_prefetch(&word(c, name), 1); }
+    bool mark(u32 c, u32 name) {
+        if (name >= NameTable::SLOTS) {
+            std::lock_guard<std::mutex> lock(overflow_mu);
+            return overflow_seen.insert((u64(c) << 32) | name).second;
         }
-        quote_total += __builtin_popcountll(quotes);
+        u64 bit = u64(1) << (name & 63);
+        return !(word(c, name).fetch_or(bit, std::memory_order_relaxed) & bit);
     }
-    throw std::runtime_error("missing text delimiters");
-}
+};
 
-__attribute__((target("pclmul")))
-static void parse_range(const char *p, const char *end, const std::vector<uint8_t> &regions,
-                        unsigned unmatched, Worker &w, SharedNames &shared) {
+// Parse every record that starts in [p, end). A record's region row and name
+// slot are prefetched when it is parsed; LAG records later its country is
+// read, its sums go to totals, its name is looked up and that name's bitset
+// word prefetched; LAG records after that the name is marked. So each of the
+// three random reads (region table, name table, bitsets) has a steady lead.
+void parse_records(const char* p, const char* end, const char* file_end, const u8* country_of,
+                   size_t regions, NameTable& names, NamesSeen& seen, Totals* totals) {
+    constexpr u64 LAG = 16;
     struct Pending {
-        uint64_t id;
-        int64_t amount;
-        Field name;
-        uint32_t name_len, note_len;
-        unsigned group;
-    };
-    static_assert(sizeof(Pending) == 48, "compact pending row");
-    try {
-        std::array<Pending, 32> batch;
-        std::array<SharedNames::Slot *, 32> slots;
-        const char *reclaimed = p;
-        while (p < end) {
-            unsigned count = 0;
-            do {
-                bom(p, end);
-                uint64_t id = number(p, end);
-                comma(p, end);
-                uint32_t name_len, note_len;
-                Field name = text_pair(p, end, name_len, note_len, shared);
-                uint64_t region = number(p, end);
-                uint32_t region_key = region < regions.size()
-                                          ? static_cast<uint32_t>(region) : UINT32_MAX;
-                if (region_key != UINT32_MAX) __builtin_prefetch(&regions[region_key], 0, 1);
-                comma(p, end);
-                int64_t amount = cents(p, end);
-                unsigned group = region_key != UINT32_MAX && regions[region_key] != UINT8_MAX
-                                     ? regions[region_key] : unmatched;
-                SharedNames::Slot *slot = shared.prepare(name);
-                if (slot) {
-                    __builtin_prefetch(slot, 0, 3);
-                    __builtin_prefetch(&slot->seen[group >> 6], 1, 3);
-                }
-                newline(p, end);
-                batch[count] = Pending{id, amount, name, name_len, note_len, group};
-                slots[count++] = slot;
-            } while (count < batch.size() && p < end);
-            for (unsigned i = 0; i < count; ++i) {
-                const Pending &r = batch[i];
-                w.groups[r.group].add(r.id, r.amount, r.name_len, r.note_len, shared.first(r.name, r.group, slots[i], end));
-            }
-            if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
+        u64 name;
+        const char* name_at;
+        u32 name_raw, region, id, name_bytes, note_bytes;
+        i64 cents;
+    } pending[LAG];
+    struct Mark {
+        u32 country, id;
+    } marks[LAG];
+    u64 n = 0, last = UINT64_MAX;  // records started; all of them once known
+    auto advance = [&]() __attribute__((always_inline)) {  // retire ring slot n % LAG
+        u32 k = n % LAG;
+        if (n >= 2 * LAG && n - 2 * LAG < last) totals[marks[k].country].distinct += seen.mark(marks[k].country, marks[k].id);
+        if (n >= LAG && n - LAG < last) {
+            const Pending& old = pending[k];
+            u32 c = old.region < regions ? country_of[old.region] : 0;
+            Totals& t = totals[c];
+            ++t.count;
+            t.id_sum += old.id;
+            t.amount_sum += old.cents;
+            t.amount_min = std::min(t.amount_min, old.cents);
+            t.amount_max = std::max(t.amount_max, old.cents);
+            t.name_bytes += old.name_bytes;
+            t.note_bytes += old.note_bytes;
+            marks[k] = {c, names.id(old.name, old.name_at, old.name_raw)};
+            seen.prefetch(c, marks[k].id);
         }
-    } catch (...) { w.error = std::current_exception(); }
+    };
+
+    while (p < end) {
+        // The file's pages are scattered in memory, and the hardware prefetcher
+        // stops at each 4 KB page; this reaches into the next one in time.
+        _mm_prefetch(p + 2048, _MM_HINT_T0);
+        if (u8(*p) == 0xEF) p += 3;  // a byte order mark before the id
+        const char* f1 = comma_after(p);
+        u64 id = digits(p, f1);
+        p = f1 + 1;
+        Text name = text(p), note = text(p);
+        // The region (at most 7 digits) and the amount (at most 9 bytes) end
+        // within the 32 bytes at p, so one load gives both the comma and the
+        // LF, if any.
+        u32 lf = match32(p, '\n');
+        const char* f4 = p + __builtin_ctz(match32(p, ','));
+        u64 region = digits(p, f4);
+        const char* amount = f4 + 1;
+        const char* eol = lf ? p + __builtin_ctz(lf) : file_end;
+        const char* amount_end = eol - (eol[-1] == '\r');
+        bool negative = *amount == '-';
+        i64 cents = money(amount + negative, amount_end);
+        if (negative) cents = -cents;
+
+        // Region ids are below 10^7 (fit u32); one past the table means none.
+        u32 r = region < regions ? u32(region) : u32(regions);
+        _mm_prefetch(reinterpret_cast<const char*>(country_of + r), _MM_HINT_T0);
+        advance();
+        u64 key = NameTable::key(name.at, name.raw);
+        pending[n++ % LAG] = {key, name.at, name.raw, r, u32(id), name.length, note.length, cents};
+        names.prefetch(key);
+        p = eol + 1;
+    }
+    for (last = n; n < last + 2 * LAG; ++n) advance();
+}
+
+// 15-bit code of a three-letter country; numeric order is alphabetical order.
+u32 code(const char* p) { return (p[0] - 'A') << 10 | (p[1] - 'A') << 5 | (p[2] - 'A'); }
+
+// The region line "id,ABC" at p, moving p to the next line. An id has at most
+// 7 digits, so the comma is the lowest zero byte of the line's first 8 bytes
+// XOR ','.
+std::pair<u64, u32> region_line(const char*& p) {
+    u64 x = load8(p) ^ 0x2C2C2C2C2C2C2C2C;
+    const char* comma = p + __builtin_ctzll((x - 0x0101010101010101) & ~x & 0x8080808080808080) / 8;
+    std::pair<u64, u32> line{digits(p, comma), code(comma + 1)};
+    for (p = comma + 4; *p++ != '\n';) {}
+    return line;
+}
+
+// A phase of work in pieces. Every thread claims pieces until none are left,
+// then sleeps until all are done. It waits for the work, not for every thread
+// to arrive: a thread starts milliseconds after the one before it, and the
+// late ones just join in wherever the work has got to.
+struct Phase {
+    std::atomic<int> claimed{0}, done{0};
+    const int pieces;
+
+    template <class F>
+    void run(F&& f) {
+        for (int k; (k = claimed++) < pieces;)
+            if (f(k), ++done == pieces) done.notify_all();
+        for (int d; (d = done) < pieces;) done.wait(d);
+    }
+};
+
+// Cuts of [from, size) into n ranges, each starting just after a delimiter.
+std::vector<size_t> split(const char* data, size_t from, size_t size, int n, std::string_view delim) {
+    std::vector<size_t> cut(n + 1, size);
+    cut[0] = from;
+    for (int t = 1; t < n; ++t) {
+        size_t c = std::max(cut[t - 1], from + (size - from) * t / n);
+        auto* hit = static_cast<const char*>(memmem(data + c, size - c, delim.data(), delim.size()));
+        cut[t] = hit ? hit - data + delim.size() : size;
+    }
+    return cut;
+}
+
+void put_money(std::string& out, i64 cents) {
+    u64 a = cents < 0 ? -u64(cents) : u64(cents);
+    out += cents < 0 ? " -" : " ";
+    out += std::to_string(a / 100);
+    out += {'.', char('0' + a % 100 / 10), char('0' + a % 10)};
 }
 
 int main() {
-    try {
-        (void)prctl(PR_SET_THP_DISABLE, 1, 0, 0, 0);
-        File lookup("/data/regions.csv");
-        const char *p = lookup.data, *end = p + lookup.size;
-        const char *header = "region_id,country\n";
-        if (end - p < 18 || memcmp(p, header, 18)) throw std::runtime_error("regions header");
-        p += 18;
-        std::vector<uint8_t> regions(1000000, UINT8_MAX);
-        std::array<int16_t, 17576> code_index;
-        code_index.fill(-1);
-        std::vector<std::string> country;
-        while (p < end) {
-            uint64_t id = number(p, end);
-            comma(p, end);
-            if (end - p < 3) throw std::runtime_error("short country");
-            int code = ((p[0] - 'A') * 26 + p[1] - 'A') * 26 + p[2] - 'A';
-            if (code < 0 || code >= 17576) throw std::runtime_error("bad country");
-            if (code_index[code] == -1) {
-                code_index[code] = static_cast<int16_t>(country.size());
-                country.emplace_back(p, 3);
-            }
-            if (id >= regions.size()) throw std::runtime_error("lookup id out of range");
-            regions[id] = static_cast<uint8_t>(code_index[code]);
-            p += 3;
-            newline(p, end);
-        }
-        if (country.size() > 255) throw std::runtime_error("too many countries");
-        (void)madvise(const_cast<char *>(lookup.data), lookup.size, MADV_DONTNEED);
-        const unsigned unmatched = static_cast<unsigned>(country.size());
-        File records("/data/records.csv");
-        p = records.data;
-        end = p + records.size;
-        bom(p, end);
-        const char *rh = "id,name,note,region_id,amount";
-        if (end - p < 29 || memcmp(p, rh, 29)) throw std::runtime_error("records header");
-        p += 29;
-        newline(p, end);
-        const char *record_start = p;
-        unsigned threads = end - p < (1 << 20) ? 1 : 6;
-        std::vector<const char *> cuts(threads + 1);
-        cuts[0] = record_start;
-        cuts[threads] = end;
-        if (threads > 1) {
-            // Generated notes contain no digits; LF followed by an id and comma certifies a record boundary.
-            for (unsigned i = 1; i < threads; ++i) {
-                const char *q = record_start + (end - record_start) * i / threads;
-                while (q < end) {
-                    const char *lf = static_cast<const char *>(memchr(q, '\n', end - q));
-                    if (!lf) { q = end; break; }
-                    const char *candidate = lf + 1;
-                    const char *digit = candidate;
-                    if (end - digit >= 3 && static_cast<unsigned char>(digit[0]) == 0xef &&
-                        static_cast<unsigned char>(digit[1]) == 0xbb &&
-                        static_cast<unsigned char>(digit[2]) == 0xbf) digit += 3;
-                    const char *first = digit;
-                    while (digit < end && *digit >= '0' && *digit <= '9') ++digit;
-                    if (digit != first && digit < end && *digit == ',') {
-                        q = candidate;
-                        break;
-                    }
-                    q = candidate;
+    // With transparent huge pages, a block written only in part can be backed
+    // by a whole 2 MB page; plain pages keep memory to what is written.
+    prctl(PR_SET_THP_DISABLE, 1, 0, 0, 0);
+    const int nthreads = std::clamp<int>(std::thread::hardware_concurrency(), 1, 12);
+    size_t rsize, size;
+    const char* regions = map_file("/data/regions.csv", rsize);
+    const char* records = map_file("/data/records.csv", size);
+
+    // regions.csv: a header, then "id,ABC\n" lines in ascending id order, so
+    // the last line holds the largest id.
+    const char* last = static_cast<const char*>(memrchr(regions, '\n', rsize - 1)) + 1;
+    const size_t nregions = atoll(last) + 1;
+    u8* country_of = zeroed<u8>(nregions);  // 0 = no such region
+    std::vector<size_t> rcut = split(regions, strchr(regions, '\n') - regions + 1, rsize, nthreads, "\n");
+    std::vector<std::atomic<u8>> present(1 << 15);
+    std::array<u8, 1 << 15> index_of{};
+    std::vector<u32> codes;  // country index - 1 -> code
+    std::once_flag numbered;
+    auto number_countries = [&] {
+        for (u32 k = 0; k < present.size(); ++k)
+            if (present[k]) codes.push_back(k), index_of[k] = codes.size();
+        if (codes.size() > 255) { fputs("too many countries\n", stderr); _exit(1); }
+    };
+
+    // records.csv: skip the BOM and header, then split after CRLFs into eight
+    // pieces per thread, claimed in turn, so a thread whose pieces are slow
+    // (more first sightings of names) is evened out by the others.
+    size_t start = size ? static_cast<const char*>(memchr(records, '\n', size)) - records + 1 : 0;
+    const int pieces = 8 * nthreads;
+    std::vector<size_t> cut = split(records, start, size, pieces, "\r\n");
+    std::vector<std::array<Totals, 256>> totals(nthreads);
+    NameTable names;
+    NamesSeen seen;
+
+    // Populate tables and flag countries; populate bitsets and fill the region
+    // table; parse records.
+    Phase flag{.pieces = nthreads}, fill{.pieces = nthreads}, parse{.pieces = pieces};
+    std::vector<std::thread> pool;
+    for (int t = 0; t < nthreads; ++t)
+        pool.emplace_back([&, t] {
+            flag.run([&](int k) {
+                populate_share(country_of, nregions, k, nthreads);
+                names.populate(k, nthreads);
+                for (const char* p = regions + rcut[k]; p < regions + rcut[k + 1];)
+                    present[region_line(p).second].store(1, std::memory_order_relaxed);
+            });
+            std::call_once(numbered, number_countries);
+            fill.run([&](int k) {
+                populate_share(seen.bits, (codes.size() + 1) * NamesSeen::WORDS, k, nthreads);
+                for (const char* p = regions + rcut[k]; p < regions + rcut[k + 1];) {
+                    auto [id, c] = region_line(p);
+                    country_of[id] = index_of[c];
                 }
-                cuts[i] = q;
-            }
+            });
+            parse.run([&](int k) {
+                // Map the piece's pages in one call rather than by a fault
+                // every 16 pages as the parse reaches them.
+                uintptr_t from = uintptr_t(records + cut[k]) & ~uintptr_t(4095);
+                madvise(reinterpret_cast<void*>(from), uintptr_t(records + cut[k + 1]) - from, MADV_POPULATE_READ);
+                parse_records(records + cut[k], records + cut[k + 1], records + size, country_of, nregions, names,
+                              seen, totals[t].data());
+                // The piece is not read again: its pages are unmapped now, by
+                // this thread, instead of all of the file's at exit by one.
+                uintptr_t to = uintptr_t(records + cut[k + 1]) & ~uintptr_t(4095);
+                if (to > from) madvise(reinterpret_cast<void*>(from), to - from, MADV_DONTNEED);
+            });
+        });
+    for (auto& th : pool) th.join();
+
+    std::string out;
+    for (u32 i = 1; i <= codes.size() + 1; ++i) {
+        u32 c = i % (codes.size() + 1);  // countries 1..N, then _UNMATCHED (0)
+        Totals sum;
+        for (const auto& per_thread : totals) {
+            const Totals& t = per_thread[c];
+            sum.count += t.count;
+            sum.id_sum += t.id_sum;
+            sum.name_bytes += t.name_bytes;
+            sum.note_bytes += t.note_bytes;
+            sum.distinct += t.distinct;
+            sum.amount_sum += t.amount_sum;
+            sum.amount_min = std::min(sum.amount_min, t.amount_min);
+            sum.amount_max = std::max(sum.amount_max, t.amount_max);
         }
-        static SharedNames shared;
-        std::vector<Worker> workers;
-        workers.reserve(threads);
-        for (unsigned i = 0; i < threads; ++i) workers.emplace_back(unmatched + 1);
-        std::vector<std::thread> jobs;
-        for (unsigned i = 0; i < threads; ++i)
-            jobs.emplace_back([&, i] { parse_range(cuts[i], cuts[i + 1], regions, unmatched, workers[i], shared); });
-        for (auto &job : jobs) job.join();
-        for (const auto &w : workers) if (w.error) std::rethrow_exception(w.error);
-        std::vector<Group> groups(unmatched + 1);
-        for (const Worker &w : workers) for (unsigned g = 0; g <= unmatched; ++g) {
-            const Group &src = w.groups[g];
-            if (!src.count) continue;
-            Group &dst = groups[g];
-            if (!dst.count || src.min < dst.min) dst.min = src.min;
-            if (!dst.count || src.max > dst.max) dst.max = src.max;
-            dst.count += src.count;
-            dst.id_sum += src.id_sum;
-            dst.sum += src.sum;
-            dst.name_bytes += src.name_bytes;
-            dst.note_bytes += src.note_bytes;
-            dst.distinct += src.distinct;
+        if (sum.count == 0) continue;
+        if (c == 0) {
+            out += "_UNMATCHED";
+        } else {
+            u32 k = codes[c - 1];
+            out += {char('A' + (k >> 10)), char('A' + (k >> 5 & 31)), char('A' + (k & 31))};
         }
-        std::vector<unsigned> order;
-        for (unsigned i = 0; i < country.size(); ++i) if (groups[i].count) order.push_back(i);
-        std::sort(order.begin(), order.end(), [&](unsigned a, unsigned b) { return country[a] < country[b]; });
-        if (groups[unmatched].count) order.push_back(unmatched);
-        FILE *out = fopen("/out/aggregates.txt", "wb");
-        if (!out) throw std::runtime_error("open output");
-        for (unsigned i : order) {
-            const Group &g = groups[i];
-            std::string line = (i == unmatched ? "_UNMATCHED" : country[i]) + " " +
-                std::to_string(g.count) + " " + std::to_string(g.id_sum) + " " +
-                money(g.sum) + " " + money(g.min) + " " + money(g.max) + " " +
-                std::to_string(g.distinct) + " " + std::to_string(g.name_bytes) + " " +
-                std::to_string(g.note_bytes) + "\n";
-            if (fwrite(line.data(), 1, line.size(), out) != line.size()) throw std::runtime_error("write output");
-        }
-        if (fclose(out)) throw std::runtime_error("close output");
-        return 0;
-    } catch (const std::exception &e) {
-        fprintf(stderr, "track-c: %s\n", e.what());
-        return 1;
+        for (u64 v : {sum.count, sum.id_sum}) out += ' ' + std::to_string(v);
+        for (i64 v : {sum.amount_sum, sum.amount_min, sum.amount_max}) put_money(out, v);
+        for (u64 v : {sum.distinct, sum.name_bytes, sum.note_bytes}) out += ' ' + std::to_string(v);
+        out += '\n';
     }
+    FILE* f = fopen("/out/aggregates.txt", "wb");
+    if (!f) { perror("/out/aggregates.txt"); return 1; }
+    fwrite(out.data(), 1, out.size(), f);
+    fclose(f);
+    return 0;
 }
