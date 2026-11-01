@@ -378,3 +378,10 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Direct full-PGO paired median **62.749 -> 65.153 ms** (+3.83% T); cgroup median **11,008,000 -> 10,496,000 B** (-4.65% M).
 - Complete-K runner proxy **-0.92%** at unchanged S/D. Reject: reduced index memory does not offset longer probes.
 - Restored exact qualified `join.cpp` blob `3b5e1392f49abdbb7fdcf6a36b5866366298143b` in `f6b7fb9`; no redundant restoration CI.
+
+## 128-row deferred dictionary-probe promotion (2026-11-01)
+
+- Trial [4bcec24](https://github.com/insightlabs38-pixel/sd-tc/commit/4bcec2445cb670f2e3b7d22efc10864d4e97fdb3) parses 128 records before preparing/prefetching shared-name slots, then performs exact membership updates. Previously qualified 32-row interleaved champion is unchanged as rollback (`3b5e1392f49abdbb7fdcf6a36b5866366298143b`).
+- [CI 41321611522](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41321611522) passed seed-1 full reference SHA-256, full holdout seeds 11/29 (three repetitions), hostile quote/hash cases, ASan/UBSan/TSan, pinned offline Docker and sandbox.
+- Direct qualified-champion 12-trial full-PGO paired median **76.761 -> 74.794 ms** (9/12 paired trials faster); fresh Docker cgroup peak **11,026,432 -> 11,026,432 bytes**. Source-only median **83.066 -> 79.634 ms**. Scored physical C++ lines **567 -> 569**, D=1; complete-K runner proxy **+1.25%** assuming a two-line S increase.
+- **Promoted in development repo only**: qualified source blob `cf7e7c3fb12a6054836d5010c391cb63c59e0c48`. Official six-P-core T/M/S/D/K remains unmeasured; Luna controls integration and submissions. Research batch128 measurements on a different earlier architecture are supporting context, not a substitute for this direct comparison.
