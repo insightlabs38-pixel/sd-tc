@@ -105,7 +105,8 @@ struct SharedNames {
                     std::memcpy(tail, f.raw, f.raw_len);
                     input = _mm256_load_si256(reinterpret_cast<const __m256i *>(tail));
                 }
-                __m256i saved = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(key));
+                __m256i saved = _mm256_maskload_epi64(reinterpret_cast<const long long *>(key),
+                    _mm256_set_epi64x(0, -1, -1, -1));
                 uint32_t same = static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(saved, input)));
                 uint32_t valid = (uint32_t(1) << f.raw_len) - 1;
                 return (same & valid) == valid;
