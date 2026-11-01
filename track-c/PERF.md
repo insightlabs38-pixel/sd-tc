@@ -432,3 +432,10 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - [CI 41332781590](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41332781590) passed full seed-1 hash, holdouts 11/29, hostile cases, sanitizers, offline Docker and sandbox.
 - Direct qualified champion full-PGO 12-trial median **48.240 -> 48.112 ms** (5/12 paired faster); cgroup **10,242,048 -> 10,487,808 B** (+2.40% M). Source 564 -> 564 lines; D=1.
 - Complete-K runner proxy **-0.34%** at unchanged S/D, and speed difference is not convincing. **Rejected**; exact champion blob `b02c0e99543f228462b75840be8e1f13cfcb6b26` restored in `20d3472`.
+
+## 256-row parse/probe depth trial (2026-11-01)
+
+- Candidate [85daef5](https://github.com/insightlabs38-pixel/sd-tc/commit/85daef5a6e25c465999188812722f5aac8e7156a) doubles deferred dictionary batches from 128 to 256 rows.
+- [CI 41333064922](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41333064922) passed full seed-1 SHA, holdouts 11/29, hostile cases, sanitizers, offline Docker and sandbox.
+- Direct qualified champion full-PGO 12-trial median **73.898 -> 74.649 ms** (+1.02% T, 4/12 paired faster); cgroup **10,252,288 -> 10,479,616 B** (+2.22% M), unchanged 564 source lines and D=1.
+- Complete-K runner proxy **-0.94%**. **Rejected**; exact champion blob `b02c0e99543f228462b75840be8e1f13cfcb6b26` restored in `a23a9b1`, without redundant restoration CI.
