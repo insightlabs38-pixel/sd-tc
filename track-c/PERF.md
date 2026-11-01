@@ -224,3 +224,11 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - [CI 41259602337](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41259602337) passed write-prefetch alone; direct safe-champion PGO **81.342 -> 80.456 ms**, cgroup **10,493,952 -> 10,496,000 B**, unchanged S/D; proxy **+0.55%**.
 - [CI 41259948744](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41259948744), attempts 1 and 2, passed full seed-1 SHA-256, full holdouts 11/29, hostile cases, ASan/UBSan/TSan, offline Docker and sandbox. Branchless LF/CRLF versus prefetch-only: full-PGO **80.444 -> 78.670 ms** and **80.807 -> 79.011 ms**; cgroup **10,485,760 -> 10,485,760 B** and **10,496,000 -> 10,498,048 B**; physical source **546 -> 544 lines**, D=1. Complete-K runner proxies **+1.18% / +1.18%**. Promoted source blob `3519869c67493e3e5da7c4ced30b38be438cfeca`.
 - All ratios are runner proxies, not official scoring-box measurements. Official C BEST remains PR #13 `run-f24670761e6b`, K=21.757571; Luna must validate the new T/M/S/D/K before official promotion.
+
+## Parse-stage exact name lookup overlap (2026-11-01)
+
+- [CI 41261183692](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41261183692), attempts 1 and 2, passed full seed-1 SHA-256, holdout seeds 11/29, hostile cases, ASan/UBSan/TSan, pinned offline Docker and sandbox.
+- Moved exact shared-name probe and membership write-prefetch into the parse stage after amount/region extraction, while retaining the 32-row batch and deferred atomic aggregation.
+- Paired full-PGO 12-trial medians versus qualified `3519869c`: **65.070 -> 64.236 ms** and **78.833 -> 77.788 ms**; cgroup peaks **10,487,808 -> 10,473,472 B** and **10,498,048 -> 10,467,328 B**.
+- Physical source lines **544 -> 543**, D=1; complete-K runner proxies **+0.70% / +0.76%**. Source-only binaries regressed 71.330 -> 72.548 ms and 87.376 -> 88.580 ms, so promotion is specific to the pinned full-PGO release.
+- Promoted twice-qualified source blob `b31de39258eec335f79e14a0568a325d4ad2c732` (commit `981d23c`). Official six-P-core T/M/S/D/K still requires Luna; official BEST remains K=21.757571.
