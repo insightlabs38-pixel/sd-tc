@@ -50,6 +50,8 @@ CRC32C_TABLE = _crc32c_table()
 
 
 def crc32c(data):
+    if len(data) <= 16:
+        data = data.ljust(16, b"\0")
     value = 5381
     for byte in data:
         value = CRC32C_TABLE[(value ^ byte) & 255] ^ (value >> 8)

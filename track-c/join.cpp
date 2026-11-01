@@ -57,7 +57,27 @@ static_assert(sizeof(Field) == 24, "name slot layout");
 
 static constexpr uint32_t HASH_OFFSET = 5381U;
 
-static uint32_t raw_hash(const char *p, size_t n) {
+static uint32_t raw_hash(const char *p, size_t n, const char *end) {
+    if (n <= 16) {
+        alignas(16) static const unsigned char mask[32] = {
+            255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
+            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        };
+        __m128i key;
+        if (end - p >= 16) {
+            key = _mm_loadu_si128(reinterpret_cast<const __m128i *>(p));
+        } else {
+            alignas(16) unsigned char tail[16] = {};
+            std::memcpy(tail, p, n);
+            key = _mm_load_si128(reinterpret_cast<const __m128i *>(tail));
+        }
+        key = _mm_and_si128(key, _mm_loadu_si128(
+            reinterpret_cast<const __m128i *>(mask + 16 - n)));
+        uint32_t h = static_cast<uint32_t>(
+            _mm_crc32_u64(HASH_OFFSET, static_cast<uint64_t>(_mm_cvtsi128_si64(key))));
+        return static_cast<uint32_t>(
+            _mm_crc32_u64(h, static_cast<uint64_t>(_mm_extract_epi64(key, 1))));
+    }
     uint32_t h = HASH_OFFSET;
     while (n >= 8) {
         uint64_t word;
@@ -107,7 +127,7 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
                 continue;
             }
             f.raw_len = static_cast<uint32_t>(q - f.raw);
-            f.hash = need_hash ? raw_hash(f.raw, f.raw_len) : HASH_OFFSET;
+            f.hash = need_hash ? raw_hash(f.raw, f.raw_len, end) : HASH_OFFSET;
             p = q + 1;
             return f;
         }
@@ -118,7 +138,7 @@ static Field text_field(const char *&p, const char *end, bool need_hash) {
         ++f.len;
     }
     f.raw_len = f.len;
-    f.hash = need_hash ? raw_hash(f.raw, f.raw_len) : HASH_OFFSET;
+    f.hash = need_hash ? raw_hash(f.raw, f.raw_len, end) : HASH_OFFSET;
     return f;
 }
 
