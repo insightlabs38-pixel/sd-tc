@@ -1,0 +1,14 @@
+{
+  "current-official": {
+    "sha256": "d9631649abf3fc5280d4a3bc9f7cb941640079069018fc2019389c89c69ba74c",
+    "git_blob": "c4b41459c8ce1ea8d47e834a136cb9d11b73cd2a"
+  },
+  "main-baseline": {
+    "sha256": "235d2ba35db14dd48edca1085680d782910bbbcdace8f89e14fae91d103dd786",
+    "git_blob": "b31de39258eec335f79e14a0568a325d4ad2c732"
+  },
+  "official-best": {
+    "sha256": "d9631649abf3fc5280d4a3bc9f7cb941640079069018fc2019389c89c69ba74c",
+    "git_blob": "c4b41459c8ce1ea8d47e834a136cb9d11b73cd2a"
+  }
+}

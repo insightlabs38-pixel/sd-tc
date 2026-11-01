@@ -1,0 +1,122 @@
+[
+  {
+    "threads": 1,
+    "report": "SD_PROFILE lookup=2.579 boundary=0.507 parse=275.035 merge=0.012 output=0.361 total=278.495",
+    "wall_s": 0.28343935200001624,
+    "cpu_s": 0.28227199999999997,
+    "minor_faults": 5600,
+    "major_faults": 0
+  },
+  {
+    "threads": 2,
+    "report": "SD_PROFILE lookup=2.874 boundary=0.438 parse=144.487 merge=0.024 output=0.326 total=148.149",
+    "wall_s": 0.15167619399994692,
+    "cpu_s": 0.288825,
+    "minor_faults": 5599,
+    "major_faults": 0
+  },
+  {
+    "threads": 3,
+    "report": "SD_PROFILE lookup=2.292 boundary=0.748 parse=170.248 merge=0.017 output=0.325 total=173.630",
+    "wall_s": 0.17659014899999192,
+    "cpu_s": 0.37123599999999995,
+    "minor_faults": 5635,
+    "major_faults": 0
+  },
+  {
+    "threads": 6,
+    "report": "SD_PROFILE lookup=3.993 boundary=0.399 parse=173.334 merge=0.020 output=0.347 total=178.093",
+    "wall_s": 0.18217507199994998,
+    "cpu_s": 0.35578400000000004,
+    "minor_faults": 5687,
+    "major_faults": 0
+  },
+  {
+    "threads": 12,
+    "report": "SD_PROFILE lookup=2.609 boundary=0.634 parse=181.323 merge=0.031 output=0.287 total=184.884",
+    "wall_s": 0.1880063560000167,
+    "cpu_s": 0.34191199999999994,
+    "minor_faults": 5702,
+    "major_faults": 0
+  },
+  {
+    "threads": 12,
+    "report": "SD_PROFILE lookup=2.520 boundary=0.509 parse=178.026 merge=0.029 output=0.275 total=181.360",
+    "wall_s": 0.1848257810000291,
+    "cpu_s": 0.33446699999999985,
+    "minor_faults": 5742,
+    "major_faults": 0
+  },
+  {
+    "threads": 6,
+    "report": "SD_PROFILE lookup=2.872 boundary=0.494 parse=149.133 merge=0.023 output=0.296 total=152.818",
+    "wall_s": 0.15634625600000618,
+    "cpu_s": 0.36635799999999996,
+    "minor_faults": 5697,
+    "major_faults": 0
+  },
+  {
+    "threads": 3,
+    "report": "SD_PROFILE lookup=2.762 boundary=0.414 parse=191.516 merge=0.015 output=0.372 total=195.079",
+    "wall_s": 0.1985666709999805,
+    "cpu_s": 0.3655990000000003,
+    "minor_faults": 5636,
+    "major_faults": 0
+  },
+  {
+    "threads": 2,
+    "report": "SD_PROFILE lookup=2.331 boundary=0.372 parse=161.791 merge=0.023 output=0.360 total=164.877",
+    "wall_s": 0.1700226069999644,
+    "cpu_s": 0.301058,
+    "minor_faults": 5601,
+    "major_faults": 0
+  },
+  {
+    "threads": 1,
+    "report": "SD_PROFILE lookup=2.538 boundary=0.340 parse=273.899 merge=0.011 output=0.336 total=277.125",
+    "wall_s": 0.28048704000002544,
+    "cpu_s": 0.27630600000000016,
+    "minor_faults": 5597,
+    "major_faults": 0
+  },
+  {
+    "threads": 1,
+    "report": "SD_PROFILE lookup=2.270 boundary=0.355 parse=273.148 merge=0.015 output=0.336 total=276.124",
+    "wall_s": 0.2789283330000103,
+    "cpu_s": 0.2755570000000002,
+    "minor_faults": 5597,
+    "major_faults": 0
+  },
+  {
+    "threads": 2,
+    "report": "SD_PROFILE lookup=2.397 boundary=0.375 parse=155.406 merge=0.027 output=0.337 total=158.542",
+    "wall_s": 0.16177817800002003,
+    "cpu_s": 0.2999950000000001,
+    "minor_faults": 5604,
+    "major_faults": 0
+  },
+  {
+    "threads": 3,
+    "report": "SD_PROFILE lookup=2.729 boundary=0.382 parse=175.444 merge=0.015 output=0.343 total=178.914",
+    "wall_s": 0.18224098500002128,
+    "cpu_s": 0.3677200000000005,
+    "minor_faults": 5634,
+    "major_faults": 0
+  },
+  {
+    "threads": 6,
+    "report": "SD_PROFILE lookup=2.587 boundary=0.481 parse=172.861 merge=0.023 output=0.297 total=176.249",
+    "wall_s": 0.1791688079999858,
+    "cpu_s": 0.36009599999999964,
+    "minor_faults": 5695,
+    "major_faults": 0
+  },
+  {
+    "threads": 12,
+    "report": "SD_PROFILE lookup=2.716 boundary=0.475 parse=184.504 merge=0.028 output=0.272 total=187.995",
+    "wall_s": 0.1910898209999914,
+    "cpu_s": 0.3544739999999995,
+    "minor_faults": 5745,
+    "major_faults": 0
+  }
+]

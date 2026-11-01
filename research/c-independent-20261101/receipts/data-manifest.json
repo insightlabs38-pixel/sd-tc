@@ -1,0 +1,50 @@
+[
+  {
+    "seed": 1,
+    "records.csv": {
+      "bytes": 201935059,
+      "sha256": "36166f4ac44101a22ebf25b4f949436a681a2698cb0f2ae1f7f6853010259f48"
+    },
+    "regions.csv": {
+      "bytes": 2177799,
+      "sha256": "414c57c4f3ec968f9bce28c59eebfdf57a9425322b468db7ee964c18c4852fe1"
+    },
+    "output_sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "seed": 11,
+    "records.csv": {
+      "bytes": 201901422,
+      "sha256": "46392c5e5ffc8f479cd3ddd5fc22a1c8b19b2334057aeaee251246fd2048c147"
+    },
+    "regions.csv": {
+      "bytes": 2177967,
+      "sha256": "59c421c958c5d04cf612c6cac3d409298e2270cf7a96139b3e1b0b1579f1c01d"
+    },
+    "output_sha256": "53d4497e7b196e175e9ec6848c43f813317d83ece3914cfc63aab410fae20057"
+  },
+  {
+    "seed": 29,
+    "records.csv": {
+      "bytes": 202074636,
+      "sha256": "b560afedeb9e4f8a944445a05ee8b23f00e3cffcc932a7848c5d9bf03dfcadc4"
+    },
+    "regions.csv": {
+      "bytes": 2177670,
+      "sha256": "c8338e835fa10e516ee1da3fa7e152a99465df86a1dd380a6370cdf5e6ddef62"
+    },
+    "output_sha256": "67daeb210797eaa56e70ae2ea36885339c96a9f6f2800ea8b3bf3dd9da1cc8c4"
+  },
+  {
+    "seed": 137,
+    "records.csv": {
+      "bytes": 202135827,
+      "sha256": "d190352e653b1b569c6d4f7c23e94cfc0d4593e73ebd33756c743a902906472b"
+    },
+    "regions.csv": {
+      "bytes": 2177389,
+      "sha256": "7d2226a564de1820d2214734382b6b11ceac1b7fbf1be6d3274b7b4f57b57eba"
+    },
+    "output_sha256": "0783e0b145954999192085d8a71cfed1cd265d8350292073ebf27f43887a5487"
+  }
+]
