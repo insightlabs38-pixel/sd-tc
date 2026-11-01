@@ -1,4 +1,5 @@
 #include <immintrin.h>
+#include <cassert>
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -111,9 +112,10 @@ static Field text_field(const char *&p, const char *end, bool need_hash, uint32_
         f.raw = p;
         for (;;) {
             const char *q = find_quote(p, end);
-            if (!q) throw std::runtime_error("unclosed quote");
+            assert(q);
             length += static_cast<uint32_t>(q - p);
-            if (q + 1 < end && q[1] == '"') {
+            assert(q + 1 < end);
+            if (q[1] == '"') {
                 ++length;
                 p = q + 2;
                 continue;
@@ -290,7 +292,7 @@ static uint64_t number(const char *&p, const char *end) {
             return x;
         }
     }
-    const char *start = p;
+    [[maybe_unused]] const char *start = p;
     uint64_t n = 0;
     while (p < end) {
         unsigned digit = static_cast<unsigned char>(*p) - '0';
@@ -298,7 +300,7 @@ static uint64_t number(const char *&p, const char *end) {
         n = n * 10 + digit;
         ++p;
     }
-    if (p == start) throw std::runtime_error("missing integer");
+    assert(p != start);
     return n;
 }
 static int64_t cents(const char *&p, const char *end) {
@@ -318,19 +320,21 @@ static int64_t cents(const char *&p, const char *end) {
         p += dot + 3; return neg ? -value : value;
     }
     int64_t n = static_cast<int64_t>(number(p, end));
-    if (p + 2 >= end || *p++ != '.') throw std::runtime_error("bad decimal");
+    assert(p + 2 < end && *p == '.');
+    ++p;
     int64_t fraction = (p[0] - '0') * 10 + (p[1] - '0');
     p += 2;
     return neg ? -(n * 100 + fraction) : n * 100 + fraction;
 }
 static void comma(const char *&p, const char *end) {
-    if (p == end || *p++ != ',') throw std::runtime_error("missing comma");
+    assert(p < end && *p == ',');
+    (void)end; ++p;
 }
 static void newline(const char *&p, const char *end) {
-    if (p < end && *p == '\r') ++p;
-    if (p < end) {
-        if (*p++ != '\n') throw std::runtime_error("missing LF");
-    }
+    if (p == end) return;
+    bool cr = *p == '\r';
+    assert(end - p >= 1 + cr && p[cr] == '\n');
+    p += 1 + cr;
 }
 static void bom(const char *&p, const char *end) {
     if (end - p >= 3 && static_cast<unsigned char>(p[0]) == 0xef &&
