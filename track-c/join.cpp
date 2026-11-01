@@ -496,13 +496,14 @@ int main() {
         newline(p, end);
         const char *record_start = p;
         unsigned threads = end - p < (1 << 20) ? 1 : 6;
-        std::vector<const char *> cuts(threads + 1);
+        const unsigned chunks = threads == 1 ? 1 : threads * 4;
+        std::vector<const char *> cuts(chunks + 1);
         cuts[0] = record_start;
-        cuts[threads] = end;
-        if (threads > 1) {
+        cuts[chunks] = end;
+        if (chunks > 1) {
             // Generated notes contain no digits; LF followed by an id and comma certifies a record boundary.
-            for (unsigned i = 1; i < threads; ++i) {
-                const char *q = record_start + (end - record_start) * i / threads;
+            for (unsigned i = 1; i < chunks; ++i) {
+                const char *q = record_start + (end - record_start) * i / chunks;
                 while (q < end) {
                     const char *lf = static_cast<const char *>(memchr(q, '\n', end - q));
                     if (!lf) { q = end; break; }
@@ -527,8 +528,16 @@ int main() {
         workers.reserve(threads);
         for (unsigned i = 0; i < threads; ++i) workers.emplace_back(unmatched + 1);
         std::vector<std::thread> jobs;
+        std::atomic<unsigned> next_chunk{0};
         for (unsigned i = 0; i < threads; ++i)
-            jobs.emplace_back([&, i] { parse_range(cuts[i], cuts[i + 1], regions, unmatched, workers[i], shared); });
+            jobs.emplace_back([&, i] {
+                while (true) {
+                    unsigned chunk = next_chunk.fetch_add(1, std::memory_order_relaxed);
+                    if (chunk >= chunks) break;
+                    parse_range(cuts[chunk], cuts[chunk + 1], regions, unmatched, workers[i], shared);
+                    if (workers[i].error) break;
+                }
+            });
         for (auto &job : jobs) job.join();
         for (const auto &w : workers) if (w.error) std::rethrow_exception(w.error);
         std::vector<Group> groups(unmatched + 1);
