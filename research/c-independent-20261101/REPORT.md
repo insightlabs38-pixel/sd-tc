@@ -241,3 +241,31 @@ Two additional complete solvers are actively under investigation:
 
 These new prototypes are experimental, not fully qualified candidates. The
 research branch is a checkpoint; subsequent results will extend it.
+
+## Repeat-filter completion and further solver work
+
+The repeat filter has now been implemented with worker-private first-pass
+sketches and batched reconciliation. Each worker records first bits privately
+and logs repeated indices; reconciliation ORs local duplicate logs and
+intersections of the per-worker seen sets, then frees those sets before replay.
+A repeated exact country/name key cannot be lost: it either repeats in one
+worker or appears in at least two worker sets. Fingerprint collisions only
+add replay candidates; full bytes still determine identity in replay.
+
+A second complete replay implementation uses whole-block structural masks
+to project only name and region, omitting arithmetic and note decoding. Both
+versions match full seed 1. The projected version passed the complete hostile
+suite under ASan/UBSan and TSan plus independent tiny/sample cases.
+
+Seven interleaved local PGO trials: baseline 166.08 ms; shared repeat filter
+299.21 ms; private filter 263.84 ms; projected replay 266.64 ms. CPU falls
+from roughly 566 to 488/506 ms through the private repair, but this remains
+behind baseline. Phase profiling and complete Docker M/S measurements are
+in progress; the family is not being dismissed from this first repair.
+
+A new epoch-partition solver is also fully implemented. It partitions compact
+exact-verifiable name descriptors into bounded batches, then reconciles them
+through cache-sized worker-owned dictionaries. No dictionary or membership
+update is shared. Persistent per-bucket sets preserve identity across epochs;
+wide descriptors handle long names and offsets without truncation. Its first
+full output matches; phase profiling is underway before further repair.

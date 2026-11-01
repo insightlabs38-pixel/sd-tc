@@ -1,0 +1,254 @@
+[
+  {
+    "name": "main-baseline",
+    "trial": 0,
+    "wall_ms": 167.42513600001985,
+    "user_ms": 300.712,
+    "system_ms": 14.813,
+    "rss_kib": 14868,
+    "minor_faults": 5262
+  },
+  {
+    "name": "filter-private",
+    "trial": 0,
+    "wall_ms": 263.84239599974535,
+    "user_ms": 436.338,
+    "system_ms": 55.998,
+    "rss_kib": 17952,
+    "minor_faults": 10691
+  },
+  {
+    "name": "filter",
+    "trial": 0,
+    "wall_ms": 293.7067590000879,
+    "user_ms": 520.278,
+    "system_ms": 43.481,
+    "rss_kib": 19448,
+    "minor_faults": 10543
+  },
+  {
+    "name": "filter-projected",
+    "trial": 0,
+    "wall_ms": 281.1141950005549,
+    "user_ms": 474.361,
+    "system_ms": 39.959,
+    "rss_kib": 16824,
+    "minor_faults": 10691
+  },
+  {
+    "name": "main-baseline",
+    "trial": 1,
+    "wall_ms": 166.4949219994014,
+    "user_ms": 292.682,
+    "system_ms": 14.846,
+    "rss_kib": 14340,
+    "minor_faults": 5250
+  },
+  {
+    "name": "filter-projected",
+    "trial": 1,
+    "wall_ms": 273.84276900011173,
+    "user_ms": 457.373,
+    "system_ms": 45.195,
+    "rss_kib": 16812,
+    "minor_faults": 10691
+  },
+  {
+    "name": "filter-private",
+    "trial": 1,
+    "wall_ms": 264.6214360001977,
+    "user_ms": 456.51,
+    "system_ms": 27.219,
+    "rss_kib": 16672,
+    "minor_faults": 10691
+  },
+  {
+    "name": "filter",
+    "trial": 1,
+    "wall_ms": 299.21217300034186,
+    "user_ms": 500.267,
+    "system_ms": 62.68899999999999,
+    "rss_kib": 19336,
+    "minor_faults": 10543
+  },
+  {
+    "name": "main-baseline",
+    "trial": 2,
+    "wall_ms": 165.0237929998184,
+    "user_ms": 292.361,
+    "system_ms": 20.442999999999998,
+    "rss_kib": 14592,
+    "minor_faults": 5245
+  },
+  {
+    "name": "filter",
+    "trial": 2,
+    "wall_ms": 293.7721690004764,
+    "user_ms": 501.219,
+    "system_ms": 59.062,
+    "rss_kib": 19856,
+    "minor_faults": 10540
+  },
+  {
+    "name": "filter-private",
+    "trial": 2,
+    "wall_ms": 257.4191699995936,
+    "user_ms": 450.01399999999995,
+    "system_ms": 26.293999999999997,
+    "rss_kib": 16872,
+    "minor_faults": 10692
+  },
+  {
+    "name": "filter-projected",
+    "trial": 2,
+    "wall_ms": 285.02112700061843,
+    "user_ms": 492.292,
+    "system_ms": 38.832,
+    "rss_kib": 17096,
+    "minor_faults": 10691
+  },
+  {
+    "name": "filter",
+    "trial": 3,
+    "wall_ms": 303.89145800018014,
+    "user_ms": 508.163,
+    "system_ms": 73.27499999999999,
+    "rss_kib": 18480,
+    "minor_faults": 10542
+  },
+  {
+    "name": "filter-private",
+    "trial": 3,
+    "wall_ms": 266.0651770002005,
+    "user_ms": 436.853,
+    "system_ms": 57.193999999999996,
+    "rss_kib": 16472,
+    "minor_faults": 10692
+  },
+  {
+    "name": "main-baseline",
+    "trial": 3,
+    "wall_ms": 157.68060600021272,
+    "user_ms": 281.779,
+    "system_ms": 15.253999999999998,
+    "rss_kib": 14668,
+    "minor_faults": 5261
+  },
+  {
+    "name": "filter-projected",
+    "trial": 3,
+    "wall_ms": 265.378227999463,
+    "user_ms": 424.502,
+    "system_ms": 69.575,
+    "rss_kib": 17560,
+    "minor_faults": 10691
+  },
+  {
+    "name": "filter-projected",
+    "trial": 4,
+    "wall_ms": 262.9403230002936,
+    "user_ms": 466.681,
+    "system_ms": 30.554,
+    "rss_kib": 17376,
+    "minor_faults": 10690
+  },
+  {
+    "name": "main-baseline",
+    "trial": 4,
+    "wall_ms": 161.5995189995374,
+    "user_ms": 276.881,
+    "system_ms": 30.595,
+    "rss_kib": 15156,
+    "minor_faults": 5256
+  },
+  {
+    "name": "filter-private",
+    "trial": 4,
+    "wall_ms": 268.20710500032874,
+    "user_ms": 457.13599999999997,
+    "system_ms": 42.894999999999996,
+    "rss_kib": 17712,
+    "minor_faults": 10691
+  },
+  {
+    "name": "filter",
+    "trial": 4,
+    "wall_ms": 312.70986099934817,
+    "user_ms": 497.65299999999996,
+    "system_ms": 84.154,
+    "rss_kib": 19576,
+    "minor_faults": 10540
+  },
+  {
+    "name": "filter-private",
+    "trial": 5,
+    "wall_ms": 259.45066699932795,
+    "user_ms": 456.82399999999996,
+    "system_ms": 31.314,
+    "rss_kib": 16628,
+    "minor_faults": 10691
+  },
+  {
+    "name": "filter-projected",
+    "trial": 5,
+    "wall_ms": 261.3336270005675,
+    "user_ms": 448.43,
+    "system_ms": 39.561,
+    "rss_kib": 17292,
+    "minor_faults": 10692
+  },
+  {
+    "name": "filter",
+    "trial": 5,
+    "wall_ms": 293.8173239999742,
+    "user_ms": 486.99299999999994,
+    "system_ms": 64.318,
+    "rss_kib": 18928,
+    "minor_faults": 10547
+  },
+  {
+    "name": "main-baseline",
+    "trial": 5,
+    "wall_ms": 166.0760089998803,
+    "user_ms": 295.03399999999993,
+    "system_ms": 23.889,
+    "rss_kib": 14464,
+    "minor_faults": 5253
+  },
+  {
+    "name": "filter-projected",
+    "trial": 6,
+    "wall_ms": 266.6355769997608,
+    "user_ms": 475.67199999999997,
+    "system_ms": 23.098,
+    "rss_kib": 17624,
+    "minor_faults": 10691
+  },
+  {
+    "name": "main-baseline",
+    "trial": 6,
+    "wall_ms": 166.1516140002277,
+    "user_ms": 290.588,
+    "system_ms": 23.493999999999996,
+    "rss_kib": 14604,
+    "minor_faults": 5246
+  },
+  {
+    "name": "filter",
+    "trial": 6,
+    "wall_ms": 333.33188199958386,
+    "user_ms": 542.329,
+    "system_ms": 66.654,
+    "rss_kib": 19456,
+    "minor_faults": 10541
+  },
+  {
+    "name": "filter-private",
+    "trial": 6,
+    "wall_ms": 262.45810599994,
+    "user_ms": 462.429,
+    "system_ms": 26.914,
+    "rss_kib": 16716,
+    "minor_faults": 10690
+  }
+]
