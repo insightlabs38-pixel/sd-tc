@@ -378,58 +378,96 @@ static Field text_pair(const char *&p, const char *end, uint32_t &name_len,
     throw std::runtime_error("missing text delimiters");
 }
 
+
 __attribute__((target("pclmul")))
-static void parse_range(const char *p, const char *end, const std::vector<uint8_t> &regions,
-                        unsigned unmatched, Worker &w, SharedNames &shared) {
-    const char *range_begin = p;
+static void parse_four(const char *const beginnings[4],const char *const endings[4],
+                       const std::vector<uint8_t>& regions,unsigned unmatched,
+                       Worker &w,SharedNames &shared) {
+    struct Cursor {const char *p,*end,*begin,*reclaimed;};
+    struct Stage {
+        bool valid=false;
+        const char *p=nullptr,*end=nullptr;
+        uint64_t id=0;
+        Field name{};
+        uint32_t name_len=0,note_len=0;
+    };
     struct Pending {
         uint64_t id;
         int64_t amount;
         Field name;
-        uint32_t name_len, note_len;
+        uint32_t name_len,note_len;
         unsigned group;
     };
-    static_assert(sizeof(Pending) == 48, "compact pending row");
+    static_assert(sizeof(Pending)==48,"retire exact projected rows");
+    std::array<Cursor,4> streams{};
+    for (unsigned i=0;i<4;++i)
+        streams[i]={beginnings[i],endings[i],beginnings[i],beginnings[i]};
     try {
-        std::array<Pending, 64> batch;
-        std::array<SharedNames::Slot *, 64> slots;
-        const char *reclaimed = p;
-        while (p < end) {
-            unsigned count = 0;
-            do {
-                bom(p, end);
-                uint64_t id = number(p, end);
-                comma(p, end);
-                uint32_t name_len, note_len;
-                Field name = text_pair(p, end, name_len, note_len, shared);
-                uint64_t region = number(p, end);
-                uint32_t region_key = region < regions.size()
-                                          ? static_cast<uint32_t>(region) : UINT32_MAX;
-                if (region_key != UINT32_MAX) __builtin_prefetch(&regions[region_key], 0, 1);
-                comma(p, end);
-                int64_t amount = cents(p, end);
-                unsigned group = region_key != UINT32_MAX && regions[region_key] != UINT8_MAX
-                                     ? regions[region_key] : unmatched;
-                newline(p, end);
-                batch[count++] = Pending{id, amount, name, name_len, note_len, group};
-            } while (count < batch.size() && p < end);
-            // Finish the parse burst before blocking on dictionary index loads.
-            for (unsigned i = 0; i < count; ++i) {
-                slots[i] = shared.prepare(batch[i].name);
-                if (slots[i]) __builtin_prefetch(slots[i], 1, 3);
+        std::array<Pending,64> batch{};
+        std::array<SharedNames::Slot*,64> slots{};
+        for (;;) {
+            unsigned count=0;
+            while (count+4<=batch.size()) {
+                std::array<Stage,4> current{};
+                bool any=false;
+                // Stage one: four independent ID parses and next name pointers.
+                for (unsigned i=0;i<4;++i) {
+                    auto &stream=streams[i];
+                    if (stream.p>=stream.end) continue;
+                    any=true;
+                    auto &s=current[i];
+                    s.valid=true;
+                    s.p=stream.p;
+                    s.end=stream.end;
+                    bom(s.p,s.end);
+                    s.id=number(s.p,s.end);
+                    comma(s.p,s.end);
+                }
+                if (!any) break;
+                // Stage two: four independent quote-aware name/note projections.
+                for (unsigned i=0;i<4;++i) {
+                    auto &s=current[i];
+                    if (!s.valid) continue;
+                    s.name=text_pair(s.p,s.end,s.name_len,s.note_len,shared);
+                }
+                // Stage three: join, cents and record completion.
+                for (unsigned i=0;i<4;++i) {
+                    auto &s=current[i];
+                    if (!s.valid) continue;
+                    uint64_t r=number(s.p,s.end);
+                    uint32_t ri=r<regions.size()?static_cast<uint32_t>(r):UINT32_MAX;
+                    if (ri!=UINT32_MAX) __builtin_prefetch(&regions[ri],0,1);
+                    comma(s.p,s.end);
+                    int64_t cents_value=cents(s.p,s.end);
+                    unsigned group=ri!=UINT32_MAX && regions[ri]!=UINT8_MAX ?
+                                   regions[ri] : unmatched;
+                    newline(s.p,s.end);
+                    streams[i].p=s.p;
+                    batch[count++]={s.id,cents_value,s.name,s.name_len,s.note_len,group};
+                }
             }
-            for (unsigned i = 0; i < count; ++i) {
-                const Pending &r = batch[i];
-                w.groups[r.group].add(r.id, r.amount, r.name_len, r.note_len, shared.first(r.name, r.group, slots[i], end));
+            if (!count) break;
+            for (unsigned i=0;i<count;++i) {
+                slots[i]=shared.prepare(batch[i].name);
+                if (slots[i]) __builtin_prefetch(slots[i],1,3);
             }
-            if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
+            for (unsigned i=0;i<count;++i) {
+                const Pending &r=batch[i];
+                w.groups[r.group].add(r.id,r.amount,r.name_len,r.note_len,
+                                      shared.first(r.name,r.group,slots[i],endings[0]));
+            }
+            for (auto &stream:streams)
+                if (stream.p-stream.reclaimed>=(1<<20))
+                    discard_consumed(stream.reclaimed,stream.p);
         }
-        const uintptr_t page = static_cast<uintptr_t>(sysconf(_SC_PAGESIZE));
-        const uintptr_t first = (reinterpret_cast<uintptr_t>(range_begin) + page - 1) & ~(page - 1);
-        const uintptr_t last = reinterpret_cast<uintptr_t>(end) & ~(page - 1);
-        if (last > first && munmap(reinterpret_cast<void *>(first), last - first))
-            throw std::runtime_error("worker munmap");
-    } catch (...) { w.error = std::current_exception(); }
+        const uintptr_t page=static_cast<uintptr_t>(sysconf(_SC_PAGESIZE));
+        for (const auto &stream:streams) {
+            uintptr_t lo=(reinterpret_cast<uintptr_t>(stream.begin)+page-1)&~(page-1);
+            uintptr_t hi=reinterpret_cast<uintptr_t>(stream.end)&~(page-1);
+            if (hi>lo && munmap(reinterpret_cast<void*>(lo),hi-lo))
+                throw std::runtime_error("worker munmap");
+        }
+    } catch (...) {w.error=std::current_exception();}
 }
 
 int main() {
@@ -508,8 +546,15 @@ int main() {
         std::vector<std::thread> jobs;
         for (unsigned i = 0; i < threads; ++i)
             jobs.emplace_back([&, i] {
-                for (unsigned k; (k = next_piece.fetch_add(1, std::memory_order_relaxed)) < pieces;)
-                    parse_range(cuts[k], cuts[k + 1], regions, unmatched, workers[i], shared);
+                for (unsigned k; (k = next_piece.fetch_add(4, std::memory_order_relaxed)) < pieces;) {
+                    const char *beginnings[4],*endings[4];
+                    for (unsigned lane=0;lane<4;++lane) {
+                        unsigned index=std::min(k+lane,pieces);
+                        beginnings[lane]=cuts[index];
+                        endings[lane]=cuts[std::min(index+1,pieces)];
+                    }
+                    parse_four(beginnings,endings,regions,unmatched,workers[i],shared);
+                }
             });
         for (auto &job : jobs) job.join();
         for (const auto &w : workers) if (w.error) std::rethrow_exception(w.error);
