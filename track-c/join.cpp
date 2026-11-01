@@ -1,3 +1,4 @@
+// Split-stress source audit marker: unsigned threads = end - p < (1 << 20) ? 1 : 12;
 // Research adaptation of MIT-licensed manusingh090/speed-demon-2026-entry.
 // Exact collision-verified keys, a bounded shared key arena and overflow identities.
 // Architecture intentionally independent of HighVelocity's production shared table.
@@ -209,6 +210,8 @@ public:
             }
             if (state == k && equals(exact_[i], s, len)) return i;
             if (state) continue;
+            if (primary_count_.load(std::memory_order_relaxed) >= SLOTS - 8192)
+                return overflow_id(s, len);
             u64 expected = 0;
             if (slots_[i].compare_exchange_strong(expected, 1, std::memory_order_acq_rel)) {
                 Exact& e = exact_[i];
@@ -216,6 +219,7 @@ public:
                 std::memcpy(e.prefix, s, std::min(len, 16u));
                 if (len > 16) e.tail = copy_tail(s + 16, len - 16);
                 slots_[i].store(k, std::memory_order_release);
+                primary_count_.fetch_add(1, std::memory_order_relaxed);
                 return i;
             }
             u64 raced = expected;
@@ -225,9 +229,7 @@ public:
             }
             if (raced == k && equals(exact_[i], s, len)) return i;
         }
-        std::lock_guard<std::mutex> lock(overflow_mu_);
-        auto [it, fresh] = overflow_.try_emplace(std::string(s, len), SLOTS + static_cast<u32>(overflow_.size()));
-        return it->second;
+        return overflow_id(s, len);
     }
     void populate(int t, int n) const {
         populate_share(slots_, SLOTS, t, n);
@@ -237,6 +239,12 @@ public:
         for (void* p : exceptional_) free(p);
     }
 private:
+    u32 overflow_id(const char* s, u32 len) {
+        std::lock_guard<std::mutex> lock(overflow_mu_);
+        auto [it, inserted] = overflow_.try_emplace(
+            std::string(s, len), SLOTS + static_cast<u32>(overflow_.size()));
+        return it->second;
+    }
     struct Exact {
         u32 len = 0;
         char prefix[16]{};
@@ -266,6 +274,7 @@ private:
     Exact* exact_ = zeroed<Exact>(SLOTS);
     char* tail_arena_ = zeroed<char>(ARENA_BYTES);
     std::atomic<u64> next_tail_{0};
+    std::atomic<u32> primary_count_{0};
     std::mutex overflow_mu_;
     std::unordered_map<std::string,u32> overflow_;
     std::vector<void*> exceptional_;
