@@ -390,8 +390,8 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
     };
     static_assert(sizeof(Pending) == 48, "compact pending row");
     try {
-        std::array<Pending, 32> batch;
-        std::array<SharedNames::Slot *, 32> slots;
+        std::array<Pending, 64> batch;
+        std::array<SharedNames::Slot *, 64> slots;
         const char *reclaimed = p;
         while (p < end) {
             unsigned count = 0;
@@ -409,15 +409,14 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 int64_t amount = cents(p, end);
                 unsigned group = region_key != UINT32_MAX && regions[region_key] != UINT8_MAX
                                      ? regions[region_key] : unmatched;
-                SharedNames::Slot *slot = shared.prepare(name);
-                if (slot) {
-                    __builtin_prefetch(slot, 0, 3);
-                    __builtin_prefetch(&slot->seen[group >> 6], 1, 3);
-                }
                 newline(p, end);
-                batch[count] = Pending{id, amount, name, name_len, note_len, group};
-                slots[count++] = slot;
+                batch[count++] = Pending{id, amount, name, name_len, note_len, group};
             } while (count < batch.size() && p < end);
+            // Finish the parse burst before blocking on dictionary index loads.
+            for (unsigned i = 0; i < count; ++i) {
+                slots[i] = shared.prepare(batch[i].name);
+                if (slots[i]) __builtin_prefetch(slots[i], 1, 3);
+            }
             for (unsigned i = 0; i < count; ++i) {
                 const Pending &r = batch[i];
                 w.groups[r.group].add(r.id, r.amount, r.name_len, r.note_len, shared.first(r.name, r.group, slots[i], end));
@@ -466,14 +465,16 @@ int main() {
         p += 29;
         newline(p, end);
         const char *record_start = p;
-        unsigned threads = end - p < (1 << 20) ? 1 : 6;
-        std::vector<const char *> cuts(threads + 1);
+        unsigned threads = end - p < (1 << 20) ? 1 :
+            std::min(12u, std::max(1u, std::thread::hardware_concurrency()));
+        unsigned pieces = threads == 1 ? 1 : threads * 8;
+        std::vector<const char *> cuts(pieces + 1);
         cuts[0] = record_start;
-        cuts[threads] = end;
-        if (threads > 1) {
+        cuts[pieces] = end;
+        if (pieces > 1) {
             // Generated notes contain no digits; LF followed by an id and comma certifies a record boundary.
-            for (unsigned i = 1; i < threads; ++i) {
-                const char *q = record_start + (end - record_start) * i / threads;
+            for (unsigned i = 1; i < pieces; ++i) {
+                const char *q = record_start + (end - record_start) * i / pieces;
                 while (q < end) {
                     const char *lf = static_cast<const char *>(memchr(q, '\n', end - q));
                     if (!lf) { q = end; break; }
@@ -497,9 +498,13 @@ int main() {
         std::vector<Worker> workers;
         workers.reserve(threads);
         for (unsigned i = 0; i < threads; ++i) workers.emplace_back(unmatched + 1);
+        std::atomic<unsigned> next_piece{0};
         std::vector<std::thread> jobs;
         for (unsigned i = 0; i < threads; ++i)
-            jobs.emplace_back([&, i] { parse_range(cuts[i], cuts[i + 1], regions, unmatched, workers[i], shared); });
+            jobs.emplace_back([&, i] {
+                for (unsigned k; (k = next_piece.fetch_add(1, std::memory_order_relaxed)) < pieces;)
+                    parse_range(cuts[k], cuts[k + 1], regions, unmatched, workers[i], shared);
+            });
         for (auto &job : jobs) job.join();
         for (const auto &w : workers) if (w.error) std::rethrow_exception(w.error);
         std::vector<Group> groups(unmatched + 1);
