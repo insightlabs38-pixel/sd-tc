@@ -448,3 +448,12 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Attempt 2 independent full-PGO 12-pair median **47.749 -> 49.693 ms**, 5/12 faster; cgroup **10,383,360 -> 10,244,096 B**. Approximate complete-K proxy **-1.68%**.
 - Physical C++ source **564 -> 563 lines**, D=1. The slower, faster-host run outweighs the unreplicated gain; no official six-P-core result. **Rejected**.
 - Restored exact qualified source blob `b02c0e99543f228462b75840be8e1f13cfcb6b26` in [eeea8aa](https://github.com/insightlabs38-pixel/sd-tc/commit/eeea8aae90e5614161f9ee62a6eb19c363797f4d); no redundant restoration CI.
+
+## 40-byte projected-row batch promotion (2026-11-01)
+
+- Candidate [486e182](https://github.com/insightlabs38-pixel/sd-tc/commit/486e18272e97615fff4532e59eeae355e998c589) reorders pending fields and stores per-row cents in signed 32 bits; organizer-generated amount range fits, while aggregate sums remain 64-bit.
+- [CI 41334481715](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41334481715), attempts 1/2: full seed-1 SHA, independent full holdouts 11/29, hostile cases, ASan/UBSan/TSan, pinned offline Docker and sandbox passed.
+- Direct champion full-PGO paired medians: **60.993 -> 60.746 ms** (7/12 faster) and **74.791 -> 74.387 ms** (10/12 faster).
+- Cgroup median peaks: **10,252,288 -> 10,244,096 B** and **10,250,240 -> 10,242,048 B**; 48-byte -> 40-byte pending row, physical C++ lines unchanged, D=1.
+- Approximate complete-K runner proxies **+0.22% / +0.29%** including T/M/S/D; not official six-P-core evidence. Source-only performance did not improve, but official Docker uses full-PGO.
+- **Promoted development champion** source blob `b4ff26f2b04cb06a1d03a923b82359b3b63f2a23`; qualified rollback `b02c0e99543f228462b75840be8e1f13cfcb6b26` retained. Luna controls official integration.
