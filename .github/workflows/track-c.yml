@@ -1,7 +1,7 @@
 name: Track C correctness and container
 on:
   push:
-    branches: [main, "frontier/round2-**", "frontier/c-**"]
+    branches: [main, "frontier/round2-**", "frontier/c-**", "research/c-breakthrough-20261101*"]
     paths:
       - "track-c/**"
       - "tests/**"
