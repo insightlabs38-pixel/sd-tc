@@ -286,3 +286,10 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - [CI 41277229285](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41277229285) passed the same gates for 512 KiB record-page reclamation, compared directly with fused-scanner commit `d459dcc`.
 - Direct full-PGO paired median **66.697 -> 67.051 ms**, cgroup median **11,003,904 -> 11,030,528 bytes**, unchanged S/D; complete-K proxy **-0.31%**. Source-only **71.113 -> 72.534 ms**. Reject.
 - Restored exact qualified fused-scanner source; retained quote-mask regression and direct-champion CI baseline. Official T/M/S/D/K remains Luna's responsibility.
+
+## Private epoch architecture qualification (2026-11-01)
+
+- Exact worker-owned dictionaries, compact bounded descriptor partitions and a persistent worker team; no shared dictionary or membership writes.
+- Two-CPU local full-PGO Docker: baseline b31 168.249 ms / 10,260,480 B versus private 169.923 ms / 14,221,312 B. S644 -> S725, D1; complete-K ratio 0.916. This is a scaling experiment, not a promotion request.
+- Hostile ASan/UBSan and TSan passed, including cross-worker/epoch identity and a 128 MiB field/24-bit-offset fallback. Published sources and receipts: research branch `frontier/c-independent-architecture-20261101`, commit d14dcd6.
+- Keep main and official champion unchanged. CI measures four-vCPU behavior and direct fused-scanner controls; Luna alone handles official scoring/integration.
