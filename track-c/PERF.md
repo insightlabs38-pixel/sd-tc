@@ -457,3 +457,10 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Cgroup median peaks: **10,252,288 -> 10,244,096 B** and **10,250,240 -> 10,242,048 B**; 48-byte -> 40-byte pending row, physical C++ lines unchanged, D=1.
 - Approximate complete-K runner proxies **+0.22% / +0.29%** including T/M/S/D; not official six-P-core evidence. Source-only performance did not improve, but official Docker uses full-PGO.
 - **Promoted development champion** source blob `b4ff26f2b04cb06a1d03a923b82359b3b63f2a23`; qualified rollback `b02c0e99543f228462b75840be8e1f13cfcb6b26` retained. Luna controls official integration.
+
+## Monotonic seen-bit load trial (2026-11-01)
+
+- Candidate [3cb9b04](https://github.com/insightlabs38-pixel/sd-tc/commit/3cb9b040e5be3bafc19e68541d5e8441e83f5d8b) checks a relaxed atomic load before the locked `fetch_or` for exact-name country bits. Monotonic set-only bits make the shortcut correct.
+- [CI 41336883538](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41336883538) passed full seed-1 hash, independent holdouts 11/29, hostile cases, ASan/UBSan/TSan, pinned offline Docker and sandbox.
+- Direct qualified-champion full-PGO 12-trial medians **74.122 -> 78.015 ms** (+5.25% T); cgroup **10,250,240 -> 10,237,952 bytes** (-0.12% M). Physical source **564 -> 568 lines**, D=1.
+- Approximate complete-K development proxy **-2.61%**; no official board measurement. **Rejected** and restored qualified champion blob `b4ff26f2b04cb06a1d03a923b82359b3b63f2a23`.
