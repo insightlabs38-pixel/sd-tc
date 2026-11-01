@@ -286,3 +286,12 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - [CI 41277229285](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41277229285) passed the same gates for 512 KiB record-page reclamation, compared directly with fused-scanner commit `d459dcc`.
 - Direct full-PGO paired median **66.697 -> 67.051 ms**, cgroup median **11,003,904 -> 11,030,528 bytes**, unchanged S/D; complete-K proxy **-0.31%**. Source-only **71.113 -> 72.534 ms**. Reject.
 - Restored exact qualified fused-scanner source; retained quote-mask regression and direct-champion CI baseline. Official T/M/S/D/K remains Luna's responsibility.
+
+## Bounded long-name CRC trial (2026-11-01)
+
+- Qualified source commit `9b6c256`, source blob `1cfd7405b24cfff6f855f16ef0ad20dda38ad5b7`: hash first/last eight bytes plus length for names >16 bytes, with unchanged exact full-byte collision checks.
+- [CI 41284775090](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41284775090) and [CI 41285099490](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41285099490) passed full seed-1 reference SHA, holdout seeds 11/29, hostile tests, ASan/UBSan/TSan, offline Docker and sandbox. Second run adds exact equal-head/tail collision cases for inline and arena names.
+- Direct qualified fused-scanner full-PGO paired medians: **78.263 -> 77.383 ms** and **79.845 -> 78.929 ms** (1.12% / 1.15% faster).
+- Paired cgroup peaks: **11,034,624 -> 11,026,432 B** and **11,034,624 -> 11,022,336 B**. Physical source 546 -> 540 lines; D=1. Approximate complete-K proxy **+0.72% / +0.74%**, assuming scored S changes by six code lines; not an official measurement.
+- Source-only paired medians were 86.194 -> 87.171 ms and 88.079 -> 87.026 ms; source-only benefit is not established. Release uses pinned PGO. Preserve prior qualified fused-scanner blob `0772ace04e358868f0b060b178d6ab77e93a15ab` as rollback.
+- Promoted to development main after independent qualification. Luna must measure official scoring-box T/M/S/D/K before official integration.
