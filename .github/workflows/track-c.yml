@@ -60,11 +60,12 @@ jobs:
           docker cp "$container_id":/join /tmp/sd-track-c
           docker rm "$container_id"
           python3 tests/paired_benchmark.py
-      - name: Paired full-PGO architecture comparison
+      - name: Paired seed-37 versus seed-1 PGO training
         run: |
           staging=$(mktemp -d)
-          git show 035738649cf4b644f1ecf43d0bcb17a72f8a98a8:track-c/join.cpp > "$staging/join.cpp"
-          cp track-c/Dockerfile track-c/generator.py "$staging/"
+          git show 32c6bfeba97fdae8de9722bb334df54949ceb395:track-c/join.cpp > "$staging/join.cpp"
+          git show 32c6bfeba97fdae8de9722bb334df54949ceb395:track-c/Dockerfile > "$staging/Dockerfile"
+          cp track-c/generator.py "$staging/"
           docker build --network=none -t sd-track-c:previous-pgo "$staging"
           container_id=$(docker create sd-track-c:previous-pgo)
           docker cp "$container_id":/join /tmp/sd-track-c-baseline
