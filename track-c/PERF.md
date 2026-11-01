@@ -417,3 +417,11 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Direct champion full-PGO 12-trial paired median **74.787 -> 77.278 ms** (+3.33% T); cgroup peak **10,381,312 -> 10,502,144 B** (+1.16% M); physical C++ lines **570 -> 569**, D=1.
 - Approximate complete-K runner proxy **-1.83%**, including T/M/S/D; not official scoring-box evidence. Extra arena copies for 17..24-byte keys plausibly offset the smaller slots.
 - **Rejected.** Restored exact qualified champion blob `d5e0becb4a61f7363c4d1a94c73dd83dcb69436a` in `62067a8`; no redundant restoration CI.
+
+## Remove premature dictionary-index prefetch (2026-11-01)
+
+- Candidate [220f940](https://github.com/insightlabs38-pixel/sd-tc/commit/220f94068151bdafed4c5a705a6186a01e14cf9c) removes both parser-stage index prefetches, keeping 128-row deferred exact-name probes and unchanged semantics.
+- [CI 41331993267](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41331993267), attempts 1 and 2, passed full seed-1 SHA, holdouts 11/29, hostile cases, sanitizers, offline Docker and sandbox.
+- Direct 56-byte champion full-PGO paired medians: **61.932 -> 61.616 ms** (9/12 faster), **74.178 -> 73.949 ms** (6/12 faster); cgroup **10,229,760 -> 10,278,912 B** and **10,250,240 -> 10,301,440 B**.
+- Source **570 -> 564 physical C++ lines**, D=1; approximate complete-K runner proxies **+0.32% / +0.21%** including T/M/S/D. Small gain near timing noise, not official scoring-box K.
+- **Promoted development champion** source blob `b02c0e99543f228462b75840be8e1f13cfcb6b26`; qualified rollback `d5e0becb4a61f7363c4d1a94c73dd83dcb69436a`. Luna owns official integration.
