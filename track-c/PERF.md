@@ -488,3 +488,10 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - [CI 41347301633](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41347301633) passed full seed-1 hash, holdout seeds 11/29, hostile cases, ASan/UBSan/TSan, pinned offline Docker and sandbox.
 - Direct champion full-PGO 12-trial median **60.762 -> 61.196 ms** (+0.71% T); cgroup peak **10,270,720 -> 10,242,048 bytes** (-0.28% M); source **564 -> 566 physical lines**, D=1. Complete-K runner proxy **-0.35%**; rejected.
 - Restored exact qualified source blob `64e6c1f91f8ce859cf75c34990c964754e070b50`. The source-only 65.703 -> 65.125 ms and pinned PGO-vs-untrained 63.033 -> 60.894 ms are not the direct full-PGO champion comparison.
+
+## Seen-first 56-byte name-slot layout trial (2026-11-01)
+
+- Candidate [513313b](https://github.com/insightlabs38-pixel/sd-tc/commit/513313b5e9e0ef01261b1a7bf162cfa9ed411f5a) moved the 32-byte atomic country-presence bitmap before the 24-byte exact key, adjusting the key prefetch. Slot size, source lines and D=1 remained unchanged.
+- [CI 41347661028](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41347661028), attempts 1/2, passed full seed-1 hash, holdouts 11/29, hostile cases, ASan/UBSan/TSan, pinned offline Docker and sandbox.
+- Direct full-PGO 12-trial paired medians **72.899 -> 72.593 ms** and **72.910 -> 73.229 ms**; cgroup medians **10,430,464 -> 10,233,856 B** and **10,254,336 -> 10,254,336 B**. Complete-K development proxies **+0.59% / -0.22%**.
+- **Rejected** due contradictory independent measurements and no replicated K gain. Restored qualified key-first champion blob `64e6c1f91f8ce859cf75c34990c964754e070b50`; no redundant restoration CI.
