@@ -169,6 +169,12 @@ def quote_vector_boundary_stress():
         note = b'"' + b"B" * width + b'""Q\nR"'
         rows.extend(str(2000 + width).encode() + b"," + name + b"," + note +
                     b",8,0.00\n")
+    # Simple quoted notes cross the 64-byte mask at every possible offset.
+    for width in range(128):
+        name = b'"Narrow"'
+        note = b'"' + b"z" * width + b'"'
+        rows.extend(str(3000 + width).encode() + b"," + name + b"," + note +
+                    (b",7,1.00\r\n" if width % 2 else b",8,-0.05\n"))
     DATA.joinpath("records.csv").write_bytes(rows)
     check_case("quote-vector-boundary-and-escaped-pairs")
 

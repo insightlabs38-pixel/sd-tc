@@ -352,19 +352,28 @@ static Field text_pair(const char *&p, const char *end, uint32_t &name_len,
                     q &= q - 1;
                     if (q && static_cast<unsigned>(__builtin_ctzll(q)) == ne + 2) {
                         q &= q - 1;
-                        if (q) {
-                            unsigned te = __builtin_ctzll(q);
-                            if (te + 1 < bytes && block[te + 1] == ',') {
-                                Field fast{p + 1, ne - 1, 0};
-                                name_len = fast.raw_len;
-                                note_len = te - ne - 3;
-                                fast.hash = raw_hash(fast.raw, fast.raw_len, end);
-                                uint32_t spread = SharedNames::spread(fast.hash);
-                                auto &shard = shared.shards[spread & 127];
-                                __builtin_prefetch(&shard.index[(spread >> 7) & (SharedNames::slots_per_shard - 1)], 0, 1);
-                                p = block + te + 2;
-                                return fast;
-                            }
+                        unsigned te = q ? __builtin_ctzll(q) : 0;
+                        if (!te && end - block > 64) {
+                            unsigned remaining = std::min<ptrdiff_t>(64, end - block - 64);
+                            alignas(32) char next_tail[64]{};
+                            const char *next = block + 64;
+                            if (remaining < 64) { std::memcpy(next_tail, next, remaining); next = next_tail; }
+                            __m256i c = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(next));
+                            __m256i d = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(next + 32));
+                            uint64_t next_quotes = static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(c, quote))) |
+                                (uint64_t(static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(d, quote)))) << 32);
+                            if (next_quotes) te = 64 + __builtin_ctzll(next_quotes);
+                        }
+                        if (te && block + te + 1 < end && block[te + 1] == ',') {
+                            Field fast{p + 1, ne - 1, 0};
+                            name_len = fast.raw_len;
+                            note_len = te - ne - 3;
+                            fast.hash = raw_hash(fast.raw, fast.raw_len, end);
+                            uint32_t spread = SharedNames::spread(fast.hash);
+                            auto &shard = shared.shards[spread & 127];
+                            __builtin_prefetch(&shard.index[(spread >> 7) & (SharedNames::slots_per_shard - 1)], 0, 1);
+                            p = block + te + 2;
+                            return fast;
                         }
                     }
                 }
