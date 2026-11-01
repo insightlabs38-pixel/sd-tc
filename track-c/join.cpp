@@ -215,6 +215,11 @@ struct SharedNames {
         const uint64_t mask = 1ULL << (group & 63);
         return !(slot->seen[group >> 6].fetch_or(mask, std::memory_order_relaxed) & mask);
     }
+    void prefetch_index(const Field &name) {
+        Shard &s = shards[spread(name.hash) & (shards.size() - 1)];
+        size_t i = (spread(name.hash) >> shard_bits) & (slots_per_shard - 1);
+        __builtin_prefetch(&s.index[i], 0, 3);
+    }
     Slot *prepare(const Field &name) {
         Shard &s = shards[spread(name.hash) & (shards.size() - 1)];
         return s.probe(name, nullptr, false).first;
@@ -434,7 +439,8 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 newline(p, end);
                 batch[count++] = Pending{name, id, static_cast<int32_t>(amount), name_len, note_len, group};
             } while (count < batch.size() && p < end);
-            // Parse ahead, then resolve and prefetch the exact-name dictionary.
+            // Prefetch index lines before dependent slot probes.
+            for (unsigned i = 0; i < count; ++i) shared.prefetch_index(batch[i].name);
             for (unsigned i = 0; i < count; ++i) {
                 slots[i] = shared.prepare(batch[i].name);
                 if (slots[i]) {
