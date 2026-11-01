@@ -1,0 +1,11 @@
+[
+  {
+    "wall_ns": 157996019,
+    "exit_code": 0,
+    "signal": 0,
+    "peak_bytes": 10776576,
+    "image": "frontier-independent:bcd",
+    "trial": 0,
+    "sha256": "53d4497e7b196e175e9ec6848c43f813317d83ece3914cfc63aab410fae20057"
+  }
+]

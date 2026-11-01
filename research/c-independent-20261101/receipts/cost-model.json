@@ -1,0 +1,202 @@
+[
+  {
+    "name": "main-baseline",
+    "trial": 0,
+    "wall_ms": 162.839060999886,
+    "user_ms": 268.78799999999995,
+    "system_ms": 36.253,
+    "rss_kib": 14828
+  },
+  {
+    "name": "competitor-exact",
+    "trial": 0,
+    "wall_ms": 141.40952200000356,
+    "user_ms": 248.39899999999997,
+    "system_ms": 23.921999999999997,
+    "rss_kib": 209248
+  },
+  {
+    "name": "pair-clean",
+    "trial": 0,
+    "wall_ms": 158.9897280000514,
+    "user_ms": 275.53,
+    "system_ms": 23.594,
+    "rss_kib": 14636
+  },
+  {
+    "name": "ablation-no-dictionary",
+    "trial": 0,
+    "wall_ms": 114.75230600012765,
+    "user_ms": 192.45999999999998,
+    "system_ms": 15.529,
+    "rss_kib": 10240
+  },
+  {
+    "name": "ablation-no-hash",
+    "trial": 0,
+    "wall_ms": 105.7804050001323,
+    "user_ms": 181.993,
+    "system_ms": 15.643,
+    "rss_kib": 10240
+  },
+  {
+    "name": "main-baseline",
+    "trial": 1,
+    "wall_ms": 169.2034339998827,
+    "user_ms": 286.75999999999993,
+    "system_ms": 27.535,
+    "rss_kib": 14616
+  },
+  {
+    "name": "competitor-exact",
+    "trial": 1,
+    "wall_ms": 143.1827459998658,
+    "user_ms": 260.192,
+    "system_ms": 12.031,
+    "rss_kib": 209244
+  },
+  {
+    "name": "pair-clean",
+    "trial": 1,
+    "wall_ms": 161.4654679999603,
+    "user_ms": 264.207,
+    "system_ms": 31.069,
+    "rss_kib": 14496
+  },
+  {
+    "name": "ablation-no-dictionary",
+    "trial": 1,
+    "wall_ms": 110.34632000018973,
+    "user_ms": 182.10999999999999,
+    "system_ms": 23.532999999999998,
+    "rss_kib": 10240
+  },
+  {
+    "name": "ablation-no-hash",
+    "trial": 1,
+    "wall_ms": 107.99027100006242,
+    "user_ms": 168.34099999999998,
+    "system_ms": 23.279999999999998,
+    "rss_kib": 10240
+  },
+  {
+    "name": "main-baseline",
+    "trial": 2,
+    "wall_ms": 166.98924700017415,
+    "user_ms": 301.64,
+    "system_ms": 12.139,
+    "rss_kib": 14296
+  },
+  {
+    "name": "competitor-exact",
+    "trial": 2,
+    "wall_ms": 148.99532899994483,
+    "user_ms": 267.11899999999997,
+    "system_ms": 10.972,
+    "rss_kib": 209224
+  },
+  {
+    "name": "pair-clean",
+    "trial": 2,
+    "wall_ms": 163.22796400004336,
+    "user_ms": 270.146,
+    "system_ms": 38.487,
+    "rss_kib": 14872
+  },
+  {
+    "name": "ablation-no-dictionary",
+    "trial": 2,
+    "wall_ms": 121.34004700010337,
+    "user_ms": 198.783,
+    "system_ms": 11.536999999999999,
+    "rss_kib": 10240
+  },
+  {
+    "name": "ablation-no-hash",
+    "trial": 2,
+    "wall_ms": 107.78306399993198,
+    "user_ms": 194.019,
+    "system_ms": 7.06,
+    "rss_kib": 10240
+  },
+  {
+    "name": "main-baseline",
+    "trial": 3,
+    "wall_ms": 160.1321430000553,
+    "user_ms": 293.28499999999997,
+    "system_ms": 11.987,
+    "rss_kib": 14924
+  },
+  {
+    "name": "competitor-exact",
+    "trial": 3,
+    "wall_ms": 147.31293199997708,
+    "user_ms": 260.0,
+    "system_ms": 11.523,
+    "rss_kib": 209252
+  },
+  {
+    "name": "pair-clean",
+    "trial": 3,
+    "wall_ms": 159.98095199984164,
+    "user_ms": 272.50399999999996,
+    "system_ms": 31.474999999999994,
+    "rss_kib": 14476
+  },
+  {
+    "name": "ablation-no-dictionary",
+    "trial": 3,
+    "wall_ms": 114.49991599988607,
+    "user_ms": 205.635,
+    "system_ms": 7.873999999999999,
+    "rss_kib": 10240
+  },
+  {
+    "name": "ablation-no-hash",
+    "trial": 3,
+    "wall_ms": 111.26743399995576,
+    "user_ms": 187.01199999999997,
+    "system_ms": 20.142999999999997,
+    "rss_kib": 10240
+  },
+  {
+    "name": "main-baseline",
+    "trial": 4,
+    "wall_ms": 166.29044300020723,
+    "user_ms": 279.21000000000004,
+    "system_ms": 37.62199999999999,
+    "rss_kib": 14672
+  },
+  {
+    "name": "competitor-exact",
+    "trial": 4,
+    "wall_ms": 141.720265999993,
+    "user_ms": 248.614,
+    "system_ms": 23.316999999999997,
+    "rss_kib": 209348
+  },
+  {
+    "name": "pair-clean",
+    "trial": 4,
+    "wall_ms": 153.71021100008875,
+    "user_ms": 259.976,
+    "system_ms": 26.914,
+    "rss_kib": 14920
+  },
+  {
+    "name": "ablation-no-dictionary",
+    "trial": 4,
+    "wall_ms": 109.87365599999066,
+    "user_ms": 188.831,
+    "system_ms": 15.064,
+    "rss_kib": 10240
+  },
+  {
+    "name": "ablation-no-hash",
+    "trial": 4,
+    "wall_ms": 115.80445200002032,
+    "user_ms": 184.607,
+    "system_ms": 22.782,
+    "rss_kib": 10240
+  }
+]

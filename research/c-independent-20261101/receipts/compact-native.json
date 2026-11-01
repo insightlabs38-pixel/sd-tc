@@ -1,0 +1,338 @@
+[
+  {
+    "name": "compact-verify",
+    "trial": 0,
+    "ms": 202.860093,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-six",
+    "trial": 0,
+    "ms": 181.496579,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "tail-vector",
+    "trial": 0,
+    "ms": 166.276108,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 0,
+    "ms": 154.769576,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-fields",
+    "trial": 0,
+    "ms": 147.088122,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-affinity",
+    "trial": 0,
+    "ms": 153.119668,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-exact",
+    "trial": 0,
+    "ms": 168.695341,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-fields-verify",
+    "trial": 0,
+    "ms": 143.530127,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-fields",
+    "trial": 1,
+    "ms": 140.56451,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "tail-vector",
+    "trial": 1,
+    "ms": 135.944374,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-verify",
+    "trial": 1,
+    "ms": 193.629849,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 1,
+    "ms": 155.578811,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-six",
+    "trial": 1,
+    "ms": 175.934814,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-exact",
+    "trial": 1,
+    "ms": 208.776981,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-affinity",
+    "trial": 1,
+    "ms": 160.723027,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-fields-verify",
+    "trial": 1,
+    "ms": 139.244566,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-verify",
+    "trial": 2,
+    "ms": 180.361372,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "tail-vector",
+    "trial": 2,
+    "ms": 141.621951,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-fields-verify",
+    "trial": 2,
+    "ms": 177.439168,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-exact",
+    "trial": 2,
+    "ms": 214.592334,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-affinity",
+    "trial": 2,
+    "ms": 153.077068,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 2,
+    "ms": 148.140773,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-fields",
+    "trial": 2,
+    "ms": 139.959137,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-six",
+    "trial": 2,
+    "ms": 190.810604,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-fields-verify",
+    "trial": 3,
+    "ms": 157.580143,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "tail-vector",
+    "trial": 3,
+    "ms": 152.961656,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-verify",
+    "trial": 3,
+    "ms": 188.762766,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-exact",
+    "trial": 3,
+    "ms": 168.022682,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-affinity",
+    "trial": 3,
+    "ms": 146.6948,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 3,
+    "ms": 154.869385,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-six",
+    "trial": 3,
+    "ms": 165.02987,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-fields",
+    "trial": 3,
+    "ms": 140.176162,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-verify",
+    "trial": 4,
+    "ms": 190.950894,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "tail-vector",
+    "trial": 4,
+    "ms": 154.00409,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-fields",
+    "trial": 4,
+    "ms": 199.330577,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-six",
+    "trial": 4,
+    "ms": 172.284093,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-affinity",
+    "trial": 4,
+    "ms": 149.551025,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-fields-verify",
+    "trial": 4,
+    "ms": 138.361837,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-exact",
+    "trial": 4,
+    "ms": 159.241676,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 4,
+    "ms": 154.54533,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-exact",
+    "trial": 5,
+    "ms": 159.753501,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-six",
+    "trial": 5,
+    "ms": 163.560947,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 5,
+    "ms": 152.455727,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-verify",
+    "trial": 5,
+    "ms": 187.664688,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-fields-verify",
+    "trial": 5,
+    "ms": 268.840082,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-fields",
+    "trial": 5,
+    "ms": 149.570776,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "tail-vector",
+    "trial": 5,
+    "ms": 139.29012,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-affinity",
+    "trial": 5,
+    "ms": 148.631945,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-exact",
+    "trial": 6,
+    "ms": 163.012937,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-fields-verify",
+    "trial": 6,
+    "ms": 140.984393,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-affinity",
+    "trial": 6,
+    "ms": 147.090028,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-verify",
+    "trial": 6,
+    "ms": 186.829557,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 6,
+    "ms": 182.578036,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-six",
+    "trial": 6,
+    "ms": 172.248175,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "compact-fields",
+    "trial": 6,
+    "ms": 276.045809,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "tail-vector",
+    "trial": 6,
+    "ms": 143.683025,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  }
+]

@@ -1,0 +1,78 @@
+[
+  {
+    "seed": 1,
+    "counters": {
+      "rows": 3320000,
+      "prepare_groups": 4324669,
+      "prepare_busy": 104270,
+      "slow": 103093,
+      "slow_groups": 154049,
+      "slow_busy": 1,
+      "cas_fail": 0,
+      "overflow_rows": 1334,
+      "bad": 1248,
+      "occupied": 100470,
+      "overflow_names": 50,
+      "max_full_groups": 42,
+      "long_names": 0
+    },
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "seed": 11,
+    "counters": {
+      "rows": 3320000,
+      "prepare_groups": 4213015,
+      "prepare_busy": 2,
+      "slow": 102429,
+      "slow_groups": 149011,
+      "slow_busy": 3,
+      "cas_fail": 0,
+      "overflow_rows": 1106,
+      "bad": 793,
+      "occupied": 100481,
+      "overflow_names": 44,
+      "max_full_groups": 39,
+      "long_names": 0
+    },
+    "sha256": "53d4497e7b196e175e9ec6848c43f813317d83ece3914cfc63aab410fae20057"
+  },
+  {
+    "seed": 29,
+    "counters": {
+      "rows": 3320000,
+      "prepare_groups": 4201727,
+      "prepare_busy": 4,
+      "slow": 102079,
+      "slow_groups": 140031,
+      "slow_busy": 0,
+      "cas_fail": 0,
+      "overflow_rows": 397,
+      "bad": 1136,
+      "occupied": 100498,
+      "overflow_names": 16,
+      "max_full_groups": 31,
+      "long_names": 0
+    },
+    "sha256": "67daeb210797eaa56e70ae2ea36885339c96a9f6f2800ea8b3bf3dd9da1cc8c4"
+  },
+  {
+    "seed": 137,
+    "counters": {
+      "rows": 3320000,
+      "prepare_groups": 4239366,
+      "prepare_busy": 1,
+      "slow": 103137,
+      "slow_groups": 158820,
+      "slow_busy": 0,
+      "cas_fail": 0,
+      "overflow_rows": 1548,
+      "bad": 1124,
+      "occupied": 100454,
+      "overflow_names": 60,
+      "max_full_groups": 45,
+      "long_names": 0
+    },
+    "sha256": "0783e0b145954999192085d8a71cfed1cd265d8350292073ebf27f43887a5487"
+  }
+]

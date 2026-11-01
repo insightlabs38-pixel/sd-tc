@@ -1,0 +1,191 @@
+2026-11-01T06:32:25.4542022Z worked-example: exact, 144 output bytes, sha256=72ed9e59bff2dad354a9fb4cbc2d4b102477f634230b47e86035864c88d27444
+2026-11-01T06:32:25.4856808Z quoted-bom-no-final-terminator: exact, 60 output bytes, sha256=0c084eef633858f79b023d1d767c8c474e73ad5c37f3f587c1145c3aa36e52ec
+2026-11-01T06:32:25.5170969Z colliding-name-hashes: exact, 30 output bytes, sha256=7f1663c6c185848cdcfeffd76a87c54c5ac6c930a726609e04254071a95834c0
+2026-11-01T06:32:25.5481729Z canonical-raw-name-equivalence: exact, 32 output bytes, sha256=e26766ec88917afefd9c0718502ba613c54bb0290a0e4d3f02de77fc996b3701
+2026-11-01T06:32:25.5798114Z wide-unknown-region-id: exact, 68 output bytes, sha256=e3a1aad8d6ae9bdaf4776c35c17c45e6d725a66ad7649f448d0fa22f04e2b1f6
+2026-11-01T06:32:25.6113524Z eight-digit-id-fast-path: exact, 38 output bytes, sha256=0e12e730cfd62e802a2eaa25d66db993367206f35136895305d7514aab17ab9f
+2026-11-01T06:32:25.6427471Z page-tail-empty-name-4095: exact, 32 output bytes, sha256=8a0eee218fc00b5628acf18501af35ebed20a11fdf77d2fceb115bf25fe180e3
+2026-11-01T06:32:25.6751434Z page-tail-empty-name-4096: exact, 32 output bytes, sha256=fe795b51905b072935c9d7b69a4a742ceb7e551be038801ddbece2201d5df78e
+2026-11-01T06:32:25.7071509Z page-tail-empty-name-4097: exact, 32 output bytes, sha256=7c99e0025034e7740269473067aaa37e7bf3b4ac933cdecbcedfa0d5bf4f95f4
+2026-11-01T06:32:25.7388297Z page-tail-empty-name-8192: exact, 32 output bytes, sha256=2ed3b30d126ceff96883ac5a2464d4af5997afdbf9ce0d912014b824c89bb60b
+2026-11-01T06:32:25.7708264Z money-swar-widths-sign-and-eof: exact, 45 output bytes, sha256=6d004334e5b190994526f3e282367c8aada1675d0347955327f4f39500650193
+2026-11-01T06:32:25.8026024Z page-aligned-eof-short-name-and-money: exact, 32 output bytes, sha256=7617dffbc6d8808e53e0c6804a829af155aad12f5485953f289f3391179e4b46
+2026-11-01T06:32:25.8358097Z quote-vector-boundary-and-escaped-pairs: exact, 86 output bytes, sha256=758a4ad1bd79cde96d1a5b6db6cb215d9e4e1f94e2465919ed95df7617aea4c9
+2026-11-01T06:32:26.1313474Z packed-metadata-lengths-and-full-hash-collisions: exact, 115 output bytes, sha256=26631f91ae32b799363bbfff3d21674175ee70f20c2b08e3525d0db689b96dfd
+2026-11-01T06:32:26.2980417Z long-quoted-record-crosses-worker-boundary: exact, 98 output bytes, sha256=e26343acbacaddb7d01c8c0a821f6e4861ddaee5caedda527083e01174421313
+2026-11-01T06:32:27.1249696Z sharded-name-table-grow: exact, 60 output bytes, sha256=f8af717c6731f00daf15d7be5e37cfb7bd589cfb4ddd005886fd10922fb286c5
+2026-11-01T06:32:28.6831822Z concurrent-primary-overflow-cutover: exact, 124 output bytes, sha256=e4804303e66df689b9ec12407a75b636b25045d38e704a396579388f5649d363
+2026-11-01T06:32:31.4688043Z concentrated-name-shard-overflow: exact, 53 output bytes, sha256=4d6bca23cb6f9be27e5e320e843e399de3b6a3a2774fb811cfd0d7081a85a730
+2026-11-01T06:32:31.6494503Z cross-worker-colliding-names: exact, 109 output bytes, sha256=34f1fa808d87d2639010072d341d574e18bd9e65d9cb6cb81be1fee2048917fe
+2026-11-01T06:32:31.7344125Z tiny-seed1: exact, 1195 output bytes, sha256=e4e43bc39920e9d446c3fcd700fdd35b3959e9495c6aaa738491df38a1aed733
+2026-11-01T06:32:31.8183209Z tiny-seed2: exact, 1191 output bytes, sha256=33751caa2d533502b540bad1ad914bce49118ca9732c89c37892541c91b6713a
+2026-11-01T06:32:31.9030252Z tiny-seed3: exact, 1193 output bytes, sha256=c080b7e7d70f1abe437c77e3f242007dd9d286e95b5ec56dc9d1127816e7a30a
+2026-11-01T06:32:36.5579523Z sample-seed2: exact, 15408 output bytes, sha256=f389938275df1b495a38c4375fe741795df180e64617e01e2cf77a95a56982a3
+2026-11-01T06:32:40.9927264Z sample-seed1: exact, 15415 output bytes, sha256=9035fed36823232dd41ae2d1b9d6d21aa7c73f49d8e95647e953a89d5ebe9a66
+2026-11-01T06:33:12.2718063Z full-seed1: exact, 17054 output bytes, sha256=d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536
+2026-11-01T06:33:14.4812160Z baseline trial=1 elapsed_ms=89.399 peak_rss_kib=44620
+2026-11-01T06:33:14.5900116Z current trial=1 elapsed_ms=108.557 peak_rss_kib=34812
+2026-11-01T06:33:14.7043586Z current trial=2 elapsed_ms=114.119 peak_rss_kib=34756
+2026-11-01T06:33:14.7928388Z baseline trial=2 elapsed_ms=88.298 peak_rss_kib=45008
+2026-11-01T06:33:14.8813516Z baseline trial=3 elapsed_ms=88.290 peak_rss_kib=44828
+2026-11-01T06:33:14.9936840Z current trial=3 elapsed_ms=112.131 peak_rss_kib=34612
+2026-11-01T06:33:15.1013867Z current trial=4 elapsed_ms=107.432 peak_rss_kib=35336
+2026-11-01T06:33:15.1845763Z baseline trial=4 elapsed_ms=83.003 peak_rss_kib=46172
+2026-11-01T06:33:15.2742153Z baseline trial=5 elapsed_ms=89.444 peak_rss_kib=43044
+2026-11-01T06:33:15.3802043Z current trial=5 elapsed_ms=105.765 peak_rss_kib=35592
+2026-11-01T06:33:15.4894334Z current trial=6 elapsed_ms=109.051 peak_rss_kib=34424
+2026-11-01T06:33:15.5797814Z baseline trial=6 elapsed_ms=90.084 peak_rss_kib=44852
+2026-11-01T06:33:15.6642699Z baseline trial=7 elapsed_ms=84.277 peak_rss_kib=44472
+2026-11-01T06:33:15.7780236Z current trial=7 elapsed_ms=113.498 peak_rss_kib=34608
+2026-11-01T06:33:15.8875035Z current trial=8 elapsed_ms=109.267 peak_rss_kib=35676
+2026-11-01T06:33:15.9716884Z baseline trial=8 elapsed_ms=83.945 peak_rss_kib=44728
+2026-11-01T06:33:16.0581766Z baseline trial=9 elapsed_ms=86.271 peak_rss_kib=43956
+2026-11-01T06:33:16.1676168Z current trial=9 elapsed_ms=109.234 peak_rss_kib=35036
+2026-11-01T06:33:16.2784569Z current trial=10 elapsed_ms=110.562 peak_rss_kib=35132
+2026-11-01T06:33:16.3635477Z baseline trial=10 elapsed_ms=84.869 peak_rss_kib=44332
+2026-11-01T06:33:16.4500398Z baseline trial=11 elapsed_ms=86.244 peak_rss_kib=44008
+2026-11-01T06:33:16.5616754Z current trial=11 elapsed_ms=111.464 peak_rss_kib=34648
+2026-11-01T06:33:16.6677803Z current trial=12 elapsed_ms=105.919 peak_rss_kib=34568
+2026-11-01T06:33:16.7534324Z baseline trial=12 elapsed_ms=85.403 peak_rss_kib=43804
+2026-11-01T06:33:16.7535287Z baseline median_ms=86.258 median_rss_kib=44546
+2026-11-01T06:33:16.7535776Z current median_ms=109.250 median_rss_kib=34784
+2026-11-01T06:33:42.0109387Z parsers=1 owners=1 median_of_5 {'lookup': 2.261, 'boundary': 0.022, 'parse': 150.895, 'merge': 5.794, 'output': 0.421, 'total': 159.352, 'rss_kib': 18468}
+2026-11-01T06:33:42.0110975Z parsers=2 owners=2 median_of_5 {'lookup': 2.273, 'boundary': 0.027, 'parse': 95.04, 'merge': 5.969, 'output': 0.432, 'total': 103.717, 'rss_kib': 21840}
+2026-11-01T06:33:42.0112163Z parsers=3 owners=2 median_of_5 {'lookup': 2.293, 'boundary': 0.03, 'parse': 99.488, 'merge': 5.994, 'output': 0.413, 'total': 108.242, 'rss_kib': 29560}
+2026-11-01T06:33:42.0113345Z parsers=4 owners=2 median_of_5 {'lookup': 2.27, 'boundary': 0.033, 'parse': 97.541, 'merge': 5.95, 'output': 0.418, 'total': 106.296, 'rss_kib': 34764}
+2026-11-01T06:33:42.0114322Z parsers=6 owners=2 median_of_5 {'lookup': 2.283, 'boundary': 0.04, 'parse': 108.008, 'merge': 5.966, 'output': 0.429, 'total': 116.673, 'rss_kib': 45044}
+2026-11-01T06:33:42.0115225Z parsers=8 owners=2 median_of_5 {'lookup': 2.286, 'boundary': 0.048, 'parse': 115.905, 'merge': 6.002, 'output': 0.453, 'total': 124.649, 'rss_kib': 55912}
+2026-11-01T06:33:42.0116135Z parsers=12 owners=2 median_of_5 {'lookup': 2.283, 'boundary': 0.063, 'parse': 119.949, 'merge': 5.981, 'output': 0.428, 'total': 128.695, 'rss_kib': 76888}
+2026-11-01T06:34:28.4655672Z baseline trial=1 elapsed_ms=116.581 peak_rss_kib=32272
+2026-11-01T06:34:28.5687957Z current trial=1 elapsed_ms=102.958 peak_rss_kib=30892
+2026-11-01T06:34:28.6745354Z current trial=2 elapsed_ms=105.074 peak_rss_kib=31712
+2026-11-01T06:34:28.7817390Z baseline trial=2 elapsed_ms=107.413 peak_rss_kib=33052
+2026-11-01T06:34:28.8927949Z baseline trial=3 elapsed_ms=110.881 peak_rss_kib=32136
+2026-11-01T06:34:28.9951440Z current trial=3 elapsed_ms=102.128 peak_rss_kib=31628
+2026-11-01T06:34:29.0924442Z current trial=4 elapsed_ms=97.070 peak_rss_kib=31312
+2026-11-01T06:34:29.2049383Z baseline trial=4 elapsed_ms=112.260 peak_rss_kib=32936
+2026-11-01T06:34:29.3139064Z baseline trial=5 elapsed_ms=108.757 peak_rss_kib=31552
+2026-11-01T06:34:29.4182024Z current trial=5 elapsed_ms=104.080 peak_rss_kib=30536
+2026-11-01T06:34:29.5209183Z current trial=6 elapsed_ms=102.472 peak_rss_kib=31660
+2026-11-01T06:34:29.6440788Z baseline trial=6 elapsed_ms=122.980 peak_rss_kib=30876
+2026-11-01T06:34:29.7545858Z baseline trial=7 elapsed_ms=110.240 peak_rss_kib=29908
+2026-11-01T06:34:29.8675277Z current trial=7 elapsed_ms=112.719 peak_rss_kib=30700
+2026-11-01T06:34:29.9765135Z current trial=8 elapsed_ms=108.743 peak_rss_kib=32160
+2026-11-01T06:34:30.0870958Z baseline trial=8 elapsed_ms=110.336 peak_rss_kib=30408
+2026-11-01T06:34:30.2022103Z baseline trial=9 elapsed_ms=114.903 peak_rss_kib=31980
+2026-11-01T06:34:30.3057636Z current trial=9 elapsed_ms=103.322 peak_rss_kib=32348
+2026-11-01T06:34:30.4092957Z current trial=10 elapsed_ms=103.313 peak_rss_kib=31828
+2026-11-01T06:34:30.5185986Z baseline trial=10 elapsed_ms=109.066 peak_rss_kib=30520
+2026-11-01T06:34:30.6381446Z baseline trial=11 elapsed_ms=119.257 peak_rss_kib=30528
+2026-11-01T06:34:30.7418412Z current trial=11 elapsed_ms=103.538 peak_rss_kib=32600
+2026-11-01T06:34:30.8431884Z current trial=12 elapsed_ms=101.125 peak_rss_kib=29972
+2026-11-01T06:34:30.9562160Z baseline trial=12 elapsed_ms=112.822 peak_rss_kib=31740
+2026-11-01T06:34:30.9562747Z baseline median_ms=111.570 median_rss_kib=31646
+2026-11-01T06:34:30.9563455Z current median_ms=103.317 median_rss_kib=31644
+2026-11-01T06:34:41.2682399Z baseline trial=1 elapsed_ms=77.439 peak_rss_kib=30208
+2026-11-01T06:34:41.3778958Z current trial=1 elapsed_ms=109.404 peak_rss_kib=32208
+2026-11-01T06:34:41.4855136Z current trial=2 elapsed_ms=107.387 peak_rss_kib=32972
+2026-11-01T06:34:41.5621653Z baseline trial=2 elapsed_ms=76.520 peak_rss_kib=31192
+2026-11-01T06:34:41.6392241Z baseline trial=3 elapsed_ms=76.763 peak_rss_kib=29584
+2026-11-01T06:34:41.7516867Z current trial=3 elapsed_ms=112.243 peak_rss_kib=30596
+2026-11-01T06:34:41.8594944Z current trial=4 elapsed_ms=107.569 peak_rss_kib=32136
+2026-11-01T06:34:41.9368071Z baseline trial=4 elapsed_ms=77.089 peak_rss_kib=30536
+2026-11-01T06:34:42.0209137Z baseline trial=5 elapsed_ms=83.892 peak_rss_kib=30596
+2026-11-01T06:34:42.1255179Z current trial=5 elapsed_ms=104.332 peak_rss_kib=31484
+2026-11-01T06:34:42.2335921Z current trial=6 elapsed_ms=107.826 peak_rss_kib=31908
+2026-11-01T06:34:42.3106351Z baseline trial=6 elapsed_ms=76.836 peak_rss_kib=31316
+2026-11-01T06:34:42.3944299Z baseline trial=7 elapsed_ms=83.534 peak_rss_kib=41732
+2026-11-01T06:34:42.4958408Z current trial=7 elapsed_ms=101.227 peak_rss_kib=32272
+2026-11-01T06:34:42.5971853Z current trial=8 elapsed_ms=101.093 peak_rss_kib=31180
+2026-11-01T06:34:42.6739714Z baseline trial=8 elapsed_ms=76.563 peak_rss_kib=30724
+2026-11-01T06:34:42.7507668Z baseline trial=9 elapsed_ms=76.575 peak_rss_kib=29828
+2026-11-01T06:34:42.8543341Z current trial=9 elapsed_ms=103.343 peak_rss_kib=31596
+2026-11-01T06:34:42.9506117Z current trial=10 elapsed_ms=96.045 peak_rss_kib=32892
+2026-11-01T06:34:43.0276090Z baseline trial=10 elapsed_ms=76.760 peak_rss_kib=43368
+2026-11-01T06:34:43.1049322Z baseline trial=11 elapsed_ms=77.101 peak_rss_kib=30600
+2026-11-01T06:34:43.2075228Z current trial=11 elapsed_ms=102.370 peak_rss_kib=31580
+2026-11-01T06:34:43.3077917Z current trial=12 elapsed_ms=100.037 peak_rss_kib=30532
+2026-11-01T06:34:43.3872314Z baseline trial=12 elapsed_ms=79.218 peak_rss_kib=42784
+2026-11-01T06:34:43.3873217Z baseline median_ms=76.962 median_rss_kib=30662
+2026-11-01T06:34:43.3873777Z current median_ms=103.837 median_rss_kib=31752
+2026-11-01T06:34:54.1955356Z baseline trial=1 elapsed_ms=78.554 peak_rss_kib=41360
+2026-11-01T06:34:54.2992022Z current trial=1 elapsed_ms=103.452 peak_rss_kib=32684
+2026-11-01T06:34:54.4076326Z current trial=2 elapsed_ms=108.224 peak_rss_kib=30624
+2026-11-01T06:34:54.4877917Z baseline trial=2 elapsed_ms=79.967 peak_rss_kib=29128
+2026-11-01T06:34:54.5669714Z baseline trial=3 elapsed_ms=78.941 peak_rss_kib=41156
+2026-11-01T06:34:54.6777469Z current trial=3 elapsed_ms=110.552 peak_rss_kib=31348
+2026-11-01T06:34:54.7853036Z current trial=4 elapsed_ms=107.308 peak_rss_kib=30952
+2026-11-01T06:34:54.8674565Z baseline trial=4 elapsed_ms=81.959 peak_rss_kib=41380
+2026-11-01T06:34:54.9490561Z baseline trial=5 elapsed_ms=81.407 peak_rss_kib=30268
+2026-11-01T06:34:55.0591613Z current trial=5 elapsed_ms=109.875 peak_rss_kib=31852
+2026-11-01T06:34:55.1576397Z current trial=6 elapsed_ms=98.266 peak_rss_kib=32024
+2026-11-01T06:34:55.2371194Z baseline trial=6 elapsed_ms=79.308 peak_rss_kib=41952
+2026-11-01T06:34:55.3162693Z baseline trial=7 elapsed_ms=78.908 peak_rss_kib=29772
+2026-11-01T06:34:55.4170746Z current trial=7 elapsed_ms=100.595 peak_rss_kib=31944
+2026-11-01T06:34:55.5209781Z current trial=8 elapsed_ms=103.706 peak_rss_kib=32564
+2026-11-01T06:34:55.5995543Z baseline trial=8 elapsed_ms=78.360 peak_rss_kib=29544
+2026-11-01T06:34:55.6834672Z baseline trial=9 elapsed_ms=83.639 peak_rss_kib=30312
+2026-11-01T06:34:55.7840321Z current trial=9 elapsed_ms=100.354 peak_rss_kib=31856
+2026-11-01T06:34:55.8901678Z current trial=10 elapsed_ms=105.887 peak_rss_kib=32032
+2026-11-01T06:34:55.9701287Z baseline trial=10 elapsed_ms=79.734 peak_rss_kib=42156
+2026-11-01T06:34:56.0482470Z baseline trial=11 elapsed_ms=77.954 peak_rss_kib=16868
+2026-11-01T06:34:56.1569536Z current trial=11 elapsed_ms=108.434 peak_rss_kib=32624
+2026-11-01T06:34:56.2629330Z current trial=12 elapsed_ms=105.756 peak_rss_kib=31348
+2026-11-01T06:34:56.3420368Z baseline trial=12 elapsed_ms=78.878 peak_rss_kib=29748
+2026-11-01T06:34:56.3421038Z baseline median_ms=79.124 median_rss_kib=30290
+2026-11-01T06:34:56.3421591Z current median_ms=105.821 median_rss_kib=31900
+2026-11-01T06:35:07.2372302Z baseline trial=1 elapsed_ms=92.342 peak_rss_kib=30504
+2026-11-01T06:35:07.3491282Z current trial=1 elapsed_ms=111.607 peak_rss_kib=31980
+2026-11-01T06:35:07.4686467Z current trial=2 elapsed_ms=119.310 peak_rss_kib=32492
+2026-11-01T06:35:07.5615842Z baseline trial=2 elapsed_ms=92.690 peak_rss_kib=16588
+2026-11-01T06:35:07.6609524Z baseline trial=3 elapsed_ms=99.153 peak_rss_kib=40516
+2026-11-01T06:35:07.7731166Z current trial=3 elapsed_ms=111.927 peak_rss_kib=31712
+2026-11-01T06:35:07.8873841Z current trial=4 elapsed_ms=113.984 peak_rss_kib=31968
+2026-11-01T06:35:07.9799019Z baseline trial=4 elapsed_ms=92.336 peak_rss_kib=29236
+2026-11-01T06:35:08.0727868Z baseline trial=5 elapsed_ms=92.712 peak_rss_kib=41988
+2026-11-01T06:35:08.1907356Z current trial=5 elapsed_ms=117.689 peak_rss_kib=32344
+2026-11-01T06:35:08.3010844Z current trial=6 elapsed_ms=110.128 peak_rss_kib=32024
+2026-11-01T06:35:08.3924041Z baseline trial=6 elapsed_ms=91.129 peak_rss_kib=30900
+2026-11-01T06:35:08.4908606Z baseline trial=7 elapsed_ms=98.242 peak_rss_kib=29064
+2026-11-01T06:35:08.5987116Z current trial=7 elapsed_ms=107.677 peak_rss_kib=31868
+2026-11-01T06:35:08.7023174Z current trial=8 elapsed_ms=103.337 peak_rss_kib=31216
+2026-11-01T06:35:08.7958625Z baseline trial=8 elapsed_ms=93.387 peak_rss_kib=30344
+2026-11-01T06:35:08.8873226Z baseline trial=9 elapsed_ms=91.208 peak_rss_kib=43128
+2026-11-01T06:35:08.9989708Z current trial=9 elapsed_ms=111.470 peak_rss_kib=32876
+2026-11-01T06:35:09.1028532Z current trial=10 elapsed_ms=103.636 peak_rss_kib=30664
+2026-11-01T06:35:09.1941875Z baseline trial=10 elapsed_ms=91.119 peak_rss_kib=30256
+2026-11-01T06:35:09.2845336Z baseline trial=11 elapsed_ms=90.108 peak_rss_kib=29572
+2026-11-01T06:35:09.3861219Z current trial=11 elapsed_ms=101.383 peak_rss_kib=31520
+2026-11-01T06:35:09.4901090Z current trial=12 elapsed_ms=103.795 peak_rss_kib=30932
+2026-11-01T06:35:09.5809448Z baseline trial=12 elapsed_ms=90.629 peak_rss_kib=30608
+2026-11-01T06:35:09.5809886Z baseline median_ms=92.339 median_rss_kib=30424
+2026-11-01T06:35:09.5810234Z current median_ms=110.799 median_rss_kib=31918
+2026-11-01T06:35:09.5918910Z ##[group]Run python3 tests/paired_cgroup.py sd-track-c:previous-pgo sd-track-c:ci
+2026-11-01T06:35:09.8595122Z baseline trial=1 cgroup_peak_bytes=11014144
+2026-11-01T06:35:10.0980030Z current trial=1 cgroup_peak_bytes=14950400
+2026-11-01T06:35:10.3419575Z current trial=2 cgroup_peak_bytes=14995456
+2026-11-01T06:35:10.5694162Z baseline trial=2 cgroup_peak_bytes=10780672
+2026-11-01T06:35:10.7891743Z baseline trial=3 cgroup_peak_bytes=10747904
+2026-11-01T06:35:11.0365993Z current trial=3 cgroup_peak_bytes=14962688
+2026-11-01T06:35:11.2879120Z current trial=4 cgroup_peak_bytes=14954496
+2026-11-01T06:35:11.4986913Z baseline trial=4 cgroup_peak_bytes=11259904
+2026-11-01T06:35:11.7542000Z current trial=5 cgroup_peak_bytes=14954496
+2026-11-01T06:35:11.9756207Z baseline trial=5 cgroup_peak_bytes=11284480
+2026-11-01T06:35:12.2324043Z current trial=6 cgroup_peak_bytes=14954496
+2026-11-01T06:35:12.4515076Z baseline trial=6 cgroup_peak_bytes=11272192
+2026-11-01T06:35:12.6963868Z current trial=7 cgroup_peak_bytes=14958592
+2026-11-01T06:35:12.9163619Z baseline trial=7 cgroup_peak_bytes=11034624
+2026-11-01T06:35:13.1344090Z baseline trial=8 cgroup_peak_bytes=11010048
+2026-11-01T06:35:13.3865637Z current trial=8 cgroup_peak_bytes=14966784
+2026-11-01T06:35:13.6296778Z current trial=9 cgroup_peak_bytes=14692352
+2026-11-01T06:35:13.8543225Z baseline trial=9 cgroup_peak_bytes=11022336
+2026-11-01T06:35:14.0952058Z current trial=10 cgroup_peak_bytes=15163392
+2026-11-01T06:35:14.3150025Z baseline trial=10 cgroup_peak_bytes=11059200
+2026-11-01T06:35:14.5670989Z current trial=11 cgroup_peak_bytes=15183872
+2026-11-01T06:35:14.7987859Z baseline trial=11 cgroup_peak_bytes=11300864
+2026-11-01T06:35:15.0571841Z current trial=12 cgroup_peak_bytes=14962688
+2026-11-01T06:35:15.2727132Z baseline trial=12 cgroup_peak_bytes=11296768
+2026-11-01T06:35:15.2728309Z     "median_peak_bytes": 11046912.0,
+2026-11-01T06:35:15.2733342Z     "median_peak_bytes": 14960640.0,
+2026-11-01T06:35:47.4638535Z full seed 11: three exact comparisons of /tmp/sd-track-c
+2026-11-01T06:36:19.0185666Z full seed 29: three exact comparisons of /tmp/sd-track-c

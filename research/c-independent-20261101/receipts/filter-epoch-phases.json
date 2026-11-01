@@ -1,0 +1,98 @@
+[
+  {
+    "name": "filter-phases",
+    "trial": 0,
+    "wall_ms": 680.5077220005842,
+    "phases": "PHASE stage1_cpu_ms=1010.775 stage2_cpu_ms=308.089 replay=3320000 candidates=1044565"
+  },
+  {
+    "name": "filter-private-phases",
+    "trial": 0,
+    "wall_ms": 269.8476429995935,
+    "phases": "PHASE stage1_cpu_ms=223.299 stage2_cpu_ms=289.350 replay=3320000 candidates=1415459"
+  },
+  {
+    "name": "filter-projected-phases",
+    "trial": 0,
+    "wall_ms": 278.7576489999992,
+    "phases": "PHASE stage1_cpu_ms=224.665 stage2_cpu_ms=294.221 replay=3320000 candidates=1415459"
+  },
+  {
+    "name": "epoch-phases",
+    "trial": 0,
+    "wall_ms": 184.25266800022655,
+    "phases": "PHASE parse_cpu_ms=195.531 reconcile_cpu_ms=107.671 event_capacity=7964160 names=100520 max_bucket_names=444"
+  },
+  {
+    "name": "filter-phases",
+    "trial": 1,
+    "wall_ms": 299.9275980000675,
+    "phases": "PHASE stage1_cpu_ms=299.454 stage2_cpu_ms=276.867 replay=3320000 candidates=1044565"
+  },
+  {
+    "name": "filter-private-phases",
+    "trial": 1,
+    "wall_ms": 286.83725999962917,
+    "phases": "PHASE stage1_cpu_ms=226.300 stage2_cpu_ms=297.916 replay=3320000 candidates=1415459"
+  },
+  {
+    "name": "filter-projected-phases",
+    "trial": 1,
+    "wall_ms": 275.37271100027283,
+    "phases": "PHASE stage1_cpu_ms=219.741 stage2_cpu_ms=301.143 replay=3320000 candidates=1415459"
+  },
+  {
+    "name": "epoch-phases",
+    "trial": 1,
+    "wall_ms": 181.98524000035832,
+    "phases": "PHASE parse_cpu_ms=193.991 reconcile_cpu_ms=105.437 event_capacity=7964160 names=100520 max_bucket_names=444"
+  },
+  {
+    "name": "filter-phases",
+    "trial": 2,
+    "wall_ms": 305.740515999787,
+    "phases": "PHASE stage1_cpu_ms=313.808 stage2_cpu_ms=280.801 replay=3320000 candidates=1044565"
+  },
+  {
+    "name": "filter-private-phases",
+    "trial": 2,
+    "wall_ms": 271.6286400000172,
+    "phases": "PHASE stage1_cpu_ms=218.328 stage2_cpu_ms=289.916 replay=3320000 candidates=1415459"
+  },
+  {
+    "name": "filter-projected-phases",
+    "trial": 2,
+    "wall_ms": 272.83896599965374,
+    "phases": "PHASE stage1_cpu_ms=218.788 stage2_cpu_ms=293.992 replay=3320000 candidates=1415459"
+  },
+  {
+    "name": "epoch-phases",
+    "trial": 2,
+    "wall_ms": 182.01443599991762,
+    "phases": "PHASE parse_cpu_ms=195.787 reconcile_cpu_ms=107.364 event_capacity=7964160 names=100520 max_bucket_names=444"
+  },
+  {
+    "name": "filter-phases",
+    "trial": 3,
+    "wall_ms": 318.68178800050373,
+    "phases": "PHASE stage1_cpu_ms=328.523 stage2_cpu_ms=277.133 replay=3320000 candidates=1044565"
+  },
+  {
+    "name": "filter-private-phases",
+    "trial": 3,
+    "wall_ms": 292.27748699941003,
+    "phases": "PHASE stage1_cpu_ms=240.912 stage2_cpu_ms=285.447 replay=3320000 candidates=1415459"
+  },
+  {
+    "name": "filter-projected-phases",
+    "trial": 3,
+    "wall_ms": 284.07655299997714,
+    "phases": "PHASE stage1_cpu_ms=225.012 stage2_cpu_ms=290.470 replay=3320000 candidates=1415459"
+  },
+  {
+    "name": "epoch-phases",
+    "trial": 3,
+    "wall_ms": 187.8344239994476,
+    "phases": "PHASE parse_cpu_ms=194.092 reconcile_cpu_ms=104.181 event_capacity=7964160 names=100520 max_bucket_names=444"
+  }
+]

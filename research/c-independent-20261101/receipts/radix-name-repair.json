@@ -1,0 +1,170 @@
+[
+  {
+    "name": "radix-bucket",
+    "trial": 0,
+    "ms": 277.810038,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 0,
+    "ms": 166.302783,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "radix-name",
+    "trial": 0,
+    "ms": 252.825835,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "main-baseline",
+    "trial": 0,
+    "ms": 172.940906,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "radix-name",
+    "trial": 1,
+    "ms": 261.944683,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "main-baseline",
+    "trial": 1,
+    "ms": 172.367577,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 1,
+    "ms": 150.59101,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "radix-bucket",
+    "trial": 1,
+    "ms": 258.937039,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "radix-name",
+    "trial": 2,
+    "ms": 265.437206,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "main-baseline",
+    "trial": 2,
+    "ms": 164.862172,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 2,
+    "ms": 184.951634,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "radix-bucket",
+    "trial": 2,
+    "ms": 275.982016,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "main-baseline",
+    "trial": 3,
+    "ms": 160.552933,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "radix-name",
+    "trial": 3,
+    "ms": 252.92683,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 3,
+    "ms": 147.026512,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "radix-bucket",
+    "trial": 3,
+    "ms": 265.100999,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "radix-bucket",
+    "trial": 4,
+    "ms": 263.487241,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "radix-name",
+    "trial": 4,
+    "ms": 271.720025,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "main-baseline",
+    "trial": 4,
+    "ms": 163.891199,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 4,
+    "ms": 156.156309,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "radix-bucket",
+    "trial": 5,
+    "ms": 263.612509,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "main-baseline",
+    "trial": 5,
+    "ms": 165.770564,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "radix-name",
+    "trial": 5,
+    "ms": 253.696759,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 5,
+    "ms": 149.618241,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "radix-name",
+    "trial": 6,
+    "ms": 249.946716,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "radix-bucket",
+    "trial": 6,
+    "ms": 257.820101,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 6,
+    "ms": 157.214764,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  },
+  {
+    "name": "main-baseline",
+    "trial": 6,
+    "ms": 166.859056,
+    "sha256": "d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536"
+  }
+]

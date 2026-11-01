@@ -1,0 +1,794 @@
+[
+  {
+    "name": "epoch-compact",
+    "trial": 0,
+    "wall_ms": 595.4804960001638,
+    "user_ms": 776.4639999999999,
+    "system_ms": 25.814,
+    "rss_kib": 29440,
+    "minor_faults": 6315
+  },
+  {
+    "name": "pair-ownership-prefetch",
+    "trial": 0,
+    "wall_ms": 193.0643740006417,
+    "user_ms": 303.756,
+    "system_ms": 28.570999999999998,
+    "rss_kib": 15532,
+    "minor_faults": 5437
+  },
+  {
+    "name": "owner-prefetch",
+    "trial": 0,
+    "wall_ms": 248.0896200004281,
+    "user_ms": 348.662,
+    "system_ms": 44.85,
+    "rss_kib": 205736,
+    "minor_faults": 5124
+  },
+  {
+    "name": "owner-partition",
+    "trial": 0,
+    "wall_ms": 207.01745499991375,
+    "user_ms": 342.889,
+    "system_ms": 47.959999999999994,
+    "rss_kib": 206148,
+    "minor_faults": 5178
+  },
+  {
+    "name": "main-baseline",
+    "trial": 0,
+    "wall_ms": 163.7983009995878,
+    "user_ms": 284.19899999999996,
+    "system_ms": 23.729,
+    "rss_kib": 14680,
+    "minor_faults": 5283
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 0,
+    "wall_ms": 147.8643299997202,
+    "user_ms": 268.626,
+    "system_ms": 16.073999999999998,
+    "rss_kib": 15464,
+    "minor_faults": 5436
+  },
+  {
+    "name": "epoch-arena",
+    "trial": 0,
+    "wall_ms": 195.39153200003057,
+    "user_ms": 237.451,
+    "system_ms": 17.165,
+    "rss_kib": 67016,
+    "minor_faults": 7474
+  },
+  {
+    "name": "epoch",
+    "trial": 0,
+    "wall_ms": 193.05372400049237,
+    "user_ms": 244.96699999999998,
+    "system_ms": 19.306,
+    "rss_kib": 68044,
+    "minor_faults": 7723
+  },
+  {
+    "name": "vector",
+    "trial": 0,
+    "wall_ms": 173.4538850005265,
+    "user_ms": 291.88599999999997,
+    "system_ms": 27.567999999999998,
+    "rss_kib": 14492,
+    "minor_faults": 5251
+  },
+  {
+    "name": "ownership-prefetch",
+    "trial": 0,
+    "wall_ms": 165.39295999973547,
+    "user_ms": 302.654,
+    "system_ms": 8.091,
+    "rss_kib": 14660,
+    "minor_faults": 5234
+  },
+  {
+    "name": "vector-soa",
+    "trial": 0,
+    "wall_ms": 162.11304599983123,
+    "user_ms": 277.414,
+    "system_ms": 23.227999999999998,
+    "rss_kib": 14336,
+    "minor_faults": 5271
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 1,
+    "wall_ms": 153.22992199980945,
+    "user_ms": 274.11999999999995,
+    "system_ms": 7.796999999999999,
+    "rss_kib": 15664,
+    "minor_faults": 5436
+  },
+  {
+    "name": "owner-partition",
+    "trial": 1,
+    "wall_ms": 208.38818199990783,
+    "user_ms": 330.597,
+    "system_ms": 63.997,
+    "rss_kib": 206056,
+    "minor_faults": 5176
+  },
+  {
+    "name": "pair-ownership-prefetch",
+    "trial": 1,
+    "wall_ms": 156.1771630003932,
+    "user_ms": 266.431,
+    "system_ms": 15.474,
+    "rss_kib": 15680,
+    "minor_faults": 5434
+  },
+  {
+    "name": "epoch-compact",
+    "trial": 1,
+    "wall_ms": 198.09582499965472,
+    "user_ms": 107.05499999999999,
+    "system_ms": 13.647,
+    "rss_kib": 29452,
+    "minor_faults": 6313
+  },
+  {
+    "name": "epoch-arena",
+    "trial": 1,
+    "wall_ms": 186.54948600033094,
+    "user_ms": 209.861,
+    "system_ms": 19.482,
+    "rss_kib": 67088,
+    "minor_faults": 7487
+  },
+  {
+    "name": "vector-soa",
+    "trial": 1,
+    "wall_ms": 164.27039899917872,
+    "user_ms": 295.17099999999994,
+    "system_ms": 11.826999999999998,
+    "rss_kib": 14644,
+    "minor_faults": 5249
+  },
+  {
+    "name": "ownership-prefetch",
+    "trial": 1,
+    "wall_ms": 157.08991199971933,
+    "user_ms": 280.464,
+    "system_ms": 16.052,
+    "rss_kib": 14368,
+    "minor_faults": 5269
+  },
+  {
+    "name": "vector",
+    "trial": 1,
+    "wall_ms": 167.55476799971802,
+    "user_ms": 281.553,
+    "system_ms": 31.398999999999997,
+    "rss_kib": 14216,
+    "minor_faults": 5225
+  },
+  {
+    "name": "owner-prefetch",
+    "trial": 1,
+    "wall_ms": 248.4156910004458,
+    "user_ms": 328.782,
+    "system_ms": 66.386,
+    "rss_kib": 205764,
+    "minor_faults": 5123
+  },
+  {
+    "name": "main-baseline",
+    "trial": 1,
+    "wall_ms": 160.05719100030547,
+    "user_ms": 271.15299999999996,
+    "system_ms": 32.297,
+    "rss_kib": 14552,
+    "minor_faults": 5250
+  },
+  {
+    "name": "epoch",
+    "trial": 1,
+    "wall_ms": 210.5595680004626,
+    "user_ms": 222.972,
+    "system_ms": 40.624,
+    "rss_kib": 68024,
+    "minor_faults": 7726
+  },
+  {
+    "name": "owner-prefetch",
+    "trial": 2,
+    "wall_ms": 260.7524420000118,
+    "user_ms": 300.153,
+    "system_ms": 103.52399999999999,
+    "rss_kib": 205828,
+    "minor_faults": 5122
+  },
+  {
+    "name": "owner-partition",
+    "trial": 2,
+    "wall_ms": 204.62874800068676,
+    "user_ms": 369.948,
+    "system_ms": 19.504,
+    "rss_kib": 206048,
+    "minor_faults": 5176
+  },
+  {
+    "name": "epoch-arena",
+    "trial": 2,
+    "wall_ms": 176.85349200019118,
+    "user_ms": 187.197,
+    "system_ms": 20.108999999999998,
+    "rss_kib": 67012,
+    "minor_faults": 7475
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 2,
+    "wall_ms": 153.159522000351,
+    "user_ms": 260.138,
+    "system_ms": 19.729,
+    "rss_kib": 15368,
+    "minor_faults": 5435
+  },
+  {
+    "name": "pair-ownership-prefetch",
+    "trial": 2,
+    "wall_ms": 148.9363479995518,
+    "user_ms": 237.32399999999998,
+    "system_ms": 39.007,
+    "rss_kib": 14892,
+    "minor_faults": 5436
+  },
+  {
+    "name": "ownership-prefetch",
+    "trial": 2,
+    "wall_ms": 160.97112099942024,
+    "user_ms": 272.477,
+    "system_ms": 27.097,
+    "rss_kib": 14532,
+    "minor_faults": 5276
+  },
+  {
+    "name": "epoch",
+    "trial": 2,
+    "wall_ms": 192.49341599970649,
+    "user_ms": 229.278,
+    "system_ms": 15.251,
+    "rss_kib": 68040,
+    "minor_faults": 7725
+  },
+  {
+    "name": "epoch-compact",
+    "trial": 2,
+    "wall_ms": 209.13616100006038,
+    "user_ms": 123.25599999999999,
+    "system_ms": 19.206999999999997,
+    "rss_kib": 29360,
+    "minor_faults": 6311
+  },
+  {
+    "name": "vector-soa",
+    "trial": 2,
+    "wall_ms": 165.77586699986568,
+    "user_ms": 291.513,
+    "system_ms": 19.455999999999996,
+    "rss_kib": 14632,
+    "minor_faults": 5273
+  },
+  {
+    "name": "vector",
+    "trial": 2,
+    "wall_ms": 185.06504600009066,
+    "user_ms": 322.637,
+    "system_ms": 19.977999999999998,
+    "rss_kib": 14584,
+    "minor_faults": 5267
+  },
+  {
+    "name": "main-baseline",
+    "trial": 2,
+    "wall_ms": 162.59676100071374,
+    "user_ms": 291.044,
+    "system_ms": 15.342999999999998,
+    "rss_kib": 14652,
+    "minor_faults": 5242
+  },
+  {
+    "name": "pair-ownership-prefetch",
+    "trial": 3,
+    "wall_ms": 152.7554330004932,
+    "user_ms": 273.97099999999995,
+    "system_ms": 11.342999999999998,
+    "rss_kib": 15176,
+    "minor_faults": 5436
+  },
+  {
+    "name": "owner-partition",
+    "trial": 3,
+    "wall_ms": 212.05834000011237,
+    "user_ms": 342.722,
+    "system_ms": 48.60399999999999,
+    "rss_kib": 206040,
+    "minor_faults": 5177
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 3,
+    "wall_ms": 154.73662299973512,
+    "user_ms": 257.21,
+    "system_ms": 34.005,
+    "rss_kib": 15360,
+    "minor_faults": 5434
+  },
+  {
+    "name": "epoch-compact",
+    "trial": 3,
+    "wall_ms": 202.9360260003159,
+    "user_ms": 130.98499999999999,
+    "system_ms": 8.616999999999999,
+    "rss_kib": 29328,
+    "minor_faults": 6302
+  },
+  {
+    "name": "owner-prefetch",
+    "trial": 3,
+    "wall_ms": 252.66364799972507,
+    "user_ms": 323.51599999999996,
+    "system_ms": 66.591,
+    "rss_kib": 205728,
+    "minor_faults": 5121
+  },
+  {
+    "name": "ownership-prefetch",
+    "trial": 3,
+    "wall_ms": 160.89976400053274,
+    "user_ms": 280.62699999999995,
+    "system_ms": 19.407999999999998,
+    "rss_kib": 14868,
+    "minor_faults": 5262
+  },
+  {
+    "name": "epoch",
+    "trial": 3,
+    "wall_ms": 194.1321379999863,
+    "user_ms": 214.34,
+    "system_ms": 28.523999999999997,
+    "rss_kib": 68032,
+    "minor_faults": 7721
+  },
+  {
+    "name": "vector",
+    "trial": 3,
+    "wall_ms": 175.2965410005345,
+    "user_ms": 290.71999999999997,
+    "system_ms": 38.978,
+    "rss_kib": 14384,
+    "minor_faults": 5248
+  },
+  {
+    "name": "main-baseline",
+    "trial": 3,
+    "wall_ms": 162.56809900005464,
+    "user_ms": 264.414,
+    "system_ms": 34.435,
+    "rss_kib": 15120,
+    "minor_faults": 5271
+  },
+  {
+    "name": "epoch-arena",
+    "trial": 3,
+    "wall_ms": 181.37891700007458,
+    "user_ms": 209.04,
+    "system_ms": 21.951999999999998,
+    "rss_kib": 67048,
+    "minor_faults": 7465
+  },
+  {
+    "name": "vector-soa",
+    "trial": 3,
+    "wall_ms": 164.52813899923058,
+    "user_ms": 297.217,
+    "system_ms": 19.653999999999996,
+    "rss_kib": 14500,
+    "minor_faults": 5275
+  },
+  {
+    "name": "epoch-compact",
+    "trial": 4,
+    "wall_ms": 210.2809719999641,
+    "user_ms": 129.639,
+    "system_ms": 16.064,
+    "rss_kib": 29452,
+    "minor_faults": 6302
+  },
+  {
+    "name": "owner-prefetch",
+    "trial": 4,
+    "wall_ms": 264.7257680000621,
+    "user_ms": 339.843,
+    "system_ms": 73.815,
+    "rss_kib": 205784,
+    "minor_faults": 5123
+  },
+  {
+    "name": "pair-ownership-prefetch",
+    "trial": 4,
+    "wall_ms": 152.27183899969532,
+    "user_ms": 263.58500000000004,
+    "system_ms": 27.365000000000002,
+    "rss_kib": 15056,
+    "minor_faults": 5434
+  },
+  {
+    "name": "main-baseline",
+    "trial": 4,
+    "wall_ms": 165.806865000377,
+    "user_ms": 299.966,
+    "system_ms": 15.447,
+    "rss_kib": 14908,
+    "minor_faults": 5269
+  },
+  {
+    "name": "vector-soa",
+    "trial": 4,
+    "wall_ms": 162.37614000056055,
+    "user_ms": 279.77399999999994,
+    "system_ms": 15.872999999999998,
+    "rss_kib": 14500,
+    "minor_faults": 5274
+  },
+  {
+    "name": "vector",
+    "trial": 4,
+    "wall_ms": 171.45458300001337,
+    "user_ms": 305.278,
+    "system_ms": 15.816,
+    "rss_kib": 14016,
+    "minor_faults": 5251
+  },
+  {
+    "name": "epoch",
+    "trial": 4,
+    "wall_ms": 198.01892699979362,
+    "user_ms": 213.79399999999998,
+    "system_ms": 31.675999999999995,
+    "rss_kib": 68020,
+    "minor_faults": 7729
+  },
+  {
+    "name": "ownership-prefetch",
+    "trial": 4,
+    "wall_ms": 157.97018299963383,
+    "user_ms": 283.234,
+    "system_ms": 14.732999999999999,
+    "rss_kib": 14980,
+    "minor_faults": 5295
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 4,
+    "wall_ms": 148.35635700001149,
+    "user_ms": 270.15099999999995,
+    "system_ms": 12.046999999999999,
+    "rss_kib": 15348,
+    "minor_faults": 5436
+  },
+  {
+    "name": "owner-partition",
+    "trial": 4,
+    "wall_ms": 216.92819799955032,
+    "user_ms": 355.44399999999996,
+    "system_ms": 43.03999999999999,
+    "rss_kib": 205952,
+    "minor_faults": 5177
+  },
+  {
+    "name": "epoch-arena",
+    "trial": 4,
+    "wall_ms": 181.10917800004245,
+    "user_ms": 226.079,
+    "system_ms": 18.584,
+    "rss_kib": 67064,
+    "minor_faults": 7463
+  },
+  {
+    "name": "epoch",
+    "trial": 5,
+    "wall_ms": 188.2075090006765,
+    "user_ms": 212.84599999999998,
+    "system_ms": 24.473,
+    "rss_kib": 67972,
+    "minor_faults": 7728
+  },
+  {
+    "name": "vector",
+    "trial": 5,
+    "wall_ms": 170.35534099977667,
+    "user_ms": 295.563,
+    "system_ms": 26.269,
+    "rss_kib": 14928,
+    "minor_faults": 5258
+  },
+  {
+    "name": "epoch-arena",
+    "trial": 5,
+    "wall_ms": 185.03661499926238,
+    "user_ms": 201.057,
+    "system_ms": 21.252,
+    "rss_kib": 66988,
+    "minor_faults": 7470
+  },
+  {
+    "name": "vector-soa",
+    "trial": 5,
+    "wall_ms": 154.5482110004741,
+    "user_ms": 273.993,
+    "system_ms": 15.688999999999998,
+    "rss_kib": 14308,
+    "minor_faults": 5273
+  },
+  {
+    "name": "main-baseline",
+    "trial": 5,
+    "wall_ms": 161.83840099984081,
+    "user_ms": 278.45799999999997,
+    "system_ms": 19.584999999999997,
+    "rss_kib": 14324,
+    "minor_faults": 5268
+  },
+  {
+    "name": "owner-partition",
+    "trial": 5,
+    "wall_ms": 215.33389199976227,
+    "user_ms": 307.479,
+    "system_ms": 83.15599999999999,
+    "rss_kib": 206036,
+    "minor_faults": 5177
+  },
+  {
+    "name": "ownership-prefetch",
+    "trial": 5,
+    "wall_ms": 160.87639200031845,
+    "user_ms": 301.311,
+    "system_ms": 3.974,
+    "rss_kib": 14244,
+    "minor_faults": 5257
+  },
+  {
+    "name": "epoch-compact",
+    "trial": 5,
+    "wall_ms": 202.92209699982777,
+    "user_ms": 125.43199999999999,
+    "system_ms": 10.142,
+    "rss_kib": 29460,
+    "minor_faults": 6304
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 5,
+    "wall_ms": 150.78830499987816,
+    "user_ms": 267.803,
+    "system_ms": 11.751,
+    "rss_kib": 15268,
+    "minor_faults": 5434
+  },
+  {
+    "name": "pair-ownership-prefetch",
+    "trial": 5,
+    "wall_ms": 147.11000100032834,
+    "user_ms": 263.739,
+    "system_ms": 11.673,
+    "rss_kib": 15348,
+    "minor_faults": 5435
+  },
+  {
+    "name": "owner-prefetch",
+    "trial": 5,
+    "wall_ms": 259.6884710001177,
+    "user_ms": 339.10599999999994,
+    "system_ms": 65.58200000000001,
+    "rss_kib": 205804,
+    "minor_faults": 5121
+  },
+  {
+    "name": "owner-prefetch",
+    "trial": 6,
+    "wall_ms": 253.74533899957896,
+    "user_ms": 337.735,
+    "system_ms": 62.82399999999999,
+    "rss_kib": 205780,
+    "minor_faults": 5122
+  },
+  {
+    "name": "epoch-compact",
+    "trial": 6,
+    "wall_ms": 192.68932599970867,
+    "user_ms": 122.336,
+    "system_ms": 11.146999999999998,
+    "rss_kib": 29356,
+    "minor_faults": 6312
+  },
+  {
+    "name": "epoch-arena",
+    "trial": 6,
+    "wall_ms": 185.26036000002932,
+    "user_ms": 213.54399999999998,
+    "system_ms": 24.697,
+    "rss_kib": 67004,
+    "minor_faults": 7472
+  },
+  {
+    "name": "vector",
+    "trial": 6,
+    "wall_ms": 166.60214200055634,
+    "user_ms": 263.681,
+    "system_ms": 42.964,
+    "rss_kib": 13768,
+    "minor_faults": 5248
+  },
+  {
+    "name": "owner-partition",
+    "trial": 6,
+    "wall_ms": 207.0506320005734,
+    "user_ms": 327.632,
+    "system_ms": 61.099000000000004,
+    "rss_kib": 206028,
+    "minor_faults": 5176
+  },
+  {
+    "name": "vector-soa",
+    "trial": 6,
+    "wall_ms": 166.13946500001475,
+    "user_ms": 301.111,
+    "system_ms": 15.274,
+    "rss_kib": 14652,
+    "minor_faults": 5281
+  },
+  {
+    "name": "main-baseline",
+    "trial": 6,
+    "wall_ms": 157.85941800004366,
+    "user_ms": 280.95599999999996,
+    "system_ms": 19.598999999999997,
+    "rss_kib": 15044,
+    "minor_faults": 5275
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 6,
+    "wall_ms": 150.94296099960047,
+    "user_ms": 264.28000000000003,
+    "system_ms": 19.458,
+    "rss_kib": 15416,
+    "minor_faults": 5434
+  },
+  {
+    "name": "pair-ownership-prefetch",
+    "trial": 6,
+    "wall_ms": 149.50059300008434,
+    "user_ms": 257.681,
+    "system_ms": 18.996,
+    "rss_kib": 14740,
+    "minor_faults": 5437
+  },
+  {
+    "name": "epoch",
+    "trial": 6,
+    "wall_ms": 181.2224530003732,
+    "user_ms": 225.23399999999998,
+    "system_ms": 20.49,
+    "rss_kib": 68168,
+    "minor_faults": 7759
+  },
+  {
+    "name": "ownership-prefetch",
+    "trial": 6,
+    "wall_ms": 159.99169099995925,
+    "user_ms": 284.828,
+    "system_ms": 15.754999999999999,
+    "rss_kib": 14340,
+    "minor_faults": 5269
+  },
+  {
+    "name": "vector",
+    "trial": 7,
+    "wall_ms": 167.53115499977866,
+    "user_ms": 286.95300000000003,
+    "system_ms": 28.509,
+    "rss_kib": 13888,
+    "minor_faults": 5265
+  },
+  {
+    "name": "owner-prefetch",
+    "trial": 7,
+    "wall_ms": 255.9270000001561,
+    "user_ms": 338.585,
+    "system_ms": 60.596,
+    "rss_kib": 205776,
+    "minor_faults": 5123
+  },
+  {
+    "name": "epoch-compact",
+    "trial": 7,
+    "wall_ms": 199.55248099995515,
+    "user_ms": 121.82300000000001,
+    "system_ms": 12.121,
+    "rss_kib": 29552,
+    "minor_faults": 6333
+  },
+  {
+    "name": "main-baseline",
+    "trial": 7,
+    "wall_ms": 159.66913099964586,
+    "user_ms": 283.094,
+    "system_ms": 11.58,
+    "rss_kib": 14236,
+    "minor_faults": 5257
+  },
+  {
+    "name": "vector-soa",
+    "trial": 7,
+    "wall_ms": 159.95504000056826,
+    "user_ms": 294.192,
+    "system_ms": 7.854,
+    "rss_kib": 14344,
+    "minor_faults": 5291
+  },
+  {
+    "name": "epoch-arena",
+    "trial": 7,
+    "wall_ms": 173.31863600065844,
+    "user_ms": 196.18099999999998,
+    "system_ms": 20.054,
+    "rss_kib": 67016,
+    "minor_faults": 7471
+  },
+  {
+    "name": "ownership-prefetch",
+    "trial": 7,
+    "wall_ms": 165.73179899933166,
+    "user_ms": 284.53299999999996,
+    "system_ms": 26.715,
+    "rss_kib": 15024,
+    "minor_faults": 5278
+  },
+  {
+    "name": "owner-partition",
+    "trial": 7,
+    "wall_ms": 215.5853570002364,
+    "user_ms": 343.282,
+    "system_ms": 55.256,
+    "rss_kib": 206048,
+    "minor_faults": 5176
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 7,
+    "wall_ms": 152.0450340003663,
+    "user_ms": 266.84999999999997,
+    "system_ms": 15.82,
+    "rss_kib": 15324,
+    "minor_faults": 5435
+  },
+  {
+    "name": "epoch",
+    "trial": 7,
+    "wall_ms": 175.425622000148,
+    "user_ms": 211.12,
+    "system_ms": 28.137,
+    "rss_kib": 68104,
+    "minor_faults": 7728
+  },
+  {
+    "name": "pair-ownership-prefetch",
+    "trial": 7,
+    "wall_ms": 155.7467299999189,
+    "user_ms": 256.245,
+    "system_ms": 31.166,
+    "rss_kib": 15052,
+    "minor_faults": 5434
+  }
+]
