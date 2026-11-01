@@ -364,3 +364,9 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - [CI 41306717074](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41306717074) passed full seed-1 SHA, independent full holdouts 11/29, hostile tests, ASan/UBSan/TSan, offline Docker and sandbox.
 - Direct 12-trial paired full-PGO seed-37 -> seed-1 median **105.487 -> 104.945 ms**, fresh cgroup **11,018,240 -> 11,024,384 B**; scored source S and D unchanged. Complete-K runner proxy **+0.25%**.
 - **Rejected:** small seed-1-specific gain within runner variation, no evidence on private final holdout seed. Restored original seed-37 Dockerfile and workflow; exact qualified `join.cpp` blob `3b5e1392f49abdbb7fdcf6a36b5866366298143b` preserved. No redundant restoration CI.
+
+## SSE short-name comparison screen (2026-11-01)
+
+- Trial `e9fcc00` used 128-bit SIMD equality for raw names <=16 bytes, retaining the exact 256-bit path for lengths 17..32 and the unchanged long-name comparison.
+- Standalone 3.2M-query, 100k-name randomized equality microbenchmark on AMD EPYC (not the official six-P-core box): original AVX2 25.4..34.9 ms; SSE split 38.5..40.1 ms across four runs. This is a microkernel screen, **not** full T/M/S/D/K or a correctness qualification.
+- Additional 13 scored source lines and no demonstrated speedup. Rejected before promotion; restored exact qualified `join.cpp` blob `3b5e1392f49abdbb7fdcf6a36b5866366298143b` in `286b9ce`. A push-triggered CI run may exist, but its status is not visible through the available commit-status/workflow-read interface; no CI pass is claimed.
