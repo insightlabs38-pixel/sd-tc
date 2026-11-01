@@ -291,7 +291,7 @@ def page_tail_stress():
 def main():
     DATA.mkdir(exist_ok=True)
     OUT.mkdir(exist_ok=True)
-    command("g++", "-O3", "-march=x86-64-v3", "-std=c++17", "-DNDEBUG", "-flto", "-Wall", "-Wextra",
+    command("g++", "-O3", "-march=x86-64-v3", "-mprfchw", "-std=c++17", "-DNDEBUG", "-flto", "-Wall", "-Wextra",
             "-Werror", "-o", "/tmp/sd-track-c", str(BIN))
     handwritten()
     page_tail_stress()

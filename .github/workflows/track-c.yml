@@ -64,7 +64,8 @@ jobs:
         run: |
           staging=$(mktemp -d)
           git show f294a882897e2ceb940f8878306b30b80c5e9829:track-c/join.cpp > "$staging/join.cpp"
-          cp track-c/Dockerfile track-c/generator.py "$staging/"
+          git show f294a882897e2ceb940f8878306b30b80c5e9829:track-c/Dockerfile > "$staging/Dockerfile"
+          git show f294a882897e2ceb940f8878306b30b80c5e9829:track-c/generator.py > "$staging/generator.py"
           docker build --network=none -t sd-track-c:previous-pgo "$staging"
           container_id=$(docker create sd-track-c:previous-pgo)
           docker cp "$container_id":/join /tmp/sd-track-c-baseline
@@ -74,7 +75,8 @@ jobs:
         run: |
           staging=$(mktemp -d)
           git show 59e47be4236db4fc246673fec87e25bbd7231780:track-c/join.cpp > "$staging/join.cpp"
-          cp track-c/Dockerfile track-c/generator.py "$staging/"
+          git show 59e47be4236db4fc246673fec87e25bbd7231780:track-c/Dockerfile > "$staging/Dockerfile"
+          git show 59e47be4236db4fc246673fec87e25bbd7231780:track-c/generator.py > "$staging/generator.py"
           docker build --network=none -t sd-track-c:official-best "$staging"
           container_id=$(docker create sd-track-c:official-best)
           docker cp "$container_id":/join /tmp/sd-track-c-baseline
@@ -84,14 +86,28 @@ jobs:
         run: |
           staging=$(mktemp -d)
           git show 90da5461b0c806fafd172ef2f5ca42feb9e0fff8:track-c/join.cpp > "$staging/join.cpp"
-          cp track-c/Dockerfile track-c/generator.py "$staging/"
+          git show 90da5461b0c806fafd172ef2f5ca42feb9e0fff8:track-c/Dockerfile > "$staging/Dockerfile"
+          git show 90da5461b0c806fafd172ef2f5ca42feb9e0fff8:track-c/generator.py > "$staging/generator.py"
           docker build --network=none -t sd-track-c:short-control "$staging"
           container_id=$(docker create sd-track-c:short-control)
           docker cp "$container_id":/join /tmp/sd-track-c-baseline
           docker rm "$container_id"
           python3 tests/paired_benchmark.py
-      - name: Paired restricted cgroup memory against short-path control
-        run: python3 tests/paired_cgroup.py sd-track-c:short-control sd-track-c:ci
+      - name: Verify intended ownership-prefetch opcode
+        run: objdump -d /tmp/sd-track-c | python3 -c 'import sys; assert "prefetchw" in sys.stdin.read()'
+      - name: Paired qualified Frame PGO control
+        run: |
+          staging=$(mktemp -d)
+          git show f0b0434:track-c/join.cpp > "$staging/join.cpp"
+          git show f0b0434:track-c/Dockerfile > "$staging/Dockerfile"
+          git show f0b0434:track-c/generator.py > "$staging/generator.py"
+          docker build --network=none -t sd-track-c:frame-control "$staging"
+          container_id=$(docker create sd-track-c:frame-control)
+          docker cp "$container_id":/join /tmp/sd-track-c-baseline
+          docker rm "$container_id"
+          python3 tests/paired_benchmark.py
+      - name: Paired restricted cgroup memory against Frame control
+        run: python3 tests/paired_cgroup.py sd-track-c:frame-control sd-track-c:ci
       - name: Independent full references for the final PGO binary
         if: hashFiles('track-c/generator.py') != ''
         run: python3 tests/check_binary_seeds.py --binary /tmp/sd-track-c --seeds 11 29
