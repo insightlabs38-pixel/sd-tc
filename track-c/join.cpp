@@ -415,11 +415,6 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 SharedNames::Slot *slot = shared.prepare(name);
                 if (slot) {
                     __builtin_prefetch(slot, 0, 3);
-                    if (name.raw_len > 16) {
-                        const char *stored;
-                        std::memcpy(&stored, slot->key, sizeof(stored));
-                        __builtin_prefetch(stored + 4, 0, 1);
-                    }
                     __builtin_prefetch(&slot->seen[group >> 6], 1, 3);
                 }
                 newline(p, end);
@@ -428,9 +423,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
             } while (count < batch.size() && p < end);
             for (unsigned i = 0; i < count; ++i) {
                 const Pending &r = batch[i];
-                Group &g = w.groups[r.group];
-                g.add(r.id, r.amount, r.name_len, r.note_len, false);
-                g.distinct += shared.first(r.name, r.group, slots[i], end);
+                w.groups[r.group].add(r.id, r.amount, r.name_len, r.note_len, shared.first(r.name, r.group, slots[i], end));
             }
             if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
         }
