@@ -404,13 +404,13 @@ __attribute__((target("pclmul")))
 static void parse_range(const char *p, const char *end, const std::vector<uint8_t> &regions,
                         unsigned unmatched, Worker &w, SharedNames &shared) {
     struct Pending {
-        uint64_t id;
-        int64_t amount;
         Field name;
+        uint64_t id;
+        int32_t amount;
         uint32_t name_len, note_len;
         unsigned group;
     };
-    static_assert(sizeof(Pending) == 48, "compact pending row");
+    static_assert(sizeof(Pending) == 40, "compact pending row");
     try {
         std::array<Pending, 128> batch;
         std::array<SharedNames::Slot *, 128> slots;
@@ -432,7 +432,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 unsigned group = region_key != UINT32_MAX && regions[region_key] != UINT8_MAX
                                      ? regions[region_key] : unmatched;
                 newline(p, end);
-                batch[count++] = Pending{id, amount, name, name_len, note_len, group};
+                batch[count++] = Pending{name, id, static_cast<int32_t>(amount), name_len, note_len, group};
             } while (count < batch.size() && p < end);
             // Parse ahead, then resolve and prefetch the exact-name dictionary.
             for (unsigned i = 0; i < count; ++i) {
