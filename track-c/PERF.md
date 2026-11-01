@@ -259,3 +259,23 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - [CI 41273543446](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41273543446) passed the same gates. Adding bounded `memchr` for unquoted non-final fields to the seen-bit trial: full-PGO 54.534 -> 54.843 ms; cgroup 10,485,760 -> 10,418,176 B; source 543 -> 545 lines; complete-K proxy **-0.21%**. Rejected.
 - The generator quotes every nonempty name and note, so the unquoted-field change primarily touches empty fields. Isolated `memchr` source `3c08ed11204778edd0e94e45b8f873c01d6d6e42` is being qualified in [CI 41273584148](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41273584148); do not promote without its full results.
 - Restored exact qualified source blob `b31de39258eec335f79e14a0568a325d4ad2c732` on `main`; no redundant restoration CI. Official BEST remains K=21.757571 pending Luna's newer official measurements.
+
+## Independent architecture campaign (2026-11-01)
+
+- Implemented private dictionary/reconciliation, bounded owner streams, exact
+  fingerprint radix reduction, whole-range structural scanning, country-major
+  membership and flat publication; concrete sources and receipts are retained
+  on `frontier/c-independent-architecture-20261101` under research/.
+- Selected hybrid: fused quote-mask scanning of name/note, exact 32-byte inline
+  keys with full long-name fallback, and explicit THP disable before allocation.
+  No probabilistic identity, new runtime dependency or Dockerfile change.
+- Two fresh-container paired PGO batches, full seed 1, local Xeon VM pinned to
+  two CPUs: main 174.126/168.193 ms -> candidate 156.334/155.548 ms;
+  maximum cgroup peaks 10,469,376/10,280,960 -> 10,878,976/10,821,632 B.
+  Canonical complete S 644 -> 657, D=1. Relative complete K +4.4%/+2.6%.
+- Against immutable official BEST source c4b41459: local 171.232/173.791 ms,
+  M 10,227,712/10,297,344 B, S637; candidate K proxies +2.9%/+4.2%.
+  These are development comparisons, not official scoring-box results.
+- Exact source qualification, independent full holdouts and CI receipts are
+  recorded in the campaign report. Luna alone evaluates official T/M/S/D/K;
+  preserve b31de392 main and c4b41459 official sources as rollback.
