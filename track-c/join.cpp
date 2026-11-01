@@ -341,7 +341,7 @@ static Field read_text_avx2(const char *&p, const char *end, uint32_t &decoded) 
                 _mm256_cmpeq_epi8(_mm256_loadu_si256(reinterpret_cast<const __m256i*>(q)),comma))) |
                 (uint64_t(static_cast<unsigned>(_mm256_movemask_epi8(
                 _mm256_cmpeq_epi8(_mm256_loadu_si256(reinterpret_cast<const __m256i*>(q+32)),comma)))) << 32);
-            if (mask && __builtin_ctzll(mask) < remaining) {
+            if (mask && static_cast<unsigned>(__builtin_ctzll(mask)) < remaining) {
                 p += __builtin_ctzll(mask);
                 decoded=static_cast<uint32_t>(p-start);
                 ++p;
