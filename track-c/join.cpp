@@ -88,7 +88,7 @@ static uint32_t raw_hash(const char *p, size_t n, const char *end) {
 
 struct SharedNames {
     static constexpr unsigned shard_bits = 7;
-    static constexpr size_t slots_per_shard = 1 << 10;
+    static constexpr size_t slots_per_shard = 1 << 11;
     static uint32_t spread(uint32_t h) { return h ^ (h >> 11) ^ (h >> 22); }
     static uint32_t tag(const Field &f) {
         return (f.hash & 0xfffc0000U) | ((f.raw_len <= 32 ? f.raw_len : 63U) << 12);
