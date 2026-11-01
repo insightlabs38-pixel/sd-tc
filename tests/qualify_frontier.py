@@ -11,7 +11,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--sanitizer', choices=('address,undefined', 'thread'), required=True)
     args = parser.parse_args()
-    flags = ['-O1', '-g', '-march=x86-64-v3', '-std=c++17', '-pthread',
+    flags = ['-O1', '-g', '-march=x86-64-v3', '-std=c++20', '-pthread',
              '-fno-omit-frame-pointer', '-fno-pie', '-no-pie', '-fsanitize=' + args.sanitizer]
     subprocess.run(['g++', *flags, str(cases.BIN), '-o', '/tmp/sd-track-c'], check=True)
     os.environ['ASAN_OPTIONS'] = 'detect_leaks=1:halt_on_error=1'
