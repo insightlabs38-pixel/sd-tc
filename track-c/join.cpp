@@ -428,7 +428,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 const Pending &r = batch[i];
                 w.groups[r.group].add(r.id, r.amount, r.name_len, r.note_len, shared.first(r.name, r.group, slots[i], end));
             }
-            if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
+            if (p - reclaimed >= (1 << 19)) discard_consumed(reclaimed, p);
         }
     } catch (...) { w.error = std::current_exception(); }
 }
