@@ -59,13 +59,21 @@ static_assert(sizeof(Field) == 16, "projected name metadata");
 
 static constexpr uint32_t HASH_OFFSET = 5381U;
 
-static uint32_t raw_hash(const char *p, size_t n) {
+static uint32_t raw_hash(const char *p, size_t n, const char *end) {
     if (n <= 16) {
         alignas(16) static const unsigned char mask[32] = {
             255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-        __m128i key = _mm_and_si128(_mm_loadu_si128(reinterpret_cast<const __m128i *>(p)),
-                                  _mm_loadu_si128(reinterpret_cast<const __m128i *>(mask + 16 - n)));
+        __m128i key;
+        if (end - p >= 16) {
+            key = _mm_loadu_si128(reinterpret_cast<const __m128i *>(p));
+        } else {
+            alignas(16) unsigned char tail[16] = {};
+            std::memcpy(tail, p, n);
+            key = _mm_load_si128(reinterpret_cast<const __m128i *>(tail));
+        }
+        key = _mm_and_si128(key, _mm_loadu_si128(
+            reinterpret_cast<const __m128i *>(mask + 16 - n)));
         uint32_t h = static_cast<uint32_t>(_mm_crc32_u64(HASH_OFFSET, static_cast<uint64_t>(_mm_cvtsi128_si64(key))));
         return static_cast<uint32_t>(_mm_crc32_u64(h, static_cast<uint64_t>(_mm_extract_epi64(key, 1))));
     }
@@ -119,7 +127,7 @@ static Field text_field(const char *&p, const char *end, bool need_hash, uint32_
                 continue;
             }
             f.raw_len = static_cast<uint32_t>(q - f.raw);
-            f.hash = need_hash ? raw_hash(f.raw, f.raw_len) : HASH_OFFSET;
+            f.hash = need_hash ? raw_hash(f.raw, f.raw_len, end) : HASH_OFFSET;
             p = q + 1;
             return f;
         }
@@ -130,7 +138,7 @@ static Field text_field(const char *&p, const char *end, bool need_hash, uint32_
         ++length;
     }
     f.raw_len = length;
-    f.hash = need_hash ? raw_hash(f.raw, f.raw_len) : HASH_OFFSET;
+    f.hash = need_hash ? raw_hash(f.raw, f.raw_len, end) : HASH_OFFSET;
     return f;
 }
 
@@ -144,8 +152,9 @@ struct SharedNames {
     struct Slot {
         char key[16]{};
         std::atomic<uint64_t> seen[4]{};
-        bool matches(const Field &f) const {
+        bool matches(const Field &f, const char *end) const {
             if (f.raw_len <= 16) {
+                if (end - f.raw < 16) return std::memcmp(key, f.raw, f.raw_len) == 0;
                 __m128i a = _mm_loadu_si128(reinterpret_cast<const __m128i *>(key));
                 __m128i b = _mm_loadu_si128(reinterpret_cast<const __m128i *>(f.raw));
                 unsigned same = static_cast<unsigned>(_mm_movemask_epi8(_mm_cmpeq_epi8(a, b)));
@@ -193,7 +202,7 @@ struct SharedNames {
             remaining -= f.raw_len;
             return dst;
         }
-        std::pair<Slot *, bool> probe(const Field &f, size_t *empty = nullptr, bool verify = true) {
+        std::pair<Slot *, bool> probe(const Field &f, size_t *empty = nullptr, bool verify = true, const char *end = nullptr) {
             const uint32_t signature = tag(f);
             size_t i = (spread(f.hash) >> shard_bits) & (slots_per_shard - 1);
             for (size_t n = 0; n < slots_per_shard; ++n) {
@@ -205,7 +214,7 @@ struct SharedNames {
                 }
                 if ((entry & 0xfffff000U) == signature) {
                     Slot &slot = pool[id - 1];
-                    if (!verify || slot.matches(f))
+                    if (!verify || slot.matches(f, end))
                         return {&slot, true};
                 }
                 i = (i + 1) & (slots_per_shard - 1);
@@ -219,10 +228,10 @@ struct SharedNames {
         for (size_t i = 0; i < shards.size(); ++i)
             shards[i].pool = storage + i * slots_per_shard;
     }
-    __attribute__((noinline, cold)) static bool slow_first(Shard &s, const Field &name, unsigned group) {
+    __attribute__((noinline, cold)) static bool slow_first(Shard &s, const Field &name, unsigned group, const char *end) {
         std::lock_guard<std::mutex> lock(s.mutex);
         size_t empty = slots_per_shard;
-        auto match = s.probe(name, &empty);
+        auto match = s.probe(name, &empty, true, end);
         Slot *slot = match.first;
         if (!match.second && empty == slots_per_shard) {
             const uint64_t bit = 1ULL << (group & 63);
@@ -260,10 +269,10 @@ struct SharedNames {
         Shard &s = shards[spread(name.hash) & (shards.size() - 1)];
         return s.probe(name, nullptr, false).first;
     }
-    bool first(const Field &name, unsigned group, Slot *slot) {
-        if (!slot || !slot->matches(name)) {
+    bool first(const Field &name, unsigned group, Slot *slot, const char *end) {
+        if (!slot || !slot->matches(name, end)) {
             Shard &s = shards[spread(name.hash) & (shards.size() - 1)];
-            return slow_first(s, name, group);
+            return slow_first(s, name, group, end);
         }
         const uint64_t mask = 1ULL << (group & 63);
         return !(slot->seen[group >> 6].fetch_or(mask, std::memory_order_relaxed) & mask);
@@ -304,6 +313,7 @@ static uint64_t number(const char *&p, const char *end) {
 static int64_t cents(const char *&p, const char *end) {
     bool neg = p < end && *p == '-';
     if (neg) ++p;
+    if (end - p >= 8) {
     uint64_t word; std::memcpy(&word, p, 8);
     uint64_t dots = word ^ 0x2e2e2e2e2e2e2e2eULL;
     dots = (dots - 0x0101010101010101ULL) & ~dots & 0x8080808080808080ULL;
@@ -316,6 +326,7 @@ static int64_t cents(const char *&p, const char *end) {
         x = (x * 100 + (x >> 16)) & 0x0000ffff0000ffffULL;
         int64_t value = static_cast<int64_t>((x * 10000 + (x >> 32)) & 0xffffffffULL);
         p += dot + 3; return neg ? -value : value;
+    }
     }
     int64_t n = static_cast<int64_t>(number(p, end));
     if (p + 2 >= end || *p++ != '.') throw std::runtime_error("bad decimal");
@@ -415,7 +426,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
             }
             for (unsigned i = 0; i < count; ++i) {
                 const Pending &r = batch[i];
-                w.groups[r.group].add(r.id, r.amount, r.name_len, r.note_len, shared.first(r.name, r.group, slots[i]));
+                w.groups[r.group].add(r.id, r.amount, r.name_len, r.note_len, shared.first(r.name, r.group, slots[i], end));
             }
             if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
         }
