@@ -373,6 +373,27 @@ static Field text_pair(const char *&p, const char *end, uint32_t &name_len,
                 }
             }
         }
+        // A long, quote-free note may close beyond the first SIMD word.
+        // The first three quotes certify a plain quoted name and note opener.
+        if (block == p && (quotes & 1) && __builtin_popcountll(quotes) == 3) {
+            uint64_t q = quotes & ~uint64_t(1);
+            unsigned name_end = __builtin_ctzll(q);
+            q &= q - 1;
+            unsigned note_open = __builtin_ctzll(q);
+            if (name_end + 2 < bytes && note_open == name_end + 2 &&
+                block[name_end + 1] == ',') {
+                const char *note_end = static_cast<const char *>(
+                    memchr(block + bytes, '"', end - (block + bytes)));
+                if (note_end && note_end + 1 < end && note_end[1] == ',') {
+                    Field fast{p + 1, name_end - 1, 0};
+                    name_len = fast.raw_len;
+                    note_len = static_cast<uint32_t>(note_end - (block + note_open + 1));
+                    fast.hash = raw_hash(fast.raw, fast.raw_len, end);
+                    p = note_end + 2;
+                    return fast;
+                }
+            }
+        }
         uint64_t inside = static_cast<uint64_t>(_mm_cvtsi128_si64(_mm_clmulepi64_si128(
             _mm_cvtsi64_si128(quotes), _mm_set1_epi32(-1), 0)));
         inside ^= carry;
