@@ -179,6 +179,8 @@ struct SharedNames {
         std::vector<Overflow> overflow;
         std::array<std::atomic<uint32_t>, slots_per_shard> index{};
         Slot *pool = nullptr;
+        std::unique_ptr<Slot[]> second;
+        Slot &slot_at(size_t i) { return i < slots_per_shard / 2 ? pool[i] : second[i - slots_per_shard / 2]; }
         uint16_t used = 0;
         std::vector<std::unique_ptr<char[]>> arena;
         char *cursor = nullptr;
@@ -213,7 +215,7 @@ struct SharedNames {
                     return {nullptr, false};
                 }
                 if ((entry & 0xfffff000U) == signature) {
-                    Slot &slot = pool[id - 1];
+                    Slot &slot = slot_at(id - 1);
                     if (!verify || slot.matches(f, end))
                         return {&slot, true};
                 }
@@ -224,9 +226,9 @@ struct SharedNames {
     };
     std::array<Shard, 1 << shard_bits> shards;
     SharedNames() {
-        static Slot storage[(1 << shard_bits) * slots_per_shard]{};
+        static Slot storage[(1 << shard_bits) * (slots_per_shard / 2)]{};
         for (size_t i = 0; i < shards.size(); ++i)
-            shards[i].pool = storage + i * slots_per_shard;
+            shards[i].pool = storage + i * (slots_per_shard / 2);
     }
     __attribute__((noinline, cold)) static bool slow_first(Shard &s, const Field &name, unsigned group, const char *end) {
         std::lock_guard<std::mutex> lock(s.mutex);
@@ -250,7 +252,8 @@ struct SharedNames {
             return true;
         }
         if (!match.second) {
-            slot = &s.pool[s.used];
+            if (s.used == slots_per_shard / 2) s.second.reset(new Slot[slots_per_shard / 2]{});
+            slot = &s.slot_at(s.used);
             if (name.raw_len <= 16) std::memcpy(slot->key, name.raw, name.raw_len);
             else {
                 const char *saved = s.keep(name);
