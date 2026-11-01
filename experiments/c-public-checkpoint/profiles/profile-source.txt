@@ -1,0 +1,534 @@
+Source file: join.cpp (found as work/public-research/short-pgo.er/archives/join.cpp_Ghn8439BbV1)
+Object file: join-profile (found as work/public-research/short-pgo.er/archives/join-profile_Ghn8439BbV1)
+Load Object: join-profile (found as work/public-research/short-pgo.er/archives/join-profile_Ghn8439BbV1)
+
+   Excl. Total   Incl. Total
+   CPU           CPU
+    sec.      %   sec.      %
+                                     1. #include <immintrin.h>
+                                     2. #include <algorithm>
+                                     3. #include <array>
+                                     4. #include <atomic>
+                                     5. #include <cstdint>
+                                     6. #include <cstdio>
+                                     7. #include <cstdlib>
+                                     8. #include <cstring>
+                                     9. #include <exception>
+                                    10. #include <memory>
+                                    11. #include <mutex>
+                                    12. #include <thread>
+                                    13. #include <unordered_map>
+                                    14. #include <fcntl.h>
+                                    15. #include <stdexcept>
+                                    16. #include <string>
+                                    17. #include <sys/mman.h>
+                                    18. #include <sys/stat.h>
+                                    19. #include <unistd.h>
+                                    20. #include <vector>
+                                    21. 
+                                    22. struct File {
+                                    23.     const char *data;
+                                    24.     size_t size, mapped;
+                                    25.     explicit File(const char *path) {
+                                    26.         int fd = open(path, O_RDONLY);
+                                    27.         if (fd < 0) throw std::runtime_error(std::string("open ") + path);
+                                    28.         struct stat st;
+                                    29.         if (fstat(fd, &st)) throw std::runtime_error("fstat");
+                                    30.         size = st.st_size;
+                                    31.         size_t page = static_cast<size_t>(sysconf(_SC_PAGESIZE));
+                                    32.         mapped = (size + page - 1) / page * page + page;
+                                    33.         data = static_cast<const char *>(mmap(nullptr, mapped, PROT_READ, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0));
+                                    34.         if (data == MAP_FAILED) { close(fd); throw std::runtime_error("reserve mmap"); }
+                                    35.         if (size && mmap(const_cast<char *>(data), size, PROT_READ, MAP_PRIVATE | MAP_FIXED, fd, 0) == MAP_FAILED) {
+                                    36.             munmap(const_cast<char *>(data), mapped); close(fd); throw std::runtime_error("file mmap");
+                                    37.         }
+                                    38.         close(fd);
+                                    39.     }
+   0.      0.    0.      0.         40.     ~File() { munmap(const_cast<char *>(data), mapped); }
+                                    41. };
+                                    42. 
+   0.      0.    0.      0.         43. static void discard_consumed(const char *&cursor, const char *end) {
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0] [clone .cold]>
+   0.      0.    0.      0.         44.     static const uintptr_t page = static_cast<uintptr_t>(sysconf(_SC_PAGESIZE));
+   0.      0.    0.      0.         45.     uintptr_t lo = (reinterpret_cast<uintptr_t>(cursor) + page - 1) & ~(page - 1);
+   0.      0.    0.      0.         46.     uintptr_t hi = reinterpret_cast<uintptr_t>(end) & ~(page - 1);
+   0.      0.    0.      0.         47.     if (hi > lo) {
+   0.      0.    0.033   0.         48.         (void)madvise(reinterpret_cast<void *>(lo), hi - lo, MADV_DONTNEED);
+   0.      0.    0.      0.         49.         cursor = reinterpret_cast<const char *>(hi);
+                                    50.     }
+                                    51. }
+                                    52. 
+   0.      0.    0.      0.         53. struct Field {
+                                    54.     const char *raw = nullptr;
+                                    55.     uint32_t raw_len : 31;
+                                    56.     uint32_t quoted : 1;
+                                    57.     uint32_t len = 0;
+                                    58.     uint32_t hash = 0;
+                                    59.     uint32_t id = UINT32_MAX;
+                                    60. };
+                                    61. static_assert(sizeof(Field) == 24, "name slot layout");
+                                    62. 
+                                    63. static constexpr uint32_t HASH_OFFSET = 5381U;
+                                    64. 
+   0.      0.    0.      0.         65. static uint32_t raw_hash(const char *p, size_t n) {
+   0.      0.    0.      0.         66.     if (n <= 16) {
+   0.      0.    0.      0.         67.         alignas(16) static const unsigned char mask[32] = {
+                                    68.             255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
+                                    69.             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+   0.      0.    0.      0.         70.         __m128i key = _mm_and_si128(_mm_loadu_si128(reinterpret_cast<const __m128i *>(p)),
+   0.001   0.    0.001   0.         71.                                   _mm_loadu_si128(reinterpret_cast<const __m128i *>(mask + 16 - n)));
+   0.      0.    0.      0.         72.         uint32_t h = static_cast<uint32_t>(_mm_crc32_u64(HASH_OFFSET, static_cast<uint64_t>(_mm_cvtsi128_si64(key))));
+   0.      0.    0.      0.         73.         return static_cast<uint32_t>(_mm_crc32_u64(h, static_cast<uint64_t>(_mm_extract_epi64(key, 1))));
+                                    74.     }
+   0.      0.    0.      0.         75.     uint32_t h = HASH_OFFSET;
+   0.003   0.    0.003   0.         76.     while (n >= 8) {
+   0.      0.    0.      0.         77.         uint64_t word;
+   0.      0.    0.      0.         78.         std::memcpy(&word, p, 8);
+   0.      0.    0.      0.         79.         h = static_cast<uint32_t>(_mm_crc32_u64(h, word));
+   0.      0.    0.      0.         80.         p += 8;
+   0.001   0.    0.001   0.         81.         n -= 8;
+                                    82.     }
+   0.004   0.    0.004   0.         83.     if (n & 4) { uint32_t w; std::memcpy(&w, p, 4); h = _mm_crc32_u32(h, w); p += 4; }
+   0.      0.    0.      0.         84.     if (n & 2) { uint16_t w; std::memcpy(&w, p, 2); h = _mm_crc32_u16(h, w); p += 2; }
+   0.004   0.    0.004   0.         85.     if (n & 1) h = _mm_crc32_u8(h, static_cast<unsigned char>(*p));
+                                    86.     return h;
+                                    87. }
+                                    88. 
+   0.      0.    0.      0.         89. static const char *find_quote(const char *p, const char *end) {
+   0.      0.    0.      0.         90.     const __m256i quote32 = _mm256_set1_epi8('"');
+   0.019   0.    0.019   0.         91.     while (end - p >= 32) {
+   0.008   0.    0.008   0.         92.         __m256i block = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(p));
+   0.      0.    0.      0.         93.         unsigned mask = static_cast<unsigned>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(block, quote32)));
+   0.033   0.    0.033   0.         94.         if (mask) return p + __builtin_ctz(mask);
+   0.      0.    0.      0.         95.         p += 32;
+                                    96.     }
+                                    97.     const __m128i quote16 = _mm_set1_epi8('"');
+   0.      0.    0.      0.         98.     while (end - p >= 16) {
+   0.      0.    0.      0.         99.         __m128i block = _mm_loadu_si128(reinterpret_cast<const __m128i *>(p));
+   0.      0.    0.      0.        100.         unsigned mask = static_cast<unsigned>(_mm_movemask_epi8(_mm_cmpeq_epi8(block, quote16)));
+   0.      0.    0.      0.        101.         if (mask) return p + __builtin_ctz(mask);
+   0.      0.    0.      0.        102.         p += 16;
+                                   103.     }
+   0.      0.    0.      0.        104.     for (; p < end; ++p) if (*p == '"') return p;
+                                   105.     return nullptr;
+                                   106. }
+                                   107. 
+   0.      0.    0.      0.        108. static Field text_field(const char *&p, const char *end, bool need_hash) {
+   0.      0.    0.      0.        109.     Field f{};
+   0.021   0.    0.021   0.        110.     f.quoted = p < end && *p == '"';
+   0.      0.    0.      0.        111.     if (f.quoted) {
+   0.005   0.    0.005   0.        112.         ++p;
+   0.008   0.    0.008   0.        113.         f.raw = p;
+   0.      0.    0.      0.        114.         for (;;) {
+   0.      0.    0.      0.        115.             const char *q = find_quote(p, end);
+   0.002   0.    0.002   0.        116.             if (!q) throw std::runtime_error("unclosed quote");
+   0.004   0.    0.004   0.        117.             f.len += static_cast<uint32_t>(q - p);
+   0.019   0.    0.019   0.        118.             if (q + 1 < end && q[1] == '"') {
+   0.001   0.    0.001   0.        119.                 ++f.len;
+   0.      0.    0.      0.        120.                 p = q + 2;
+   0.      0.    0.      0.        121.                 continue;
+                                   122.             }
+   0.096   0.    0.096   0.        123.             f.raw_len = static_cast<uint32_t>(q - f.raw);
+   0.      0.    0.      0.        124.             f.hash = need_hash ? raw_hash(f.raw, f.raw_len) : HASH_OFFSET;
+   0.      0.    0.      0.        125.             p = q + 1;
+   0.002   0.    0.002   0.        126.             return f;
+                                   127.         }
+                                   128.     }
+   0.      0.    0.      0.        129.     f.raw = p;
+   0.      0.    0.      0.        130.     while (p < end && *p != ',' && *p != '\r' && *p != '\n') {
+   0.      0.    0.      0.        131.         ++p;
+   0.      0.    0.      0.        132.         ++f.len;
+                                   133.     }
+   0.      0.    0.      0.        134.     f.raw_len = f.len;
+   0.      0.    0.      0.        135.     f.hash = need_hash ? raw_hash(f.raw, f.raw_len) : HASH_OFFSET;
+                                   136.     return f;
+                                   137. }
+                                   138. 
+                                   139. struct SharedNames {
+                                   140.     static constexpr unsigned shard_bits = 7;
+                                   141.     static constexpr size_t slots_per_shard = 1 << 11;
+   0.011   0.    0.011   0.        142.     static uint32_t spread(uint32_t h) { return h ^ (h >> 11) ^ (h >> 22); }
+   0.      0.    0.      0.        143.     static uint32_t tag(const Field &f) {
+   0.002   0.    0.002   0.        144.         return (f.hash & 0xfffe0000U) | ((f.raw_len <= 16 ? f.raw_len : 31U) << 12);
+                                   145.     }
+                                   146.     struct Slot {
+                                   147.         char key[16]{};
+                                   148.         std::atomic<uint64_t> seen[4]{};
+   0.      0.    0.      0.        149.         bool matches(const Field &f) const {
+   0.      0.    0.      0.        150.             if (f.raw_len <= 16) {
+   0.      0.    0.      0.        151.                 __m128i a = _mm_loadu_si128(reinterpret_cast<const __m128i *>(key));
+   0.      0.    0.      0.        152.                 __m128i b = _mm_loadu_si128(reinterpret_cast<const __m128i *>(f.raw));
+   0.      0.    0.      0.        153.                 unsigned same = static_cast<unsigned>(_mm_movemask_epi8(_mm_cmpeq_epi8(a, b)));
+   0.      0.    0.      0.        154.                 unsigned valid = 0xffffU >> (16 - f.raw_len);
+   0.      0.    0.      0.        155.                 return (same & valid) == valid;
+                                   156.             }
+   0.      0.    0.      0.        157.             const char *p;
+   0.      0.    0.      0.        158.             uint32_t length;
+   0.      0.    0.      0.        159.             std::memcpy(&p, key, sizeof(p));
+   0.      0.    0.      0.        160.             std::memcpy(&length, key + 8, sizeof(length));
+   0.      0.    0.      0.        161.             return length == f.raw_len && std::memcmp(key + 12, f.raw, 4) == 0 &&
+   0.      0.    0.      0.        162.                    std::memcmp(p + 4, f.raw + 4, f.raw_len - 4) == 0;
+                                   163.         }
+                                   164.     };
+                                   165.     static_assert(sizeof(Slot) == 48, "packed inline name slot");
+   0.      0.    0.      0.        166.     struct Shard {
+   0.      0.    0.      0.        167.         struct Overflow {
+                                   168.             Field field;
+                                   169.             std::array<uint64_t, 4> seen{};
+                                   170.         };
+                                   171.         std::mutex mutex;
+                                   172.         std::vector<Overflow> overflow;
+                                   173.         std::array<std::atomic<uint32_t>, slots_per_shard> index{};
+                                   174.         Slot *pool = nullptr;
+                                   175.         uint16_t used = 0;
+                                   176.         std::vector<std::unique_ptr<char[]>> arena;
+                                   177.         char *cursor = nullptr;
+                                   178.         size_t remaining = 0;
+   0.      0.    0.      0.        179.         const char *keep(const Field &f) {
+   0.      0.    0.      0.        180.             constexpr size_t block = 1 << 15;
+   0.      0.    0.      0.        181.             if (!f.raw_len) return f.raw;
+   0.      0.    0.      0.        182.             if (f.raw_len > block) {
+   0.      0.    0.      0.        183.                 arena.emplace_back(new char[f.raw_len]);
+   0.      0.    0.      0.        184.                 std::memcpy(arena.back().get(), f.raw, f.raw_len);
+   0.      0.    0.      0.        185.                 return arena.back().get();
+                                   186.             }
+   0.      0.    0.      0.        187.             if (f.raw_len > remaining) {
+   0.      0.    0.      0.        188.                 arena.emplace_back(new char[block]);
+   0.      0.    0.      0.        189.                 cursor = arena.back().get();
+   0.      0.    0.      0.        190.                 remaining = block;
+                                   191.             }
+   0.      0.    0.      0.        192.             char *dst = cursor;
+   0.002   0.    0.002   0.        193.             std::memcpy(dst, f.raw, f.raw_len);
+   0.      0.    0.      0.        194.             cursor += f.raw_len;
+   0.      0.    0.      0.        195.             remaining -= f.raw_len;
+   0.002   0.    0.002   0.        196.             return dst;
+                                   197.         }
+   0.      0.    0.      0.        198.         std::pair<Slot *, bool> probe(const Field &f, size_t *empty = nullptr) {
+   0.      0.    0.      0.        199.             const uint32_t signature = tag(f);
+   0.      0.    0.      0.        200.             size_t i = (spread(f.hash) >> shard_bits) & (slots_per_shard - 1);
+   0.      0.    0.      0.        201.             for (size_t n = 0; n < slots_per_shard; ++n) {
+   0.      0.    0.      0.        202.                 uint32_t entry = index[i].load(std::memory_order_acquire);
+   0.      0.    0.      0.        203.                 uint16_t id = static_cast<uint16_t>(entry & 0xfffU);
+   0.      0.    0.      0.        204.                 if (!id) {
+   0.      0.    0.      0.        205.                     if (empty) *empty = i;
+   0.      0.    0.      0.        206.                     return {nullptr, false};
+                                   207.                 }
+   0.      0.    0.      0.        208.                 if ((entry & 0xfffff000U) == signature) {
+   0.      0.    0.      0.        209.                     Slot &slot = pool[id - 1];
+   0.      0.    0.      0.        210.                     if (slot.matches(f))
+   0.      0.    0.      0.        211.                         return {&slot, true};
+                                   212.                 }
+   0.      0.    0.      0.        213.                 i = (i + 1) & (slots_per_shard - 1);
+                                   214.             }
+   0.      0.    0.      0.        215.             return {nullptr, false};
+                                   216.         }
+                                   217.     };
+                                   218.     std::array<Shard, 1 << shard_bits> shards;
+   0.      0.    0.      0.        219.     SharedNames() {
+                                   220.         static Slot storage[(1 << shard_bits) * slots_per_shard]{};
+   0.      0.    0.      0.        221.         for (size_t i = 0; i < shards.size(); ++i)
+   0.      0.    0.      0.        222.             shards[i].pool = storage + i * slots_per_shard;
+                                   223.     }
+                                        <Function: SharedNames::slow_first(SharedNames::Shard&, Field const&, unsigned int)>
+   0.001   0.    0.017   0.        224.     __attribute__((noinline, cold)) static bool slow_first(Shard &s, const Field &name, unsigned group) {
+   0.      0.    0.      0.        225.         std::lock_guard<std::mutex> lock(s.mutex);
+   0.      0.    0.      0.        226.         size_t empty = slots_per_shard;
+   0.      0.    0.      0.        227.         auto match = s.probe(name, &empty);
+   0.      0.    0.      0.        228.         Slot *slot = match.first;
+   0.      0.    0.      0.        229.         if (!match.second && empty == slots_per_shard) {
+   0.      0.    0.      0.        230.             const uint64_t bit = 1ULL << (group & 63);
+   0.      0.    0.      0.        231.             for (auto &entry : s.overflow) {
+   0.      0.    0.      0.        232.                 if (entry.field.hash != name.hash || entry.field.raw_len != name.raw_len || std::memcmp(entry.field.raw, name.raw, name.raw_len)) continue;
+   0.      0.    0.      0.        233.                 uint64_t &cell = entry.seen[group >> 6];
+   0.      0.    0.      0.        234.                 bool fresh = !(cell & bit);
+   0.      0.    0.      0.        235.                 cell |= bit;
+   0.      0.    0.      0.        236.                 return fresh;
+                                   237.             }
+   0.      0.    0.      0.        238.             s.overflow.emplace_back();
+   0.      0.    0.      0.        239.             auto &entry = s.overflow.back();
+   0.      0.    0.      0.        240.             entry.field = name;
+   0.      0.    0.      0.        241.             entry.field.raw = s.keep(name);
+   0.      0.    0.      0.        242.             entry.seen[group >> 6] |= bit;
+   0.      0.    0.      0.        243.             return true;
+                                   244.         }
+   0.      0.    0.      0.        245.         if (!match.second) {
+   0.      0.    0.      0.        246.             slot = &s.pool[s.used];
+   0.009   0.    0.009   0.        247.             if (name.raw_len <= 16) std::memcpy(slot->key, name.raw, name.raw_len);
+                                   248.             else {
+   0.      0.    0.      0.        249.                 const char *saved = s.keep(name);
+   0.      0.    0.      0.        250.                 std::memcpy(slot->key, &saved, sizeof(saved));
+   0.      0.    0.      0.        251.                 uint32_t length = name.raw_len;
+   0.      0.    0.      0.        252.                 std::memcpy(slot->key + 8, &length, sizeof(length));
+   0.      0.    0.      0.        253.                 std::memcpy(slot->key + 12, name.raw, 4);
+                                   254.             }
+   0.      0.    0.      0.        255.             s.index[empty].store(tag(name) | ++s.used,
+                                   256.                                  std::memory_order_release);
+                                   257.         }
+   0.      0.    0.      0.        258.         const uint64_t mask = 1ULL << (group & 63);
+   0.007   0.    0.007   0.        259.         return !(slot->seen[group >> 6].fetch_or(mask, std::memory_order_relaxed) & mask);
+   0.      0.    0.      0.        260.     }
+   0.      0.    0.      0.        261.     bool first(const Field &name, unsigned group) {
+   0.      0.    0.      0.        262.         Shard &s = shards[spread(name.hash) & (shards.size() - 1)];
+   0.      0.    0.      0.        263.         auto match = s.probe(name);
+   0.      0.    0.      0.        264.         if (__builtin_expect(!match.second, 0)) return slow_first(s, name, group);
+   0.      0.    0.      0.        265.         const uint64_t mask = 1ULL << (group & 63);
+   0.      0.    0.      0.        266.         return !(match.first->seen[group >> 6].fetch_or(mask, std::memory_order_relaxed) & mask);
+                                   267.     }
+                                   268. };
+                                   269. 
+   0.      0.    0.      0.        270. static uint64_t number(const char *&p, const char *end) {
+   0.      0.    0.      0.        271.     if (end - p >= 8) { // SWAR ASCII fast path, with scalar fallback for long integers.
+   0.      0.    0.      0.        272.         uint64_t w;
+   0.006   0.    0.006   0.        273.         std::memcpy(&w, p, 8);
+   0.009   0.    0.009   0.        274.         const uint64_t bad = ((w + 0x4646464646464646ULL) |
+   0.001   0.    0.001   0.        275.                               (w - 0x3030303030303030ULL)) & 0x8080808080808080ULL;
+   0.013   0.    0.013   0.        276.         const unsigned digits = bad ? __builtin_ctzll(bad) / 8 : 8;
+   0.009   0.    0.009   0.        277.         if (digits && (digits < 8 || p + 8 == end ||
+   0.      0.    0.      0.        278.                        static_cast<unsigned>(static_cast<unsigned char>(p[8])) - '0' > 9)) {
+   0.018   0.    0.018   0.        279.             uint64_t x = (w << ((8 - digits) * 8)) |
+   0.003   0.    0.003   0.        280.                          (digits == 8 ? 0 : 0x3030303030303030ULL >> (digits * 8));
+   0.004   0.    0.004   0.        281.             x -= 0x3030303030303030ULL;
+   0.009   0.    0.009   0.        282.             x = (x * 10 + (x >> 8)) & 0x00ff00ff00ff00ffULL;
+   0.024   0.    0.024   0.        283.             x = (x * 100 + (x >> 16)) & 0x0000ffff0000ffffULL;
+   0.014   0.    0.014   0.        284.             x = (x * 10000 + (x >> 32)) & 0xffffffffULL;
+   0.002   0.    0.002   0.        285.             p += digits;
+   0.      0.    0.      0.        286.             return x;
+                                   287.         }
+                                   288.     }
+                                   289.     const char *start = p;
+                                   290.     uint64_t n = 0;
+   0.      0.    0.      0.        291.     while (p < end) {
+   0.      0.    0.      0.        292.         unsigned digit = static_cast<unsigned char>(*p) - '0';
+   0.      0.    0.      0.        293.         if (digit > 9) break;
+   0.      0.    0.      0.        294.         n = n * 10 + digit;
+   0.      0.    0.      0.        295.         ++p;
+                                   296.     }
+   0.      0.    0.      0.        297.     if (p == start) throw std::runtime_error("missing integer");
+                                   298.     return n;
+                                   299. }
+   0.      0.    0.      0.        300. static int64_t cents(const char *&p, const char *end) {
+   0.      0.    0.      0.        301.     bool neg = p < end && *p == '-';
+   0.001   0.    0.001   0.        302.     if (neg) ++p;
+   0.003   0.    0.003   0.        303.     uint64_t word; std::memcpy(&word, p, 8);
+   0.007   0.    0.007   0.        304.     uint64_t dots = word ^ 0x2e2e2e2e2e2e2e2eULL;
+   0.002   0.    0.002   0.        305.     dots = (dots - 0x0101010101010101ULL) & ~dots & 0x8080808080808080ULL;
+   0.010   0.    0.010   0.        306.     unsigned dot = dots ? __builtin_ctzll(dots) / 8 : 8;
+   0.004   0.    0.004   0.        307.     if (dot && dot <= 5 && end - p >= dot + 3) {
+   0.005   0.    0.005   0.        308.         uint64_t lower = (1ULL << (dot * 8)) - 1;
+   0.011   0.    0.011   0.        309.         uint64_t x = ((word & lower) | ((word >> 8) & ~lower)) << ((6 - dot) * 8);
+   0.004   0.    0.004   0.        310.         x &= 0x0f0f0f0f0f0f0f0fULL;
+   0.004   0.    0.004   0.        311.         x = (x * 10 + (x >> 8)) & 0x00ff00ff00ff00ffULL;
+   0.007   0.    0.007   0.        312.         x = (x * 100 + (x >> 16)) & 0x0000ffff0000ffffULL;
+   0.011   0.    0.011   0.        313.         int64_t value = static_cast<int64_t>((x * 10000 + (x >> 32)) & 0xffffffffULL);
+   0.004   0.    0.004   0.        314.         p += dot + 3; return neg ? -value : value;
+                                   315.     }
+   0.      0.    0.      0.        316.     int64_t n = static_cast<int64_t>(number(p, end));
+   0.      0.    0.      0.        317.     if (p + 2 >= end || *p++ != '.') throw std::runtime_error("bad decimal");
+   0.      0.    0.      0.        318.     int64_t fraction = (p[0] - '0') * 10 + (p[1] - '0');
+   0.      0.    0.      0.        319.     p += 2;
+   0.      0.    0.      0.        320.     return neg ? -(n * 100 + fraction) : n * 100 + fraction;
+                                   321. }
+   0.      0.    0.      0.        322. static void comma(const char *&p, const char *end) {
+   0.019   0.    0.019   0.        323.     if (p == end || *p++ != ',') throw std::runtime_error("missing comma");
+                                   324. }
+   0.      0.    0.      0.        325. static void newline(const char *&p, const char *end) {
+   0.002   0.    0.002   0.        326.     if (p < end && *p == '\r') ++p;
+   0.008   0.    0.008   0.        327.     if (p < end) {
+   0.017   0.    0.017   0.        328.         if (*p++ != '\n') throw std::runtime_error("missing LF");
+                                   329.     }
+                                   330. }
+   0.      0.    0.      0.        331. static void bom(const char *&p, const char *end) {
+   0.001   0.    0.001   0.        332.     if (end - p >= 3 && static_cast<unsigned char>(p[0]) == 0xef &&
+   0.      0.    0.      0.        333.         static_cast<unsigned char>(p[1]) == 0xbb && static_cast<unsigned char>(p[2]) == 0xbf) p += 3;
+                                   334. }
+                                   335. 
+                                   336. struct Group {
+                                   337.     uint64_t count = 0, id_sum = 0, name_bytes = 0, note_bytes = 0;
+                                   338.     int64_t sum = 0, min = 0, max = 0;
+                                   339.     uint32_t distinct = 0;
+   0.      0.    0.      0.        340.     void add(uint64_t id, int64_t amount, const Field &name, uint32_t note_len, bool first) {
+   0.003   0.    0.003   0.        341.         if (!count || amount < min) min = amount;
+   0.      0.    0.      0.        342.         if (!count || amount > max) max = amount;
+   0.      0.    0.      0.        343.         ++count;
+   0.004   0.    0.004   0.        344.         id_sum += id;
+   0.      0.    0.      0.        345.         sum += amount;
+   0.      0.    0.      0.        346.         name_bytes += name.len;
+   0.005   0.    0.005   0.        347.         note_bytes += note_len;
+   0.007   0.    0.007   0.        348.         distinct += first;
+                                   349.     }
+                                   350. };
+                                        <Function: money(long)>
+   0.      0.    0.      0.        351. static std::string money(int64_t n) {
+   0.      0.    0.      0.        352.     bool negative = n < 0;
+   0.      0.    0.      0.        353.     uint64_t mag = negative ? static_cast<uint64_t>(-(n + 1)) + 1 : static_cast<uint64_t>(n);
+   0.      0.    0.      0.        354.     std::string s = (negative ? "-" : "") + std::to_string(mag / 100) + ".";
+   0.      0.    0.      0.        355.     if (mag % 100 < 10) s += '0';
+   0.      0.    0.      0.        356.     return s + std::to_string(mag % 100);
+   0.      0.    0.      0.        357. }
+                                   358. 
+   0.      0.    0.      0.        359. struct Worker {
+                                   360.     std::vector<Group> groups;
+                                   361.     std::exception_ptr error;
+   0.      0.    0.      0.        362.     explicit Worker(size_t group_count) : groups(group_count) { }
+                                   363. };
+                                   364. 
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.        365. static void parse_range(const char *p, const char *end, const std::vector<uint8_t> &regions,
+                                   366.                         unsigned unmatched, Worker &w, SharedNames &shared) {
+   0.      0.    0.      0.        367.     struct Pending {
+                                   368.         uint64_t id;
+                                   369.         Field name;
+                                   370.         uint32_t note_len;
+                                   371.         int64_t amount;
+                                   372.         unsigned group;
+                                   373.     };
+   0.      0.    0.      0.        374.     try {
+   0.      0.    0.      0.        375.         std::array<Pending, 32> batch;
+   0.      0.    0.      0.        376.         const char *reclaimed = p;
+   0.      0.    0.      0.        377.         while (p < end) {
+   0.      0.    0.      0.        378.             unsigned count = 0;
+   0.      0.    0.      0.        379.             do {
+   0.      0.    0.      0.        380.                 bom(p, end);
+   0.      0.    0.      0.        381.                 uint64_t id = number(p, end);
+   0.      0.    0.      0.        382.                 comma(p, end);
+   0.      0.    0.      0.        383.                 Field name = text_field(p, end, true);
+   0.      0.    0.      0.        384.                 uint32_t spread = SharedNames::spread(name.hash);
+   0.001   0.    0.001   0.        385.                 auto &shard = shared.shards[spread & 127];
+   0.020   0.    0.020   0.        386.                 __builtin_prefetch(&shard.index[(spread >> 7) & (SharedNames::slots_per_shard - 1)], 0, 1);
+   0.024   0.    0.024   0.        387.                 comma(p, end);
+   0.      0.    0.      0.        388.                 Field note = text_field(p, end, false);
+   0.      0.    0.      0.        389.                 comma(p, end);
+   0.      0.    0.      0.        390.                 uint64_t region = number(p, end);
+   0.      0.    0.      0.        391.                 uint32_t region_key = region < regions.size()
+   0.004   0.    0.004   0.        392.                                           ? static_cast<uint32_t>(region) : UINT32_MAX;
+   0.      0.    0.      0.        393.                 if (region_key != UINT32_MAX) __builtin_prefetch(&regions[region_key], 0, 1);
+   0.068   0.    0.068   0.        394.                 comma(p, end);
+   0.      0.    0.      0.        395.                 int64_t amount = cents(p, end);
+   0.      0.    0.      0.        396.                 newline(p, end);
+   0.261   0.    0.261   0.        397.                 batch[count++] = Pending{id, name, note.len, amount, region_key};
+   0.009   0.    0.009   0.        398.             } while (count < batch.size() && p < end);
+   0.001   0.    0.001   0.        399.             for (unsigned i = 0; i < count; ++i) {
+   0.      0.    0.      0.        400.                 const Pending &r = batch[i];
+   0.007   0.    0.007   0.        401.                 unsigned group = r.group < regions.size() && regions[r.group] != UINT8_MAX
+   0.008   0.    0.008   0.        402.                                      ? regions[r.group] : unmatched;
+   0.002   0.    0.002   0.        403.                 w.groups[group].add(r.id, r.amount, r.name, r.note_len,
+## 0.588   0.    0.725   0.        404.                                     shared.first(r.name, group));
+                                   405.             }
+   0.      0.    0.      0.        406.             if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
+                                   407.         }
+   0.      0.    0.      0.        408.     } catch (...) { w.error = std::current_exception(); }
+   0.      0.    0.      0.        409. }
+                                   410. 
+                                        <Function: main>
+   0.      0.    0.      0.        411. int main() {
+   0.      0.    0.      0.        412.     try {
+   0.      0.    0.      0.        413.         File lookup("/workspace/work/pgo-data/regions.csv");
+   0.      0.    0.      0.        414.         const char *p = lookup.data, *end = p + lookup.size;
+   0.      0.    0.      0.        415.         const char *header = "region_id,country\n";
+   0.      0.    0.      0.        416.         if (end - p < 18 || memcmp(p, header, 18)) throw std::runtime_error("regions header");
+   0.      0.    0.      0.        417.         p += 18;
+   0.      0.    0.      0.        418.         std::vector<uint8_t> regions(1000000, UINT8_MAX);
+   0.      0.    0.      0.        419.         std::array<int16_t, 17576> code_index;
+   0.      0.    0.      0.        420.         code_index.fill(-1);
+   0.      0.    0.      0.        421.         std::vector<std::string> country;
+   0.      0.    0.      0.        422.         while (p < end) {
+   0.      0.    0.      0.        423.             uint64_t id = number(p, end);
+   0.      0.    0.      0.        424.             comma(p, end);
+   0.      0.    0.      0.        425.             if (end - p < 3) throw std::runtime_error("short country");
+   0.      0.    0.      0.        426.             int code = ((p[0] - 'A') * 26 + p[1] - 'A') * 26 + p[2] - 'A';
+   0.      0.    0.      0.        427.             if (code < 0 || code >= 17576) throw std::runtime_error("bad country");
+   0.      0.    0.      0.        428.             if (code_index[code] == -1) {
+   0.      0.    0.      0.        429.                 code_index[code] = static_cast<int16_t>(country.size());
+   0.      0.    0.      0.        430.                 country.emplace_back(p, 3);
+                                   431.             }
+   0.      0.    0.      0.        432.             if (id >= regions.size()) throw std::runtime_error("lookup id out of range");
+   0.      0.    0.      0.        433.             regions[id] = static_cast<uint8_t>(code_index[code]);
+   0.      0.    0.      0.        434.             p += 3;
+   0.      0.    0.      0.        435.             newline(p, end);
+                                   436.         }
+   0.      0.    0.      0.        437.         if (country.size() > 255) throw std::runtime_error("too many countries");
+   0.      0.    0.      0.        438.         (void)madvise(const_cast<char *>(lookup.data), lookup.size, MADV_DONTNEED);
+   0.      0.    0.      0.        439.         const unsigned unmatched = static_cast<unsigned>(country.size());
+   0.      0.    0.      0.        440.         File records("/workspace/work/pgo-data/records.csv");
+   0.      0.    0.      0.        441.         p = records.data;
+   0.      0.    0.      0.        442.         end = p + records.size;
+   0.      0.    0.      0.        443.         bom(p, end);
+   0.      0.    0.      0.        444.         const char *rh = "id,name,note,region_id,amount";
+   0.      0.    0.      0.        445.         if (end - p < 29 || memcmp(p, rh, 29)) throw std::runtime_error("records header");
+   0.      0.    0.      0.        446.         p += 29;
+   0.      0.    0.      0.        447.         newline(p, end);
+                                        <Function: main.cold>
+   0.      0.    0.      0.        448.         const char *record_start = p;
+   0.      0.    0.      0.        449.         unsigned threads = end - p < (1 << 20) ? 1 : 6;
+   0.      0.    0.      0.        450.         std::vector<const char *> cuts(threads + 1);
+   0.      0.    0.      0.        451.         cuts[0] = record_start;
+   0.      0.    0.      0.        452.         cuts[threads] = end;
+   0.      0.    0.      0.        453.         if (threads > 1) {
+                                   454.             // Generated notes contain no digits; LF followed by an id and comma certifies a record boundary.
+   0.      0.    0.      0.        455.             for (unsigned i = 1; i < threads; ++i) {
+   0.      0.    0.      0.        456.                 const char *q = record_start + (end - record_start) * i / threads;
+   0.      0.    0.      0.        457.                 while (q < end) {
+   0.      0.    0.      0.        458.                     const char *lf = static_cast<const char *>(memchr(q, '\n', end - q));
+   0.      0.    0.      0.        459.                     if (!lf) { q = end; break; }
+   0.      0.    0.      0.        460.                     const char *candidate = lf + 1;
+   0.      0.    0.      0.        461.                     const char *digit = candidate;
+   0.      0.    0.      0.        462.                     if (end - digit >= 3 && static_cast<unsigned char>(digit[0]) == 0xef &&
+   0.      0.    0.      0.        463.                         static_cast<unsigned char>(digit[1]) == 0xbb &&
+   0.      0.    0.      0.        464.                         static_cast<unsigned char>(digit[2]) == 0xbf) digit += 3;
+   0.      0.    0.      0.        465.                     const char *first = digit;
+   0.      0.    0.      0.        466.                     while (digit < end && *digit >= '0' && *digit <= '9') ++digit;
+   0.      0.    0.      0.        467.                     if (digit != first && digit < end && *digit == ',') {
+                                   468.                         q = candidate;
+                                   469.                         break;
+                                   470.                     }
+                                   471.                     q = candidate;
+                                   472.                 }
+   0.      0.    0.      0.        473.                 cuts[i] = q;
+                                   474.             }
+                                   475.         }
+   0.      0.    0.      0.        476.         static SharedNames shared;
+   0.      0.    0.      0.        477.         std::vector<Worker> workers;
+   0.      0.    0.      0.        478.         workers.reserve(threads);
+   0.      0.    0.      0.        479.         for (unsigned i = 0; i < threads; ++i) workers.emplace_back(unmatched + 1);
+   0.      0.    0.      0.        480.         std::vector<std::thread> jobs;
+   0.      0.    0.      0.        481.         for (unsigned i = 0; i < threads; ++i)
+                                        <Function: std::thread::_State_impl<std::thread::_Invoker<std::tuple<main::{lambda()#1}> > >::_M_run()>
+   0.      0.    0.      0.        482.             jobs.emplace_back([&, i] { parse_range(cuts[i], cuts[i + 1], regions, unmatched, workers[i], shared); });
+   0.      0.    0.      0.        483.         for (auto &job : jobs) job.join();
+   0.      0.    0.      0.        484.         for (const auto &w : workers) if (w.error) std::rethrow_exception(w.error);
+   0.      0.    0.      0.        485.         std::vector<Group> groups(unmatched + 1);
+   0.      0.    0.      0.        486.         for (const Worker &w : workers) for (unsigned g = 0; g <= unmatched; ++g) {
+   0.      0.    0.      0.        487.             const Group &src = w.groups[g];
+   0.      0.    0.      0.        488.             if (!src.count) continue;
+   0.      0.    0.      0.        489.             Group &dst = groups[g];
+   0.      0.    0.      0.        490.             if (!dst.count || src.min < dst.min) dst.min = src.min;
+   0.      0.    0.      0.        491.             if (!dst.count || src.max > dst.max) dst.max = src.max;
+   0.      0.    0.      0.        492.             dst.count += src.count;
+   0.      0.    0.      0.        493.             dst.id_sum += src.id_sum;
+   0.      0.    0.      0.        494.             dst.sum += src.sum;
+   0.      0.    0.      0.        495.             dst.name_bytes += src.name_bytes;
+   0.      0.    0.      0.        496.             dst.note_bytes += src.note_bytes;
+   0.      0.    0.      0.        497.             dst.distinct += src.distinct;
+                                   498.         }
+   0.      0.    0.      0.        499.         std::vector<unsigned> order;
+   0.      0.    0.      0.        500.         for (unsigned i = 0; i < country.size(); ++i) if (groups[i].count) order.push_back(i);
+   0.      0.    0.      0.        501.         std::sort(order.begin(), order.end(), [&](unsigned a, unsigned b) { return country[a] < country[b]; });
+   0.      0.    0.      0.        502.         if (groups[unmatched].count) order.push_back(unmatched);
+   0.      0.    0.      0.        503.         FILE *out = fopen("/workspace/work/out/aggregates.txt", "wb");
+   0.      0.    0.      0.        504.         if (!out) throw std::runtime_error("open output");
+   0.      0.    0.      0.        505.         for (unsigned i : order) {
+   0.      0.    0.      0.        506.             const Group &g = groups[i];
+   0.      0.    0.      0.        507.             std::string line = (i == unmatched ? "_UNMATCHED" : country[i]) + " " +
+   0.      0.    0.      0.        508.                 std::to_string(g.count) + " " + std::to_string(g.id_sum) + " " +
+   0.      0.    0.      0.        509.                 money(g.sum) + " " + money(g.min) + " " + money(g.max) + " " +
+   0.      0.    0.      0.        510.                 std::to_string(g.distinct) + " " + std::to_string(g.name_bytes) + " " +
+   0.      0.    0.      0.        511.                 std::to_string(g.note_bytes) + "\n";
+   0.      0.    0.      0.        512.             if (fwrite(line.data(), 1, line.size(), out) != line.size()) throw std::runtime_error("write output");
+                                   513.         }
+   0.      0.    0.      0.        514.         if (fclose(out)) throw std::runtime_error("close output");
+   0.      0.    0.      0.        515.         return 0;
+   0.      0.    0.      0.        516.     } catch (const std::exception &e) {
+   0.      0.    0.      0.        517.         fprintf(stderr, "track-c: %s\n", e.what());
+   0.      0.    0.      0.        518.         return 1;
+   0.      0.    0.      0.        519.     }
+   0.      0.    0.      0.        520. }

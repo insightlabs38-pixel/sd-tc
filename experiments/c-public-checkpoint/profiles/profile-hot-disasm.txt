@@ -1,0 +1,1456 @@
+Source file: join.cpp (found as work/public-research/short-pgo.er/archives/join.cpp_Ghn8439BbV1)
+Object file: join-profile (found as work/public-research/short-pgo.er/archives/join-profile_Ghn8439BbV1)
+Load Object: join-profile (found as work/public-research/short-pgo.er/archives/join-profile_Ghn8439BbV1)
+
+   Excl. Total   Incl. Total
+   CPU           CPU
+    sec.      %   sec.      %
+                                     1. #include <immintrin.h>
+                                     2. #include <algorithm>
+                                     3. #include <array>
+                                     4. #include <atomic>
+                                     5. #include <cstdint>
+                                     6. #include <cstdio>
+                                     7. #include <cstdlib>
+                                     8. #include <cstring>
+                                     9. #include <exception>
+                                    10. #include <memory>
+                                    11. #include <mutex>
+                                    12. #include <thread>
+                                    13. #include <unordered_map>
+                                    14. #include <fcntl.h>
+                                    15. #include <stdexcept>
+                                    16. #include <string>
+                                    17. #include <sys/mman.h>
+                                    18. #include <sys/stat.h>
+                                    19. #include <unistd.h>
+                                    20. #include <vector>
+                                    21. 
+                                    22. struct File {
+                                    23.     const char *data;
+                                    24.     size_t size, mapped;
+                                    25.     explicit File(const char *path) {
+                                    26.         int fd = open(path, O_RDONLY);
+                                    27.         if (fd < 0) throw std::runtime_error(std::string("open ") + path);
+                                    28.         struct stat st;
+                                    29.         if (fstat(fd, &st)) throw std::runtime_error("fstat");
+                                    30.         size = st.st_size;
+                                    31.         size_t page = static_cast<size_t>(sysconf(_SC_PAGESIZE));
+                                    32.         mapped = (size + page - 1) / page * page + page;
+                                    33.         data = static_cast<const char *>(mmap(nullptr, mapped, PROT_READ, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0));
+                                    34.         if (data == MAP_FAILED) { close(fd); throw std::runtime_error("reserve mmap"); }
+                                    35.         if (size && mmap(const_cast<char *>(data), size, PROT_READ, MAP_PRIVATE | MAP_FIXED, fd, 0) == MAP_FAILED) {
+                                    36.             munmap(const_cast<char *>(data), mapped); close(fd); throw std::runtime_error("file mmap");
+                                    37.         }
+                                    38.         close(fd);
+                                    39.     }
+                                    40.     ~File() { munmap(const_cast<char *>(data), mapped); }
+                                    41. };
+                                    42. 
+                                    43. static void discard_consumed(const char *&cursor, const char *end) {
+                                    44.     static const uintptr_t page = static_cast<uintptr_t>(sysconf(_SC_PAGESIZE));
+                                    45.     uintptr_t lo = (reinterpret_cast<uintptr_t>(cursor) + page - 1) & ~(page - 1);
+                                    46.     uintptr_t hi = reinterpret_cast<uintptr_t>(end) & ~(page - 1);
+                                    47.     if (hi > lo) {
+                                    48.         (void)madvise(reinterpret_cast<void *>(lo), hi - lo, MADV_DONTNEED);
+                                    49.         cursor = reinterpret_cast<const char *>(hi);
+                                    50.     }
+                                    51. }
+                                    52. 
+                                    53. struct Field {
+                                    54.     const char *raw = nullptr;
+                                    55.     uint32_t raw_len : 31;
+                                    56.     uint32_t quoted : 1;
+                                    57.     uint32_t len = 0;
+                                    58.     uint32_t hash = 0;
+                                    59.     uint32_t id = UINT32_MAX;
+                                    60. };
+                                    61. static_assert(sizeof(Field) == 24, "name slot layout");
+                                    62. 
+                                    63. static constexpr uint32_t HASH_OFFSET = 5381U;
+                                    64. 
+                                    65. static uint32_t raw_hash(const char *p, size_t n) {
+                                    66.     if (n <= 16) {
+                                    67.         alignas(16) static const unsigned char mask[32] = {
+                                    68.             255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
+                                    69.             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+                                    70.         __m128i key = _mm_and_si128(_mm_loadu_si128(reinterpret_cast<const __m128i *>(p)),
+                                    71.                                   _mm_loadu_si128(reinterpret_cast<const __m128i *>(mask + 16 - n)));
+                                    72.         uint32_t h = static_cast<uint32_t>(_mm_crc32_u64(HASH_OFFSET, static_cast<uint64_t>(_mm_cvtsi128_si64(key))));
+                                    73.         return static_cast<uint32_t>(_mm_crc32_u64(h, static_cast<uint64_t>(_mm_extract_epi64(key, 1))));
+                                    74.     }
+                                    75.     uint32_t h = HASH_OFFSET;
+                                    76.     while (n >= 8) {
+                                    77.         uint64_t word;
+                                    78.         std::memcpy(&word, p, 8);
+                                    79.         h = static_cast<uint32_t>(_mm_crc32_u64(h, word));
+                                    80.         p += 8;
+                                    81.         n -= 8;
+                                    82.     }
+                                    83.     if (n & 4) { uint32_t w; std::memcpy(&w, p, 4); h = _mm_crc32_u32(h, w); p += 4; }
+                                    84.     if (n & 2) { uint16_t w; std::memcpy(&w, p, 2); h = _mm_crc32_u16(h, w); p += 2; }
+                                    85.     if (n & 1) h = _mm_crc32_u8(h, static_cast<unsigned char>(*p));
+                                    86.     return h;
+                                    87. }
+                                    88. 
+                                    89. static const char *find_quote(const char *p, const char *end) {
+                                    90.     const __m256i quote32 = _mm256_set1_epi8('"');
+                                    91.     while (end - p >= 32) {
+                                    92.         __m256i block = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(p));
+                                    93.         unsigned mask = static_cast<unsigned>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(block, quote32)));
+                                    94.         if (mask) return p + __builtin_ctz(mask);
+                                    95.         p += 32;
+                                    96.     }
+                                    97.     const __m128i quote16 = _mm_set1_epi8('"');
+                                    98.     while (end - p >= 16) {
+                                    99.         __m128i block = _mm_loadu_si128(reinterpret_cast<const __m128i *>(p));
+                                   100.         unsigned mask = static_cast<unsigned>(_mm_movemask_epi8(_mm_cmpeq_epi8(block, quote16)));
+                                   101.         if (mask) return p + __builtin_ctz(mask);
+                                   102.         p += 16;
+                                   103.     }
+                                   104.     for (; p < end; ++p) if (*p == '"') return p;
+                                   105.     return nullptr;
+                                   106. }
+                                   107. 
+                                   108. static Field text_field(const char *&p, const char *end, bool need_hash) {
+                                   109.     Field f{};
+                                   110.     f.quoted = p < end && *p == '"';
+                                   111.     if (f.quoted) {
+                                   112.         ++p;
+                                   113.         f.raw = p;
+                                   114.         for (;;) {
+                                   115.             const char *q = find_quote(p, end);
+                                   116.             if (!q) throw std::runtime_error("unclosed quote");
+                                   117.             f.len += static_cast<uint32_t>(q - p);
+                                   118.             if (q + 1 < end && q[1] == '"') {
+                                   119.                 ++f.len;
+                                   120.                 p = q + 2;
+                                   121.                 continue;
+                                   122.             }
+                                   123.             f.raw_len = static_cast<uint32_t>(q - f.raw);
+                                   124.             f.hash = need_hash ? raw_hash(f.raw, f.raw_len) : HASH_OFFSET;
+                                   125.             p = q + 1;
+                                   126.             return f;
+                                   127.         }
+                                   128.     }
+                                   129.     f.raw = p;
+                                   130.     while (p < end && *p != ',' && *p != '\r' && *p != '\n') {
+                                   131.         ++p;
+                                   132.         ++f.len;
+                                   133.     }
+                                   134.     f.raw_len = f.len;
+                                   135.     f.hash = need_hash ? raw_hash(f.raw, f.raw_len) : HASH_OFFSET;
+                                   136.     return f;
+                                   137. }
+                                   138. 
+                                   139. struct SharedNames {
+                                   140.     static constexpr unsigned shard_bits = 7;
+                                   141.     static constexpr size_t slots_per_shard = 1 << 11;
+                                   142.     static uint32_t spread(uint32_t h) { return h ^ (h >> 11) ^ (h >> 22); }
+                                   143.     static uint32_t tag(const Field &f) {
+                                   144.         return (f.hash & 0xfffe0000U) | ((f.raw_len <= 16 ? f.raw_len : 31U) << 12);
+                                   145.     }
+                                   146.     struct Slot {
+                                   147.         char key[16]{};
+                                   148.         std::atomic<uint64_t> seen[4]{};
+                                   149.         bool matches(const Field &f) const {
+                                   150.             if (f.raw_len <= 16) {
+                                   151.                 __m128i a = _mm_loadu_si128(reinterpret_cast<const __m128i *>(key));
+                                   152.                 __m128i b = _mm_loadu_si128(reinterpret_cast<const __m128i *>(f.raw));
+                                   153.                 unsigned same = static_cast<unsigned>(_mm_movemask_epi8(_mm_cmpeq_epi8(a, b)));
+                                   154.                 unsigned valid = 0xffffU >> (16 - f.raw_len);
+                                   155.                 return (same & valid) == valid;
+                                   156.             }
+                                   157.             const char *p;
+                                   158.             uint32_t length;
+                                   159.             std::memcpy(&p, key, sizeof(p));
+                                   160.             std::memcpy(&length, key + 8, sizeof(length));
+                                   161.             return length == f.raw_len && std::memcmp(key + 12, f.raw, 4) == 0 &&
+                                   162.                    std::memcmp(p + 4, f.raw + 4, f.raw_len - 4) == 0;
+                                   163.         }
+                                   164.     };
+                                   165.     static_assert(sizeof(Slot) == 48, "packed inline name slot");
+                                   166.     struct Shard {
+                                   167.         struct Overflow {
+                                   168.             Field field;
+                                   169.             std::array<uint64_t, 4> seen{};
+                                   170.         };
+                                   171.         std::mutex mutex;
+                                   172.         std::vector<Overflow> overflow;
+                                   173.         std::array<std::atomic<uint32_t>, slots_per_shard> index{};
+                                   174.         Slot *pool = nullptr;
+                                   175.         uint16_t used = 0;
+                                   176.         std::vector<std::unique_ptr<char[]>> arena;
+                                   177.         char *cursor = nullptr;
+                                   178.         size_t remaining = 0;
+                                   179.         const char *keep(const Field &f) {
+                                   180.             constexpr size_t block = 1 << 15;
+                                   181.             if (!f.raw_len) return f.raw;
+                                   182.             if (f.raw_len > block) {
+                                   183.                 arena.emplace_back(new char[f.raw_len]);
+                                   184.                 std::memcpy(arena.back().get(), f.raw, f.raw_len);
+                                   185.                 return arena.back().get();
+                                   186.             }
+                                   187.             if (f.raw_len > remaining) {
+                                   188.                 arena.emplace_back(new char[block]);
+                                   189.                 cursor = arena.back().get();
+                                   190.                 remaining = block;
+                                   191.             }
+                                   192.             char *dst = cursor;
+                                   193.             std::memcpy(dst, f.raw, f.raw_len);
+                                   194.             cursor += f.raw_len;
+                                   195.             remaining -= f.raw_len;
+                                   196.             return dst;
+                                   197.         }
+                                   198.         std::pair<Slot *, bool> probe(const Field &f, size_t *empty = nullptr) {
+                                   199.             const uint32_t signature = tag(f);
+                                   200.             size_t i = (spread(f.hash) >> shard_bits) & (slots_per_shard - 1);
+                                   201.             for (size_t n = 0; n < slots_per_shard; ++n) {
+                                   202.                 uint32_t entry = index[i].load(std::memory_order_acquire);
+                                   203.                 uint16_t id = static_cast<uint16_t>(entry & 0xfffU);
+                                   204.                 if (!id) {
+                                   205.                     if (empty) *empty = i;
+                                   206.                     return {nullptr, false};
+                                   207.                 }
+                                   208.                 if ((entry & 0xfffff000U) == signature) {
+                                   209.                     Slot &slot = pool[id - 1];
+                                   210.                     if (slot.matches(f))
+                                   211.                         return {&slot, true};
+                                   212.                 }
+                                   213.                 i = (i + 1) & (slots_per_shard - 1);
+                                   214.             }
+                                   215.             return {nullptr, false};
+                                   216.         }
+                                   217.     };
+                                   218.     std::array<Shard, 1 << shard_bits> shards;
+                                   219.     SharedNames() {
+                                   220.         static Slot storage[(1 << shard_bits) * slots_per_shard]{};
+                                   221.         for (size_t i = 0; i < shards.size(); ++i)
+                                   222.             shards[i].pool = storage + i * slots_per_shard;
+                                   223.     }
+                                   224.     __attribute__((noinline, cold)) static bool slow_first(Shard &s, const Field &name, unsigned group) {
+                                   225.         std::lock_guard<std::mutex> lock(s.mutex);
+                                   226.         size_t empty = slots_per_shard;
+                                   227.         auto match = s.probe(name, &empty);
+                                   228.         Slot *slot = match.first;
+                                   229.         if (!match.second && empty == slots_per_shard) {
+                                   230.             const uint64_t bit = 1ULL << (group & 63);
+                                   231.             for (auto &entry : s.overflow) {
+                                   232.                 if (entry.field.hash != name.hash || entry.field.raw_len != name.raw_len || std::memcmp(entry.field.raw, name.raw, name.raw_len)) continue;
+                                   233.                 uint64_t &cell = entry.seen[group >> 6];
+                                   234.                 bool fresh = !(cell & bit);
+                                   235.                 cell |= bit;
+                                   236.                 return fresh;
+                                   237.             }
+                                   238.             s.overflow.emplace_back();
+                                   239.             auto &entry = s.overflow.back();
+                                   240.             entry.field = name;
+                                   241.             entry.field.raw = s.keep(name);
+                                   242.             entry.seen[group >> 6] |= bit;
+                                   243.             return true;
+                                   244.         }
+                                   245.         if (!match.second) {
+                                   246.             slot = &s.pool[s.used];
+                                   247.             if (name.raw_len <= 16) std::memcpy(slot->key, name.raw, name.raw_len);
+                                   248.             else {
+                                   249.                 const char *saved = s.keep(name);
+                                   250.                 std::memcpy(slot->key, &saved, sizeof(saved));
+                                   251.                 uint32_t length = name.raw_len;
+                                   252.                 std::memcpy(slot->key + 8, &length, sizeof(length));
+                                   253.                 std::memcpy(slot->key + 12, name.raw, 4);
+                                   254.             }
+                                   255.             s.index[empty].store(tag(name) | ++s.used,
+                                   256.                                  std::memory_order_release);
+                                   257.         }
+                                   258.         const uint64_t mask = 1ULL << (group & 63);
+                                   259.         return !(slot->seen[group >> 6].fetch_or(mask, std::memory_order_relaxed) & mask);
+                                   260.     }
+                                   261.     bool first(const Field &name, unsigned group) {
+                                   262.         Shard &s = shards[spread(name.hash) & (shards.size() - 1)];
+                                   263.         auto match = s.probe(name);
+                                   264.         if (__builtin_expect(!match.second, 0)) return slow_first(s, name, group);
+                                   265.         const uint64_t mask = 1ULL << (group & 63);
+                                   266.         return !(match.first->seen[group >> 6].fetch_or(mask, std::memory_order_relaxed) & mask);
+                                   267.     }
+                                   268. };
+                                   269. 
+                                   270. static uint64_t number(const char *&p, const char *end) {
+                                   271.     if (end - p >= 8) { // SWAR ASCII fast path, with scalar fallback for long integers.
+                                   272.         uint64_t w;
+                                   273.         std::memcpy(&w, p, 8);
+                                   274.         const uint64_t bad = ((w + 0x4646464646464646ULL) |
+                                   275.                               (w - 0x3030303030303030ULL)) & 0x8080808080808080ULL;
+                                   276.         const unsigned digits = bad ? __builtin_ctzll(bad) / 8 : 8;
+                                   277.         if (digits && (digits < 8 || p + 8 == end ||
+                                   278.                        static_cast<unsigned>(static_cast<unsigned char>(p[8])) - '0' > 9)) {
+                                   279.             uint64_t x = (w << ((8 - digits) * 8)) |
+                                   280.                          (digits == 8 ? 0 : 0x3030303030303030ULL >> (digits * 8));
+                                   281.             x -= 0x3030303030303030ULL;
+                                   282.             x = (x * 10 + (x >> 8)) & 0x00ff00ff00ff00ffULL;
+                                   283.             x = (x * 100 + (x >> 16)) & 0x0000ffff0000ffffULL;
+                                   284.             x = (x * 10000 + (x >> 32)) & 0xffffffffULL;
+                                   285.             p += digits;
+                                   286.             return x;
+                                   287.         }
+                                   288.     }
+                                   289.     const char *start = p;
+                                   290.     uint64_t n = 0;
+                                   291.     while (p < end) {
+                                   292.         unsigned digit = static_cast<unsigned char>(*p) - '0';
+                                   293.         if (digit > 9) break;
+                                   294.         n = n * 10 + digit;
+                                   295.         ++p;
+                                   296.     }
+                                   297.     if (p == start) throw std::runtime_error("missing integer");
+                                   298.     return n;
+                                   299. }
+                                   300. static int64_t cents(const char *&p, const char *end) {
+                                   301.     bool neg = p < end && *p == '-';
+                                   302.     if (neg) ++p;
+                                   303.     uint64_t word; std::memcpy(&word, p, 8);
+                                   304.     uint64_t dots = word ^ 0x2e2e2e2e2e2e2e2eULL;
+                                   305.     dots = (dots - 0x0101010101010101ULL) & ~dots & 0x8080808080808080ULL;
+                                   306.     unsigned dot = dots ? __builtin_ctzll(dots) / 8 : 8;
+                                   307.     if (dot && dot <= 5 && end - p >= dot + 3) {
+                                   308.         uint64_t lower = (1ULL << (dot * 8)) - 1;
+                                   309.         uint64_t x = ((word & lower) | ((word >> 8) & ~lower)) << ((6 - dot) * 8);
+                                   310.         x &= 0x0f0f0f0f0f0f0f0fULL;
+                                   311.         x = (x * 10 + (x >> 8)) & 0x00ff00ff00ff00ffULL;
+                                   312.         x = (x * 100 + (x >> 16)) & 0x0000ffff0000ffffULL;
+                                   313.         int64_t value = static_cast<int64_t>((x * 10000 + (x >> 32)) & 0xffffffffULL);
+                                   314.         p += dot + 3; return neg ? -value : value;
+                                   315.     }
+                                   316.     int64_t n = static_cast<int64_t>(number(p, end));
+                                   317.     if (p + 2 >= end || *p++ != '.') throw std::runtime_error("bad decimal");
+                                   318.     int64_t fraction = (p[0] - '0') * 10 + (p[1] - '0');
+                                   319.     p += 2;
+                                   320.     return neg ? -(n * 100 + fraction) : n * 100 + fraction;
+                                   321. }
+                                   322. static void comma(const char *&p, const char *end) {
+                                   323.     if (p == end || *p++ != ',') throw std::runtime_error("missing comma");
+                                   324. }
+                                   325. static void newline(const char *&p, const char *end) {
+                                   326.     if (p < end && *p == '\r') ++p;
+                                   327.     if (p < end) {
+                                   328.         if (*p++ != '\n') throw std::runtime_error("missing LF");
+                                   329.     }
+                                   330. }
+                                   331. static void bom(const char *&p, const char *end) {
+                                   332.     if (end - p >= 3 && static_cast<unsigned char>(p[0]) == 0xef &&
+                                   333.         static_cast<unsigned char>(p[1]) == 0xbb && static_cast<unsigned char>(p[2]) == 0xbf) p += 3;
+                                   334. }
+                                   335. 
+                                   336. struct Group {
+                                   337.     uint64_t count = 0, id_sum = 0, name_bytes = 0, note_bytes = 0;
+                                   338.     int64_t sum = 0, min = 0, max = 0;
+                                   339.     uint32_t distinct = 0;
+                                   340.     void add(uint64_t id, int64_t amount, const Field &name, uint32_t note_len, bool first) {
+                                   341.         if (!count || amount < min) min = amount;
+                                   342.         if (!count || amount > max) max = amount;
+                                   343.         ++count;
+                                   344.         id_sum += id;
+                                   345.         sum += amount;
+                                   346.         name_bytes += name.len;
+                                   347.         note_bytes += note_len;
+                                   348.         distinct += first;
+                                   349.     }
+                                   350. };
+                                   351. static std::string money(int64_t n) {
+                                   352.     bool negative = n < 0;
+                                   353.     uint64_t mag = negative ? static_cast<uint64_t>(-(n + 1)) + 1 : static_cast<uint64_t>(n);
+                                   354.     std::string s = (negative ? "-" : "") + std::to_string(mag / 100) + ".";
+                                   355.     if (mag % 100 < 10) s += '0';
+                                   356.     return s + std::to_string(mag % 100);
+                                   357. }
+                                   358. 
+                                   359. struct Worker {
+                                   360.     std::vector<Group> groups;
+                                   361.     std::exception_ptr error;
+                                   362.     explicit Worker(size_t group_count) : groups(group_count) { }
+                                   363. };
+                                   364. 
+                                   365. static void parse_range(const char *p, const char *end, const std::vector<uint8_t> &regions,
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [ 365]   405440:  push   %rbp
+   0.      0.    0.      0.             [ 365]   405441:  mov    %rsp,%rbp
+   0.      0.    0.      0.             [ 365]   405444:  push   %r15
+   0.      0.    0.      0.             [ 365]   405446:  push   %r14
+   0.      0.    0.      0.             [ 365]   405448:  push   %r13
+   0.      0.    0.      0.             [ 365]   40544a:  push   %r12
+   0.      0.    0.      0.             [ 365]   40544c:  mov    %rdi,%r12
+   0.      0.    0.      0.             [ 365]   40544f:  push   %rbx
+   0.      0.    0.      0.             [ 365]   405450:  mov    %rsi,%rbx
+   0.      0.    0.      0.             [ 365]   405453:  and    $0xffffffffffffffe0,%rsp
+   0.      0.    0.      0.             [ 365]   405457:  sub    $0x7e0,%rsp
+   0.      0.    0.      0.             [ 365]   40545e:  mov    %rdx,0x30(%rsp)
+   0.      0.    0.      0.             [ 365]   405463:  lea    0xe0(%rsp),%rax
+   0.      0.    0.      0.             [ 365]   40546b:  mov    %ecx,0x4(%rsp)
+   0.      0.    0.      0.             [ 365]   40546f:  mov    %r8,0x20(%rsp)
+   0.      0.    0.      0.             [  53]   405474:  xor    %edi,%edi
+   0.      0.    0.      0.             [  53]   405476:  movl   $0xffffffff,0x1c(%rax)
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/array_u5U-FtMArR9>
+   0.      0.    0.      0.             [ 102]   40547d:  add    $0x38,%rax
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [  53]   405481:  mov    %rdi,-0x30(%rax)
+   0.      0.    0.      0.             [  53]   405485:  mov    %rdi,-0x24(%rax)
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/array_u5U-FtMArR9>
+   0.      0.    0.      0.             [ 102]   405489:  lea    0x7e0(%rsp),%rdi
+   0.      0.    0.      0.             [ 102]   405491:  cmp    %rdi,%rax
+   0.      0.    0.      0.             [ 102]   405494:  jne    .-0x20 [ 0x405474 ]
+                                   366.                         unsigned unmatched, Worker &w, SharedNames &shared) {
+                                   367.     struct Pending {
+                                   368.         uint64_t id;
+                                   369.         Field name;
+                                   370.         uint32_t note_len;
+                                   371.         int64_t amount;
+                                   372.         unsigned group;
+                                   373.     };
+                                   374.     try {
+                                   375.         std::array<Pending, 32> batch;
+                                   376.         const char *reclaimed = p;
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [ 376]   405496:  mov    %r12,0x8(%rsp)
+   0.      0.    0.      0.             [ 376]   40549b:  nopl   0x0(%rax,%rax,1)
+                                   377.         while (p < end) {
+   0.      0.    0.      0.             [ 377]   4054a0:  cmp    %rbx,%r12
+   0.      0.    0.      0.             [ 377]   4054a3:  jae    .+0xdaa [ 0x40624d ]
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/avx2intrin.h_OuAb1vYBIb9>
+   0.      0.    0.      0.             [ 233]   4054a9:  mov    $0x22222222,%eax
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [ 310]   4054ae:  mov    %r12,%rcx
+   0.      0.    0.      0.             [ 310]   4054b1:  xor    %r12d,%r12d
+   0.      0.    0.      0.             [ 280]   4054b4:  movabs $0x3030303030303030,%r15
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/avx2intrin.h_OuAb1vYBIb9>
+   0.      0.    0.      0.             [ 233]   4054be:  vmovd  %eax,%xmm0
+   0.      0.    0.      0.             [ 233]   4054c2:  lea    0xe0(%rsp),%r11
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [ 282]   4054ca:  movabs $0xff00ff00ff00ff,%r13
+   0.      0.    0.      0.             [ 283]   4054d4:  movabs $0xffff0000ffff,%r14
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/avx2intrin.h_OuAb1vYBIb9>
+   0.      0.    0.      0.             [ 233]   4054de:  vpbroadcastd %xmm0,%ymm0
+   0.      0.    0.      0.             [ 233]   4054e3:  jmp    .+0xa0 [ 0x405583 ]
+   0.      0.    0.      0.             [ 233]   4054e8:  nopl   0x0(%rax,%rax,1)
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [ 328]   4054f0:  add    $0x1,%rcx
+   0.012   0.    0.012   0.             [ 328]   4054f4:  cmp    $0xa,%dl
+   0.      0.    0.      0.             [ 328]   4054f7:  jne    .-0x1ece [ 0x403629 ]
+                                   378.             unsigned count = 0;
+                                   379.             do {
+                                   380.                 bom(p, end);
+                                   381.                 uint64_t id = number(p, end);
+                                   382.                 comma(p, end);
+                                   383.                 Field name = text_field(p, end, true);
+                                   384.                 uint32_t spread = SharedNames::spread(name.hash);
+                                   385.                 auto &shard = shared.shards[spread & 127];
+                                   386.                 __builtin_prefetch(&shard.index[(spread >> 7) & (SharedNames::slots_per_shard - 1)], 0, 1);
+                                   387.                 comma(p, end);
+                                   388.                 Field note = text_field(p, end, false);
+                                   389.                 comma(p, end);
+                                   390.                 uint64_t region = number(p, end);
+                                   391.                 uint32_t region_key = region < regions.size()
+                                   392.                                           ? static_cast<uint32_t>(region) : UINT32_MAX;
+                                   393.                 if (region_key != UINT32_MAX) __builtin_prefetch(&regions[region_key], 0, 1);
+                                   394.                 comma(p, end);
+                                   395.                 int64_t amount = cents(p, end);
+                                   396.                 newline(p, end);
+                                   397.                 batch[count++] = Pending{id, name, note.len, amount, region_key};
+   0.      0.    0.      0.             [ 397]   4054fd:  vmovdqa 0x60(%rsp),%xmm1
+   0.014   0.    0.014   0.             [ 397]   405503:  mov    0x58(%rsp),%rdi
+   0.      0.    0.      0.             [ 397]   405508:  add    $0x1,%r12d
+   0.      0.    0.      0.             [ 397]   40550c:  mov    %rax,0xc8(%rsp)
+   0.001   0.    0.001   0.             [ 397]   405514:  mov    0x70(%rsp),%rdx
+   0.001   0.    0.001   0.             [ 397]   405519:  mov    0x40(%rsp),%eax
+   0.004   0.    0.004   0.             [ 397]   40551d:  mov    %rdi,0xa0(%rsp)
+   0.      0.    0.      0.             [ 397]   405525:  mov    0x50(%rsp),%edi
+   0.002   0.    0.002   0.             [ 397]   405529:  mov    %rdx,0xb8(%rsp)
+   0.005   0.    0.005   0.             [ 397]   405531:  vmovdqu %xmm1,0xa8(%rsp)
+   0.      0.    0.      0.             [ 397]   40553a:  mov    %esi,0xb8(%rsp)
+   0.      0.    0.      0.             [ 397]   405541:  vmovdqa 0xa0(%rsp),%ymm1
+   0.129   0.    0.129   0.             [ 397]   40554a:  mov    %edi,0xc0(%rsp)
+   0.001   0.    0.001   0.             [ 397]   405551:  mov    %eax,0xd0(%rsp)
+   0.      0.    0.      0.             [ 397]   405558:  vmovdqu %ymm1,(%r11)
+   0.009   0.    0.009   0.             [ 397]   40555d:  vmovdqu 0xb4(%rsp),%ymm1
+   0.095   0.    0.095   0.             [ 397]   405566:  vmovdqu %ymm1,0x14(%r11)
+                                   398.             } while (count < batch.size() && p < end);
+   0.008   0.    0.008   0.             [ 398]   40556c:  cmp    $0x20,%r12d
+   0.      0.    0.      0.             [ 398]   405570:  je     .+0x710 [ 0x405c80 ]
+   0.      0.    0.      0.             [ 398]   405576:  add    $0x38,%r11
+   0.001   0.    0.001   0.             [ 398]   40557a:  cmp    %rbx,%rcx
+   0.      0.    0.      0.             [ 398]   40557d:  jae    .+0x703 [ 0x405c80 ]
+   0.      0.    0.      0.             [ 332]   405583:  mov    %rbx,%rax
+   0.      0.    0.      0.             [ 332]   405586:  sub    %rcx,%rax
+   0.001   0.    0.001   0.             [ 332]   405589:  cmp    $0x2,%rax
+   0.      0.    0.      0.             [ 332]   40558d:  jle    .-0x1c05 [ 0x403988 ]
+   0.      0.    0.      0.             [ 332]   405593:  cmpb   $0xef,(%rcx)
+   0.      0.    0.      0.             [ 332]   405596:  je     .+0xc94 [ 0x40622a ]
+   0.      0.    0.      0.             [ 271]   40559c:  cmp    $0x7,%rax
+   0.      0.    0.      0.             [ 271]   4055a0:  jle    .-0x1c18 [ 0x403988 ]
+   0.      0.    0.      0.             [ 275]   4055a6:  movabs $0xcfcfcfcfcfcfcfd0,%rax
+   0.004   0.    0.004   0.             [ 273]   4055b0:  mov    (%rcx),%rdx
+   0.010   0.    0.010   0.             [ 276]   4055b3:  movabs $0x8080808080808080,%rdi
+   0.      0.    0.      0.             [ 275]   4055bd:  lea    (%rdx,%rax,1),%rsi
+   0.      0.    0.      0.             [ 274]   4055c1:  movabs $0x4646464646464646,%rax
+   0.      0.    0.      0.             [ 274]   4055cb:  add    %rdx,%rax
+   0.001   0.    0.001   0.             [ 274]   4055ce:  or     %rsi,%rax
+   0.      0.    0.      0.             [ 276]   4055d1:  and    %rdi,%rax
+   0.001   0.    0.001   0.             [ 276]   4055d4:  je     .-0x1c69 [ 0x40396b ]
+   0.      0.    0.      0.             [ 276]   4055da:  tzcnt  %rax,%rax
+   0.      0.    0.      0.             [ 277]   4055df:  sar    $0x3,%eax
+   0.005   0.    0.005   0.             [ 277]   4055e2:  je     .-0x1c5a [ 0x403988 ]
+   0.001   0.    0.001   0.             [ 279]   4055e8:  mov    $0x8,%esi
+   0.      0.    0.      0.             [ 279]   4055ed:  sub    %eax,%esi
+   0.      0.    0.      0.             [ 279]   4055ef:  shl    $0x3,%esi
+   0.      0.    0.      0.             [ 279]   4055f2:  shlx   %rsi,%rdx,%rdx
+   0.001   0.    0.001   0.             [ 280]   4055f7:  lea    0x0(,%rax,8),%esi
+   0.      0.    0.      0.             [ 285]   4055fe:  cltq
+   0.001   0.    0.001   0.             [ 280]   405600:  shrx   %rsi,%r15,%rsi
+   0.002   0.    0.002   0.             [ 279]   405605:  or     %rsi,%rdx
+   0.      0.    0.      0.             [ 285]   405608:  add    %rcx,%rax
+   0.001   0.    0.001   0.             [ 281]   40560b:  sub    %r15,%rdx
+   0.      0.    0.      0.             [ 282]   40560e:  lea    (%rdx,%rdx,4),%rsi
+   0.      0.    0.      0.             [ 282]   405612:  shr    $0x8,%rdx
+   0.      0.    0.      0.             [ 282]   405616:  lea    (%rdx,%rsi,2),%rsi
+   0.001   0.    0.001   0.             [ 282]   40561a:  and    %r13,%rsi
+   0.      0.    0.      0.             [ 283]   40561d:  imul   $0x64,%rsi,%rdx
+   0.004   0.    0.004   0.             [ 283]   405621:  shr    $0x10,%rsi
+   0.      0.    0.      0.             [ 283]   405625:  add    %rsi,%rdx
+   0.      0.    0.      0.             [ 283]   405628:  and    %r14,%rdx
+   0.      0.    0.      0.             [ 284]   40562b:  imul   $0x2710,%rdx,%rsi
+   0.      0.    0.      0.             [ 284]   405632:  shr    $0x20,%rdx
+   0.002   0.    0.002   0.             [ 284]   405636:  lea    (%rsi,%rdx,1),%edi
+   0.      0.    0.      0.             [ 284]   405639:  mov    %rdi,0x58(%rsp)
+   0.      0.    0.      0.             [ 323]   40563e:  cmp    %rax,%rbx
+   0.      0.    0.      0.             [ 323]   405641:  je     .+0xc69 [ 0x4062aa ]
+   0.      0.    0.      0.             [ 323]   405647:  lea    0x1(%rax),%rcx
+   0.004   0.    0.004   0.             [ 323]   40564b:  cmpb   $0x2c,(%rax)
+   0.      0.    0.      0.             [ 323]   40564e:  jne    .-0x2068 [ 0x4035e6 ]
+   0.      0.    0.      0.             [ 109]   405654:  mov    $0x80000000,%edi
+   0.      0.    0.      0.             [ 109]   405659:  movl   $0xffffffff,0x74(%rsp)
+   0.      0.    0.      0.             [ 109]   405661:  and    %rdi,0x68(%rsp)
+   0.001   0.    0.001   0.             [ 110]   405666:  cmp    %rbx,%rcx
+   0.      0.    0.      0.             [ 110]   405669:  jae    .-0x204f [ 0x40361a ]
+   0.001   0.    0.001   0.             [ 110]   40566f:  cmpb   $0x22,0x1(%rax)
+   0.      0.    0.      0.             [ 110]   405673:  movzbl 0x6b(%rsp),%edx
+   0.001   0.    0.001   0.             [ 110]   405678:  sete   %sil
+   0.007   0.    0.007   0.             [ 110]   40567c:  shl    $0x7,%esi
+   0.      0.    0.      0.             [ 110]   40567f:  and    $0x7f,%edx
+   0.      0.    0.      0.             [ 110]   405682:  or     %esi,%edx
+   0.      0.    0.      0.             [ 110]   405684:  mov    %dl,0x6b(%rsp)
+   0.      0.    0.      0.             [ 111]   405688:  test   %dl,%dl
+   0.      0.    0.      0.             [ 111]   40568a:  jns    .+0xae0 [ 0x40616a ]
+   0.      0.    0.      0.             [ 112]   405690:  lea    0x2(%rax),%r8
+   0.      0.    0.      0.             [  91]   405694:  mov    %rbx,%rdx
+   0.002   0.    0.002   0.             [ 113]   405697:  xor    %edi,%edi
+   0.005   0.    0.005   0.             [ 112]   405699:  mov    %r8,%r9
+   0.002   0.    0.002   0.             [ 113]   40569c:  mov    %r8,0x60(%rsp)
+   0.      0.    0.      0.             [  91]   4056a1:  sub    %r9,%rdx
+   0.      0.    0.      0.             [  91]   4056a4:  cmp    $0x1f,%rdx
+   0.      0.    0.      0.             [  91]   4056a8:  jle    .+0x41f [ 0x405ac7 ]
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/avx2intrin.h_OuAb1vYBIb9>
+   0.012   0.    0.012   0.             [ 233]   4056ae:  vpcmpeqb (%r9),%ymm0,%ymm1
+   0.021   0.    0.021   0.             [ 435]   4056b3:  vpmovmskb %ymm1,%edx
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [  94]   4056b7:  test   %edx,%edx
+   0.011   0.    0.011   0.             [  94]   4056b9:  je     .+0x44f [ 0x405b08 ]
+   0.      0.    0.      0.             [  94]   4056bf:  tzcnt  %edx,%edx
+   0.013   0.    0.013   0.             [  94]   4056c3:  add    %r9,%rdx
+   0.      0.    0.      0.             [ 116]   4056c6:  lea    0x1(%rdx),%rcx
+   0.001   0.    0.001   0.             [ 117]   4056ca:  mov    %rdx,%rsi
+   0.      0.    0.      0.             [ 117]   4056cd:  sub    %r9,%rsi
+   0.      0.    0.      0.             [ 117]   4056d0:  add    %edi,%esi
+   0.003   0.    0.003   0.             [ 118]   4056d2:  cmp    %rbx,%rcx
+   0.      0.    0.      0.             [ 118]   4056d5:  jae    .-0x21a5 [ 0x403530 ]
+   0.      0.    0.      0.             [ 118]   4056db:  cmpb   $0x22,0x1(%rdx)
+   0.004   0.    0.004   0.             [ 118]   4056df:  je     .+0x3d1 [ 0x405ab0 ]
+   0.004   0.    0.004   0.             [ 123]   4056e5:  sub    %r8,%rdx
+   0.002   0.    0.002   0.             [ 123]   4056e8:  mov    %esi,0x6c(%rsp)
+   0.      0.    0.      0.             [ 123]   4056ec:  mov    0x68(%rsp),%esi
+   0.084   0.    0.084   0.             [ 123]   4056f0:  mov    %edx,%edi
+   0.      0.    0.      0.             [ 124]   4056f2:  and    $0x7fffffff,%edx
+   0.      0.    0.      0.             [ 123]   4056f8:  and    $0x7fffffff,%edi
+   0.002   0.    0.002   0.             [ 123]   4056fe:  and    $0x80000000,%esi
+   0.004   0.    0.004   0.             [ 123]   405704:  or     %edi,%esi
+   0.      0.    0.      0.             [ 123]   405706:  mov    %esi,0x68(%rsp)
+   0.      0.    0.      0.             [  66]   40570a:  cmp    $0x10,%rdx
+   0.      0.    0.      0.             [  66]   40570e:  jg     .+0x4d2 [ 0x405be0 ]
+   0.      0.    0.      0.             [  71]   405714:  mov    $0x10,%esi
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/emmintrin.h_OuAb1vYBIb9>
+   0.002   0.    0.002   0.             [ 707]   405719:  vmovdqu 0x2(%rax),%xmm1
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.001   0.    0.001   0.             [  71]   40571e:  sub    %rdx,%rsi
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/emmintrin.h_OuAb1vYBIb9>
+   0.      0.    0.      0.             [1318]   405721:  vpand  0x4083d0(%rsi),%xmm1,%xmm1
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/smmintrin.h_OuAb1vYBIb9>
+   0.      0.    0.      0.             [ 843]   405729:  mov    $0x1505,%esi
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/emmintrin.h_OuAb1vYBIb9>
+   0.001   0.    0.001   0.             [ 238]   40572e:  vmovq  %xmm1,%rdx
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/smmintrin.h_OuAb1vYBIb9>
+   0.      0.    0.      0.             [ 457]   405733:  vpextrq $0x1,%xmm1,%rax
+   0.006   0.    0.006   0.             [ 843]   405739:  crc32  %rdx,%rsi
+   0.003   0.    0.003   0.             [ 843]   40573f:  crc32  %rax,%rsi
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [ 142]   405745:  mov    %esi,%eax
+   0.      0.    0.      0.             [ 142]   405747:  mov    %esi,%edx
+   0.      0.    0.      0.             [ 124]   405749:  mov    %esi,0x70(%rsp)
+   0.      0.    0.      0.             [ 124]   40574d:  shr    $0x16,%edx
+   0.001   0.    0.001   0.             [ 142]   405750:  shr    $0xb,%eax
+   0.003   0.    0.003   0.             [ 142]   405753:  xor    %edx,%eax
+   0.      0.    0.      0.             [ 142]   405755:  xor    %esi,%eax
+   0.002   0.    0.002   0.             [ 386]   405757:  mov    %eax,%edx
+   0.      0.    0.      0.             [ 385]   405759:  and    $0x7f,%eax
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/array_u5U-FtMArR9>
+   0.001   0.    0.001   0.             [ 211]   40575c:  imul   $0x81e,%rax,%rax
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.001   0.    0.001   0.             [ 386]   405763:  shr    $0x7,%edx
+   0.      0.    0.      0.             [ 386]   405766:  and    $0x7ff,%edx
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/array_u5U-FtMArR9>
+   0.001   0.    0.001   0.             [ 211]   40576c:  lea    0x10(%rdx,%rax,1),%rax
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.004   0.    0.004   0.             [ 386]   405771:  prefetcht2 0x40b200(,%rax,4)
+   0.024   0.    0.024   0.             [ 387]   405779:  cmp    %rcx,%rbx
+   0.      0.    0.      0.             [ 387]   40577c:  je     .-0x227b [ 0x403501 ]
+   0.      0.    0.      0.             [ 323]   405782:  lea    0x1(%rcx),%rdi
+   0.      0.    0.      0.             [ 323]   405786:  cmpb   $0x2c,(%rcx)
+   0.      0.    0.      0.             [ 323]   405789:  jne    .-0x2288 [ 0x403501 ]
+   0.      0.    0.      0.             [ 323]   40578f:  andl   $0x80000000,0x88(%rsp)
+   0.      0.    0.      0.             [ 110]   40579a:  cmp    %rbx,%rdi
+   0.      0.    0.      0.             [ 110]   40579d:  jae    .-0x2500 [ 0x40329d ]
+   0.      0.    0.      0.             [ 110]   4057a3:  movzbl 0x1(%rcx),%edx
+   0.002   0.    0.002   0.             [ 110]   4057a7:  movzbl 0x8b(%rsp),%eax
+   0.002   0.    0.002   0.             [ 110]   4057af:  cmp    $0x22,%dl
+   0.      0.    0.      0.             [ 110]   4057b2:  sete   %r8b
+   0.007   0.    0.007   0.             [ 110]   4057b6:  and    $0x7f,%eax
+   0.      0.    0.      0.             [ 110]   4057b9:  shl    $0x7,%r8d
+   0.      0.    0.      0.             [ 110]   4057bd:  or     %r8d,%eax
+   0.      0.    0.      0.             [ 110]   4057c0:  mov    %al,0x8b(%rsp)
+   0.      0.    0.      0.             [ 111]   4057c7:  test   %al,%al
+   0.      0.    0.      0.             [ 111]   4057c9:  jns    .+0x977 [ 0x406140 ]
+   0.      0.    0.      0.             [ 112]   4057cf:  add    $0x2,%rcx
+   0.004   0.    0.004   0.             [ 113]   4057d3:  mov    %rbx,%rax
+   0.      0.    0.      0.             [ 112]   4057d6:  xor    %edi,%edi
+   0.005   0.    0.005   0.             [  91]   4057d8:  sub    %rcx,%rax
+   0.      0.    0.      0.             [  91]   4057db:  cmp    $0x1f,%rax
+   0.      0.    0.      0.             [  91]   4057df:  jle    .+0x290 [ 0x405a6f ]
+   0.008   0.    0.008   0.             [  92]   4057e5:  vpcmpeqb (%rcx),%ymm0,%ymm1
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/avx2intrin.h_OuAb1vYBIb9>
+   0.007   0.    0.007   0.             [ 435]   4057e9:  vpmovmskb %ymm1,%eax
+   0.      0.    0.      0.             [ 435]   4057ed:  test   %eax,%eax
+   0.005   0.    0.005   0.             [ 435]   4057ef:  je     .+0x351 [ 0x405b40 ]
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [  94]   4057f5:  tzcnt  %eax,%eax
+   0.005   0.    0.005   0.             [  94]   4057f9:  add    %rcx,%rax
+   0.      0.    0.      0.             [  94]   4057fc:  lea    0x1(%rax),%r8
+   0.002   0.    0.002   0.             [ 117]   405800:  mov    %rax,%rdx
+   0.      0.    0.      0.             [ 117]   405803:  sub    %rcx,%rdx
+   0.001   0.    0.001   0.             [ 117]   405806:  add    %edi,%edx
+   0.      0.    0.      0.             [ 118]   405808:  mov    %r8,%rdi
+   0.      0.    0.      0.             [ 118]   40580b:  cmp    %rbx,%r8
+   0.      0.    0.      0.             [ 118]   40580e:  jae    .+0xa93 [ 0x4062a1 ]
+   0.      0.    0.      0.             [ 118]   405814:  cmpb   $0x22,0x1(%rax)
+   0.009   0.    0.009   0.             [ 118]   405818:  je     .+0x240 [ 0x405a58 ]
+   0.003   0.    0.003   0.             [ 118]   40581e:  mov    %edx,0x50(%rsp)
+   0.006   0.    0.006   0.             [ 323]   405822:  lea    0x1(%rdi),%r8
+   0.      0.    0.      0.             [ 323]   405826:  cmpb   $0x2c,(%rdi)
+   0.008   0.    0.008   0.             [ 323]   405829:  jne    .-0x257d [ 0x4032ac ]
+   0.      0.    0.      0.             [ 323]   40582f:  mov    %rbx,%rax
+   0.      0.    0.      0.             [ 323]   405832:  sub    %r8,%rax
+   0.      0.    0.      0.             [ 271]   405835:  cmp    $0x7,%rax
+   0.      0.    0.      0.             [ 271]   405839:  jle    .-0x24b2 [ 0x403387 ]
+   0.      0.    0.      0.             [ 272]   40583f:  movabs $0xcfcfcfcfcfcfcfd0,%rax
+   0.002   0.    0.002   0.             [ 273]   405849:  mov    0x1(%rdi),%rdx
+   0.001   0.    0.001   0.             [ 276]   40584d:  movabs $0x8080808080808080,%r10
+   0.001   0.    0.001   0.             [ 275]   405857:  lea    (%rdx,%rax,1),%rcx
+   0.002   0.    0.002   0.             [ 274]   40585b:  movabs $0x4646464646464646,%rax
+   0.001   0.    0.001   0.             [ 274]   405865:  add    %rdx,%rax
+   0.005   0.    0.005   0.             [ 274]   405868:  or     %rcx,%rax
+   0.001   0.    0.001   0.             [ 276]   40586b:  and    %r10,%rax
+   0.      0.    0.      0.             [ 276]   40586e:  je     .-0x2527 [ 0x403347 ]
+   0.      0.    0.      0.             [ 276]   405874:  tzcnt  %rax,%rax
+   0.      0.    0.      0.             [ 277]   405879:  sar    $0x3,%eax
+   0.004   0.    0.004   0.             [ 277]   40587c:  je     .-0x24f5 [ 0x403387 ]
+   0.004   0.    0.004   0.             [ 279]   405882:  mov    $0x8,%ecx
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/stl_vector.h_iTD5DGmF6Kf>
+   0.001   0.    0.001   0.             [1119]   405887:  mov    0x30(%rsp),%r10
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.001   0.    0.001   0.             [ 279]   40588c:  sub    %eax,%ecx
+   0.002   0.    0.002   0.             [ 279]   40588e:  shl    $0x3,%ecx
+   0.003   0.    0.003   0.             [ 279]   405891:  shlx   %rcx,%rdx,%rdx
+   0.001   0.    0.001   0.             [ 280]   405896:  lea    0x0(,%rax,8),%ecx
+   0.      0.    0.      0.             [ 285]   40589d:  cltq
+   0.      0.    0.      0.             [ 280]   40589f:  shrx   %rcx,%r15,%rcx
+   0.005   0.    0.005   0.             [ 279]   4058a4:  or     %rcx,%rdx
+   0.003   0.    0.003   0.             [ 281]   4058a7:  sub    %r15,%rdx
+   0.004   0.    0.004   0.             [ 282]   4058aa:  mov    %rdx,%rcx
+   0.003   0.    0.003   0.             [ 282]   4058ad:  lea    (%rdx,%rdx,4),%rdx
+   0.      0.    0.      0.             [ 282]   4058b1:  shr    $0x8,%rcx
+   0.      0.    0.      0.             [ 282]   4058b5:  lea    (%rcx,%rdx,2),%rcx
+   0.001   0.    0.001   0.             [ 282]   4058b9:  and    %r13,%rcx
+   0.009   0.    0.009   0.             [ 283]   4058bc:  mov    %rcx,%rdx
+   0.002   0.    0.002   0.             [ 283]   4058bf:  imul   $0x64,%rcx,%rcx
+   0.001   0.    0.001   0.             [ 283]   4058c3:  shr    $0x10,%rdx
+   0.005   0.    0.005   0.             [ 283]   4058c7:  add    %rcx,%rdx
+   0.003   0.    0.003   0.             [ 283]   4058ca:  and    %r14,%rdx
+   0.004   0.    0.004   0.             [ 284]   4058cd:  mov    %rdx,%rcx
+   0.      0.    0.      0.             [ 284]   4058d0:  imul   $0x2710,%rdx,%rdx
+   0.002   0.    0.002   0.             [ 284]   4058d7:  shr    $0x20,%rcx
+   0.005   0.    0.005   0.             [ 284]   4058db:  add    %rdx,%rcx
+   0.002   0.    0.002   0.             [ 285]   4058de:  lea    (%r8,%rax,1),%rdx
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/stl_vector.h_iTD5DGmF6Kf>
+   0.      0.    0.      0.             [1119]   4058e2:  mov    0x8(%r10),%rax
+   0.002   0.    0.002   0.             [1119]   4058e6:  mov    (%r10),%r8
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.001   0.    0.001   0.             [ 284]   4058e9:  mov    %ecx,%edi
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/stl_vector.h_iTD5DGmF6Kf>
+   0.      0.    0.      0.             [1117]   4058eb:  mov    %rax,0x28(%rsp)
+   0.      0.    0.      0.             [1119]   4058f0:  sub    %r8,%rax
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.001   0.    0.001   0.             [ 392]   4058f3:  cmp    %rax,%rdi
+   0.003   0.    0.003   0.             [ 392]   4058f6:  jae    .+0x927 [ 0x40621d ]
+   0.      0.    0.      0.             [ 392]   4058fc:  mov    %ecx,0x40(%rsp)
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/stl_vector.h_iTD5DGmF6Kf>
+   0.      0.    0.      0.             [1280]   405900:  prefetcht2 (%r8,%rdi,1)
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.067   0.    0.067   0.             [ 394]   405905:  cmp    %rdx,%rbx
+   0.001   0.    0.001   0.             [ 394]   405908:  je     .-0x21d7 [ 0x403731 ]
+   0.      0.    0.      0.             [ 323]   40590e:  lea    0x1(%rdx),%rcx
+   0.001   0.    0.001   0.             [ 323]   405912:  cmpb   $0x2c,(%rdx)
+   0.      0.    0.      0.             [ 323]   405915:  jne    .-0x21e4 [ 0x403731 ]
+   0.      0.    0.      0.             [ 323]   40591b:  cmp    %rbx,%rcx
+   0.      0.    0.      0.             [ 323]   40591e:  jae    .-0x2235 [ 0x4036e9 ]
+   0.      0.    0.      0.             [ 301]   405924:  cmpb   $0x2d,0x1(%rdx)
+   0.      0.    0.      0.             [ 301]   405928:  je     .+0x250 [ 0x405b78 ]
+   0.      0.    0.      0.             [ 303]   40592e:  movabs $0xfefefefefefefeff,%rax
+   0.003   0.    0.003   0.             [ 303]   405938:  mov    0x1(%rdx),%rdi
+   0.      0.    0.      0.             [ 304]   40593c:  movabs $0x2e2e2e2e2e2e2e2e,%rdx
+   0.007   0.    0.007   0.             [ 304]   405946:  xor    %rdi,%rdx
+   0.002   0.    0.002   0.             [ 305]   405949:  add    %rax,%rdx
+   0.      0.    0.      0.             [ 305]   40594c:  movabs $0xd1d1d1d1d1d1d1d1,%rax
+   0.      0.    0.      0.             [ 305]   405956:  xor    %rdi,%rax
+   0.      0.    0.      0.             [ 305]   405959:  and    %rax,%rdx
+   0.      0.    0.      0.             [ 306]   40595c:  movabs $0x8080808080808080,%rax
+   0.      0.    0.      0.             [ 306]   405966:  and    %rax,%rdx
+   0.001   0.    0.001   0.             [ 306]   405969:  je     .-0x2311 [ 0x403658 ]
+   0.      0.    0.      0.             [ 301]   40596f:  movb   $0x0,0x48(%rsp)
+   0.008   0.    0.008   0.             [ 306]   405974:  tzcnt  %rdx,%rdx
+   0.001   0.    0.001   0.             [ 307]   405979:  mov    %rbx,%rax
+   0.      0.    0.      0.             [ 306]   40597c:  sar    $0x3,%edx
+   0.      0.    0.      0.             [ 307]   40597f:  sub    %rcx,%rax
+   0.      0.    0.      0.             [ 307]   405982:  lea    -0x1(%rdx),%r9d
+   0.      0.    0.      0.             [ 307]   405986:  cmp    $0x4,%r9d
+   0.001   0.    0.001   0.             [ 307]   40598a:  ja     .-0x232d [ 0x40365d ]
+   0.      0.    0.      0.             [ 307]   405990:  lea    0x3(%rdx),%r10d
+   0.001   0.    0.001   0.             [ 307]   405994:  cmp    %rax,%r10
+   0.001   0.    0.001   0.             [ 307]   405997:  jg     .-0x22e0 [ 0x4036b7 ]
+   0.      0.    0.      0.             [ 308]   40599d:  lea    0x0(,%rdx,8),%r9d
+   0.002   0.    0.002   0.             [ 308]   4059a5:  mov    $0x1,%eax
+   0.003   0.    0.003   0.             [ 314]   4059aa:  add    %r10,%rcx
+   0.003   0.    0.003   0.             [ 308]   4059ad:  shlx   %r9,%rax,%rax
+   0.      0.    0.      0.             [ 309]   4059b2:  mov    %rdi,%r9
+   0.      0.    0.      0.             [ 309]   4059b5:  shr    $0x8,%r9
+   0.      0.    0.      0.             [ 309]   4059b9:  mov    %r9,0x38(%rsp)
+   0.      0.    0.      0.             [ 309]   4059be:  mov    %rax,%r9
+   0.      0.    0.      0.             [ 308]   4059c1:  sub    $0x1,%rax
+   0.008   0.    0.008   0.             [ 309]   4059c5:  and    %rdi,%rax
+   0.      0.    0.      0.             [ 309]   4059c8:  mov    $0x6,%edi
+   0.001   0.    0.001   0.             [ 309]   4059cd:  neg    %r9
+   0.      0.    0.      0.             [ 309]   4059d0:  and    0x38(%rsp),%r9
+   0.002   0.    0.002   0.             [ 309]   4059d5:  sub    %edx,%edi
+   0.      0.    0.      0.             [ 309]   4059d7:  or     %r9,%rax
+   0.      0.    0.      0.             [ 309]   4059da:  shl    $0x3,%edi
+   0.      0.    0.      0.             [ 309]   4059dd:  shlx   %rdi,%rax,%rax
+   0.004   0.    0.004   0.             [ 310]   4059e2:  movabs $0xf0f0f0f0f0f0f0f,%rdi
+   0.      0.    0.      0.             [ 310]   4059ec:  and    %rdi,%rax
+   0.      0.    0.      0.             [ 311]   4059ef:  lea    (%rax,%rax,4),%rdx
+   0.      0.    0.      0.             [ 311]   4059f3:  shr    $0x8,%rax
+   0.003   0.    0.003   0.             [ 311]   4059f7:  lea    (%rax,%rdx,2),%rdx
+   0.001   0.    0.001   0.             [ 311]   4059fb:  and    %r13,%rdx
+   0.      0.    0.      0.             [ 312]   4059fe:  imul   $0x64,%rdx,%rax
+   0.001   0.    0.001   0.             [ 312]   405a02:  shr    $0x10,%rdx
+   0.006   0.    0.006   0.             [ 312]   405a06:  add    %rdx,%rax
+   0.      0.    0.      0.             [ 312]   405a09:  and    %r14,%rax
+   0.002   0.    0.002   0.             [ 313]   405a0c:  imul   $0x2710,%rax,%rdx
+   0.002   0.    0.002   0.             [ 313]   405a13:  shr    $0x20,%rax
+   0.007   0.    0.007   0.             [ 313]   405a17:  add    %edx,%eax
+   0.      0.    0.      0.             [ 313]   405a19:  mov    %eax,%eax
+   0.      0.    0.      0.             [ 314]   405a1b:  cmpb   $0x0,0x48(%rsp)
+   0.      0.    0.      0.             [ 314]   405a20:  jne    .+0x1b0 [ 0x405bd0 ]
+   0.001   0.    0.001   0.             [ 314]   405a26:  cmp    %rbx,%rcx
+   0.      0.    0.      0.             [ 314]   405a29:  jae    .-0x52c [ 0x4054fd ]
+   0.      0.    0.      0.             [ 326]   405a2f:  movzbl (%rcx),%edx
+   0.002   0.    0.002   0.             [ 326]   405a32:  cmp    $0xd,%dl
+   0.      0.    0.      0.             [ 326]   405a35:  jne    .-0x545 [ 0x4054f0 ]
+   0.      0.    0.      0.             [ 326]   405a3b:  lea    0x1(%rcx),%rdi
+   0.004   0.    0.004   0.             [ 327]   405a3f:  cmp    %rbx,%rdi
+   0.004   0.    0.004   0.             [ 327]   405a42:  jae    .+0x857 [ 0x406299 ]
+   0.      0.    0.      0.             [ 328]   405a48:  movzbl 0x1(%rcx),%edx
+   0.005   0.    0.005   0.             [ 328]   405a4c:  mov    %rdi,%rcx
+   0.      0.    0.      0.             [ 328]   405a4f:  jmp    .-0x55f [ 0x4054f0 ]
+   0.      0.    0.      0.             [ 328]   405a54:  nopl   0x0(%rax)
+   0.001   0.    0.001   0.             [ 119]   405a58:  lea    0x2(%rax),%rcx
+   0.007   0.    0.007   0.             [  91]   405a5c:  mov    %rbx,%rax
+   0.      0.    0.      0.             [ 119]   405a5f:  lea    0x1(%rdx),%edi
+   0.      0.    0.      0.             [  91]   405a62:  sub    %rcx,%rax
+   0.001   0.    0.001   0.             [  91]   405a65:  cmp    $0x1f,%rax
+   0.      0.    0.      0.             [  91]   405a69:  jg     .-0x284 [ 0x4057e5 ]
+   0.      0.    0.      0.             [  91]   405a6f:  mov    %rcx,%rax
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/emmintrin.h_OuAb1vYBIb9>
+   0.      0.    0.      0.             [1342]   405a72:  vmovdqa 0x2976(%rip),%xmm1        # 0x297e
+   0.      0.    0.      0.             [1342]   405a7a:  mov    %rbx,%rdx
+   0.      0.    0.      0.             [1342]   405a7d:  sub    %rax,%rdx
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [  98]   405a80:  cmp    $0xf,%rdx
+   0.      0.    0.      0.             [  98]   405a84:  jle    .+0x830 [ 0x4062b4 ]
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/emmintrin.h_OuAb1vYBIb9>
+   0.      0.    0.      0.             [1462]   405a8a:  vpcmpeqb (%rax),%xmm1,%xmm2
+   0.      0.    0.      0.             [1462]   405a8e:  vpmovmskb %xmm2,%edx
+   0.      0.    0.      0.             [1462]   405a92:  test   %edx,%edx
+   0.      0.    0.      0.             [1462]   405a94:  je     .-0x21d3 [ 0x4038c1 ]
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [ 101]   405a9a:  tzcnt  %edx,%edx
+   0.      0.    0.      0.             [ 101]   405a9e:  add    %rdx,%rax
+   0.      0.    0.      0.             [ 116]   405aa1:  lea    0x1(%rax),%r8
+   0.      0.    0.      0.             [ 116]   405aa5:  jmp    .-0x2a5 [ 0x405800 ]
+   0.      0.    0.      0.             [ 116]   405aaa:  nopw   0x0(%rax,%rax,1)
+   0.001   0.    0.001   0.             [ 116]   405ab0:  lea    0x2(%rdx),%r9
+   0.001   0.    0.001   0.             [  91]   405ab4:  mov    %rbx,%rdx
+   0.      0.    0.      0.             [ 119]   405ab7:  lea    0x1(%rsi),%edi
+   0.      0.    0.      0.             [  91]   405aba:  sub    %r9,%rdx
+   0.      0.    0.      0.             [  91]   405abd:  cmp    $0x1f,%rdx
+   0.001   0.    0.001   0.             [  91]   405ac1:  jg     .-0x413 [ 0x4056ae ]
+   0.      0.    0.      0.             [  91]   405ac7:  mov    %r9,%rdx
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/emmintrin.h_OuAb1vYBIb9>
+   0.      0.    0.      0.             [1342]   405aca:  vmovdqa 0x291e(%rip),%xmm1        # 0x2926
+   0.      0.    0.      0.             [1342]   405ad2:  mov    %rbx,%rcx
+   0.      0.    0.      0.             [1342]   405ad5:  sub    %rdx,%rcx
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [  98]   405ad8:  cmp    $0xf,%rcx
+   0.      0.    0.      0.             [  98]   405adc:  jle    .+0x7dd [ 0x4062b9 ]
+   0.      0.    0.      0.             [ 100]   405ae2:  vpcmpeqb (%rdx),%xmm1,%xmm2
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/emmintrin.h_OuAb1vYBIb9>
+   0.      0.    0.      0.             [1462]   405ae6:  vpmovmskb %xmm2,%ecx
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [ 101]   405aea:  test   %ecx,%ecx
+   0.      0.    0.      0.             [ 101]   405aec:  je     .-0x21de [ 0x40390e ]
+   0.      0.    0.      0.             [ 101]   405af2:  tzcnt  %ecx,%ecx
+   0.      0.    0.      0.             [ 101]   405af6:  add    %rcx,%rdx
+   0.      0.    0.      0.             [ 116]   405af9:  lea    0x1(%rdx),%rcx
+   0.      0.    0.      0.             [ 116]   405afd:  jmp    .-0x433 [ 0x4056ca ]
+   0.      0.    0.      0.             [ 116]   405b02:  nopw   0x0(%rax,%rax,1)
+   0.      0.    0.      0.             [  95]   405b08:  lea    0x20(%r9),%rdx
+   0.      0.    0.      0.             [  95]   405b0c:  mov    %rbx,%rcx
+   0.      0.    0.      0.             [  95]   405b0f:  sub    %rdx,%rcx
+   0.      0.    0.      0.             [  91]   405b12:  cmp    $0x1f,%rcx
+   0.      0.    0.      0.             [  91]   405b16:  jle    .-0x4c [ 0x405aca ]
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/avx2intrin.h_OuAb1vYBIb9>
+   0.      0.    0.      0.             [ 231]   405b18:  vpcmpeqb (%rdx),%ymm0,%ymm1
+   0.      0.    0.      0.             [ 435]   405b1c:  vpmovmskb %ymm1,%ecx
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [  94]   405b20:  test   %ecx,%ecx
+   0.      0.    0.      0.             [  94]   405b22:  je     .+0x5e0 [ 0x406102 ]
+   0.      0.    0.      0.             [  94]   405b28:  tzcnt  %ecx,%ecx
+   0.      0.    0.      0.             [  94]   405b2c:  add    %rcx,%rdx
+   0.      0.    0.      0.             [ 116]   405b2f:  lea    0x1(%rdx),%rcx
+   0.      0.    0.      0.             [ 116]   405b33:  jmp    .-0x469 [ 0x4056ca ]
+   0.      0.    0.      0.             [ 116]   405b38:  nopl   0x0(%rax,%rax,1)
+   0.      0.    0.      0.             [  95]   405b40:  lea    0x20(%rcx),%rax
+   0.003   0.    0.003   0.             [  91]   405b44:  mov    %rbx,%rdx
+   0.001   0.    0.001   0.             [  91]   405b47:  sub    %rax,%rdx
+   0.      0.    0.      0.             [  91]   405b4a:  cmp    $0x1f,%rdx
+   0.      0.    0.      0.             [  91]   405b4e:  jle    .-0xdc [ 0x405a72 ]
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/avxintrin.h_OuAb1vYBIb9>
+   0.003   0.    0.003   0.             [ 871]   405b54:  vpcmpeqb (%rax),%ymm0,%ymm1
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/avx2intrin.h_OuAb1vYBIb9>
+   0.004   0.    0.004   0.             [ 435]   405b58:  vpmovmskb %ymm1,%edx
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [  94]   405b5c:  test   %edx,%edx
+   0.003   0.    0.003   0.             [  94]   405b5e:  je     .+0x5c2 [ 0x406120 ]
+   0.      0.    0.      0.             [  94]   405b64:  tzcnt  %edx,%edx
+   0.001   0.    0.001   0.             [  94]   405b68:  add    %rdx,%rax
+   0.      0.    0.      0.             [ 116]   405b6b:  lea    0x1(%rax),%r8
+   0.001   0.    0.001   0.             [ 116]   405b6f:  jmp    .-0x36f [ 0x405800 ]
+   0.      0.    0.      0.             [ 116]   405b74:  nopl   0x0(%rax)
+   0.      0.    0.      0.             [ 302]   405b78:  mov    0x2(%rdx),%rdi
+   0.001   0.    0.001   0.             [ 302]   405b7c:  lea    0x2(%rdx),%rcx
+   0.      0.    0.      0.             [ 305]   405b80:  movb   $0x1,0x48(%rsp)
+   0.      0.    0.      0.             [ 304]   405b85:  movabs $0x2e2e2e2e2e2e2e2e,%rdx
+   0.      0.    0.      0.             [ 305]   405b8f:  movabs $0xfefefefefefefeff,%rax
+   0.      0.    0.      0.             [ 304]   405b99:  xor    %rdi,%rdx
+   0.      0.    0.      0.             [ 305]   405b9c:  add    %rax,%rdx
+   0.      0.    0.      0.             [ 305]   405b9f:  movabs $0xd1d1d1d1d1d1d1d1,%rax
+   0.      0.    0.      0.             [ 305]   405ba9:  xor    %rdi,%rax
+   0.      0.    0.      0.             [ 305]   405bac:  and    %rax,%rdx
+   0.      0.    0.      0.             [ 306]   405baf:  movabs $0x8080808080808080,%rax
+   0.      0.    0.      0.             [ 306]   405bb9:  and    %rax,%rdx
+   0.001   0.    0.001   0.             [ 306]   405bbc:  jne    .-0x248 [ 0x405974 ]
+   0.      0.    0.      0.             [ 306]   405bc2:  jmp    .-0x2565 [ 0x40365d ]
+   0.      0.    0.      0.             [ 306]   405bc7:  nopw   0x0(%rax,%rax,1)
+   0.      0.    0.      0.             [ 314]   405bd0:  neg    %rax
+   0.      0.    0.      0.             [ 314]   405bd3:  jmp    .-0x1ad [ 0x405a26 ]
+   0.      0.    0.      0.             [ 314]   405bd8:  nopl   0x0(%rax,%rax,1)
+   0.      0.    0.      0.             [ 314]   405be0:  mov    $0x1505,%esi
+   0.001   0.    0.001   0.             [  81]   405be5:  lea    -0x10(%rdx),%rdi
+   0.      0.    0.      0.             [  81]   405be9:  lea    -0x8(%rdx),%r9
+   0.      0.    0.      0.             [  77]   405bed:  crc32q 0x2(%rax),%rsi
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/smmintrin.h_OuAb1vYBIb9>
+   0.      0.    0.      0.             [ 843]   405bf4:  crc32q 0xa(%rax),%rsi
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [  76]   405bfb:  cmp    $0x7,%rdi
+   0.002   0.    0.002   0.             [  76]   405bff:  ja     .+0x5e1 [ 0x4061e0 ]
+   0.      0.    0.      0.             [  76]   405c05:  shr    $0x3,%rdx
+   0.      0.    0.      0.             [  76]   405c09:  lea    -0x1(%rdx),%rax
+   0.      0.    0.      0.             [  76]   405c0d:  neg    %rax
+   0.      0.    0.      0.             [  76]   405c10:  shl    $0x3,%rax
+   0.      0.    0.      0.             [  76]   405c14:  lea    (%r9,%rax,1),%rdx
+   0.001   0.    0.001   0.             [  76]   405c18:  sub    %rax,%r8
+   0.      0.    0.      0.             [  83]   405c1b:  and    $0x4,%r9d
+   0.      0.    0.      0.             [  83]   405c1f:  lea    0x8(%r8),%rax
+   0.002   0.    0.002   0.             [  83]   405c23:  jne    .+0x5ad [ 0x4061d0 ]
+   0.      0.    0.      0.             [  83]   405c29:  test   $0x2,%dl
+   0.001   0.    0.001   0.             [  83]   405c2c:  je     .+0xc [ 0x405c38 ]
+   0.      0.    0.      0.             [  84]   405c2e:  crc32w (%rax),%esi
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/smmintrin.h_OuAb1vYBIb9>
+   0.008   0.    0.008   0.             [ 830]   405c34:  add    $0x2,%rax
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [  85]   405c38:  and    $0x1,%edx
+   0.004   0.    0.004   0.             [  85]   405c3b:  je     .+0x7 [ 0x405c42 ]
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/smmintrin.h_OuAb1vYBIb9>
+   0.      0.    0.      0.             [ 822]   405c3d:  crc32b (%rax),%esi
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.002   0.    0.002   0.             [ 126]   405c42:  mov    %esi,%eax
+   0.005   0.    0.005   0.             [ 142]   405c44:  mov    %esi,%edx
+   0.      0.    0.      0.             [ 124]   405c46:  mov    %esi,0x70(%rsp)
+   0.001   0.    0.001   0.             [ 142]   405c4a:  shr    $0xb,%edx
+   0.      0.    0.      0.             [ 142]   405c4d:  shr    $0x16,%eax
+   0.001   0.    0.001   0.             [ 142]   405c50:  xor    %edx,%eax
+   0.      0.    0.      0.             [ 142]   405c52:  xor    %esi,%eax
+   0.      0.    0.      0.             [ 386]   405c54:  mov    %eax,%edx
+   0.      0.    0.      0.             [ 386]   405c56:  shr    $0x7,%eax
+   0.001   0.    0.001   0.             [ 385]   405c59:  and    $0x7f,%edx
+   0.      0.    0.      0.             [ 386]   405c5c:  and    $0x7ff,%eax
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/array_u5U-FtMArR9>
+   0.      0.    0.      0.             [ 211]   405c61:  imul   $0x81e,%rdx,%rdx
+   0.      0.    0.      0.             [ 211]   405c68:  lea    0x10(%rdx,%rax,1),%rax
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.002   0.    0.002   0.             [ 386]   405c6d:  prefetcht2 0x40b200(,%rax,4)
+   0.011   0.    0.011   0.             [ 386]   405c75:  jmp    .-0x4fc [ 0x405779 ]
+   0.      0.    0.      0.             [ 386]   405c7a:  nopw   0x0(%rax,%rax,1)
+   0.      0.    0.      0.             [ 386]   405c80:  mov    %r12d,%edi
+   0.      0.    0.      0.             [ 386]   405c83:  mov    0x28(%rsp),%rsi
+   0.      0.    0.      0.             [ 386]   405c88:  mov    %rcx,%r12
+   0.      0.    0.      0.             [ 386]   405c8b:  xor    %r14d,%r14d
+   0.      0.    0.      0.             [ 386]   405c8e:  mov    %edi,%eax
+   0.      0.    0.      0.             [ 386]   405c90:  lea    0xe8(%rsp),%r13
+   0.      0.    0.      0.             [ 386]   405c98:  mov    %rax,0x50(%rsp)
+   0.      0.    0.      0.             [ 386]   405c9d:  jmp    .+0x103 [ 0x405da0 ]
+   0.      0.    0.      0.             [ 386]   405ca2:  nopw   0x0(%rax,%rax,1)
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace>
+   0.      0.    0.      0.             [ 404]   405ca8:  imul   $0x2078,%r11,%rax     <-- join.cpp:209 
+   0.004   0.    0.004   0.             [ 404]   405caf:  movzwl %si,%esi              <-- join.cpp:209 
+   0.      0.    0.      0.             [ 404]   405cb2:  lea    -0x3(%rsi,%rsi,2),%r9 <-- join.cpp:209 
+   0.002   0.    0.002   0.             [ 404]   405cb7:  shl    $0x4,%r9              <-- join.cpp:209 
+   0.001   0.    0.001   0.             [ 404]   405cbb:  add    0x40d240(%rax),%r9    <-- join.cpp:209 
+   0.011   0.    0.011   0.             [ 404]   405cc2:  imul   $0x38,%r14,%rax       <-- join.cpp:210 
+   0.      0.    0.      0.             [ 404]   405cc6:  mov    0xf0(%rsp,%rax,1),%eax <-- join.cpp:210 
+   0.      0.    0.      0.             [ 404]   405ccd:  and    $0x7fffffff,%eax      <-- join.cpp:210 
+   0.      0.    0.      0.             [ 404]   405cd2:  cmp    $0x10,%eax            <-- join.cpp:150 
+   0.      0.    0.      0.             [ 404]   405cd5:  ja     .+0x2db [ 0x405fb0 ]  <-- join.cpp:150 
+   0.      0.    0.      0.             [ 404]   405cdb:  mov    0x0(%r13),%rdx        <-- emmintrin.h:707 
+   0.      0.    0.      0.             [ 404]   405cdf:  vmovdqu (%r9),%xmm0          <-- emmintrin.h:707 
+## 0.274   0.    0.274   0.             [ 404]   405ce4:  mov    $0x10,%esi            <-- join.cpp:154 
+   0.002   0.    0.002   0.             [ 404]   405ce9:  sub    %eax,%esi             <-- join.cpp:154 
+   0.      0.    0.      0.             [ 404]   405ceb:  mov    $0xffff,%eax          <-- join.cpp:154 
+   0.004   0.    0.004   0.             [ 404]   405cf0:  vpcmpeqb (%rdx),%xmm0,%xmm0  <-- emmintrin.h:1342 
+   0.007   0.    0.007   0.             [ 404]   405cf4:  shrx   %esi,%eax,%eax        <-- join.cpp:154 
+   0.      0.    0.      0.             [ 404]   405cf9:  vpmovmskb %xmm0,%edx         <-- emmintrin.h:1462 
+   0.001   0.    0.001   0.             [ 404]   405cfd:  andn   %eax,%edx,%eax        <-- join.cpp:155 
+   0.012   0.    0.012   0.             [ 404]   405d02:  jne    .+0x144 [ 0x405e46 ]  <-- join.cpp:155 
+   0.005   0.    0.005   0.             [ 404]   405d08:  mov    %r15d,%eax            <-- stl_pair.h:901 
+   0.      0.    0.      0.             [ 404]   405d0b:  mov    %r15d,%edx            <-- atomic_base.h:661 
+   0.      0.    0.      0.             [ 404]   405d0e:  shr    $0x6,%eax             <-- join.cpp:266 
+   0.      0.    0.      0.             [ 404]   405d11:  and    $0x3f,%edx            <-- atomic_base.h:661 
+   0.      0.    0.      0.             [ 404]   405d14:  add    $0x2,%eax             <-- atomic_base.h:661 
+   0.      0.    0.      0.             [ 404]   405d17:  lock bts %rdx,(%r9,%rax,8)   <-- atomic_base.h:661 
+   0.124   0.    0.124   0.             [ 404]   405d1d:  setae  %dl                   <-- join.cpp:266 
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/stl_vector.h_iTD5DGmF6Kf>
+   0.      0.    0.      0.             [1264]   405d20:  mov    0x58(%rsp),%rax
+                                   399.             for (unsigned i = 0; i < count; ++i) {
+                                   400.                 const Pending &r = batch[i];
+                                   401.                 unsigned group = r.group < regions.size() && regions[r.group] != UINT8_MAX
+                                   402.                                      ? regions[r.group] : unmatched;
+                                   403.                 w.groups[group].add(r.id, r.amount, r.name, r.note_len,
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.001   0.    0.001   0.             [ 403]   405d25:  mov    %r15d,%r15d
+   0.      0.    0.      0.             [ 403]   405d28:  mov    0x18(%r13),%esi
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/stl_vector.h_iTD5DGmF6Kf>
+   0.      0.    0.      0.             [1264]   405d2c:  shl    $0x6,%r15
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [ 403]   405d30:  mov    0x20(%r13),%rcx
+   0.001   0.    0.001   0.             [ 403]   405d34:  mov    -0x8(%r13),%r8
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/stl_vector.h_iTD5DGmF6Kf>
+   0.015   0.    0.015   0.             [1264]   405d38:  add    %rax,%r15
+   0.      0.    0.      0.             [1264]   405d3b:  mov    0xc(%r13),%edi
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [ 341]   405d3f:  mov    (%r15),%rax
+   0.002   0.    0.002   0.             [ 341]   405d42:  test   %rax,%rax
+   0.      0.    0.      0.             [ 341]   405d45:  je     .+0x4c2 [ 0x406207 ]
+   0.      0.    0.      0.             [ 341]   405d4b:  cmp    0x28(%r15),%rcx
+   0.001   0.    0.001   0.             [ 341]   405d4f:  jl     .+0x4c5 [ 0x406214 ]
+   0.      0.    0.      0.             [ 342]   405d55:  cmp    0x30(%r15),%rcx
+   0.      0.    0.      0.             [ 342]   405d59:  jg     .+0x4b2 [ 0x40620b ]
+   0.      0.    0.      0.             [ 343]   405d5f:  add    $0x1,%rax
+   0.      0.    0.      0.             [ 348]   405d63:  movzbl %dl,%edx
+   0.004   0.    0.004   0.             [ 344]   405d66:  add    %r8,0x8(%r15)
+   0.      0.    0.      0.             [ 399]   405d6a:  add    $0x1,%r14
+   0.      0.    0.      0.             [ 343]   405d6e:  mov    %rax,(%r15)
+   0.      0.    0.      0.             [ 345]   405d71:  mov    %edi,%eax
+   0.      0.    0.      0.             [ 345]   405d73:  add    %rcx,0x20(%r15)
+   0.      0.    0.      0.             [ 346]   405d77:  add    %rax,0x10(%r15)
+   0.001   0.    0.001   0.             [ 347]   405d7b:  mov    %esi,%eax
+   0.003   0.    0.003   0.             [ 348]   405d7d:  add    %edx,0x38(%r15)
+   0.004   0.    0.004   0.             [ 347]   405d81:  add    %rax,0x18(%r15)
+   0.004   0.    0.004   0.             [ 348]   405d85:  cmp    0x50(%rsp),%r14
+   0.      0.    0.      0.             [ 348]   405d8a:  je     .+0x29e [ 0x406028 ]
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/stl_vector.h_iTD5DGmF6Kf>
+   0.      0.    0.      0.             [1119]   405d90:  mov    0x30(%rsp),%rax
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.001   0.    0.001   0.             [ 399]   405d95:  add    $0x38,%r13
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/stl_vector.h_iTD5DGmF6Kf>
+   0.      0.    0.      0.             [1119]   405d99:  mov    0x8(%rax),%rsi
+   0.001   0.    0.001   0.             [1119]   405d9d:  mov    (%rax),%r8
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/array_u5U-FtMArR9>
+   0.      0.    0.      0.             [ 208]   405da0:  mov    0x28(%r13),%eax
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/stl_vector.h_iTD5DGmF6Kf>
+   0.      0.    0.      0.             [1117]   405da4:  sub    %r8,%rsi
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.004   0.    0.004   0.             [ 402]   405da7:  cmp    %rsi,%rax
+   0.004   0.    0.004   0.             [ 402]   405daa:  jae    .+0x16e [ 0x405f18 ]
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/stl_vector.h_iTD5DGmF6Kf>
+   0.      0.    0.      0.             [1282]   405db0:  movzbl (%r8,%rax,1),%r15d
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.007   0.    0.007   0.             [ 401]   405db5:  cmp    $0xff,%r15b
+   0.      0.    0.      0.             [ 401]   405db9:  je     .+0x15f [ 0x405f18 ]
+   0.      0.    0.      0.             [ 403]   405dbf:  mov    0x20(%rsp),%rax
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace>
+   0.001   0.    0.001   0.             [ 404]   405dc4:  mov    0x10(%r13),%r8d       <-- join.cpp:262 
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/stl_vector.h_iTD5DGmF6Kf>
+   0.      0.    0.      0.             [1264]   405dc8:  mov    (%rax),%rax
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace>
+   0.      0.    0.      0.             [ 404]   405dcb:  mov    %r8d,%ecx             <-- join.cpp:142 
+   0.      0.    0.      0.             [ 404]   405dce:  shr    $0x16,%ecx            <-- join.cpp:142 
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/stl_vector.h_iTD5DGmF6Kf>
+   0.      0.    0.      0.             [1264]   405dd1:  mov    %rax,0x58(%rsp)
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace>
+   0.002   0.    0.002   0.             [ 404]   405dd6:  mov    %r8d,%eax             <-- join.cpp:262 
+   0.004   0.    0.004   0.             [ 404]   405dd9:  shr    $0xb,%eax             <-- join.cpp:262 
+   0.      0.    0.      0.             [ 404]   405ddc:  xor    %eax,%ecx             <-- join.cpp:142 
+   0.      0.    0.      0.             [ 404]   405dde:  imul   $0x38,%r14,%rax       <-- join.cpp:144 
+   0.      0.    0.      0.             [ 404]   405de2:  xor    %r8d,%ecx             <-- join.cpp:142 
+   0.      0.    0.      0.             [ 404]   405de5:  and    $0xfffe0000,%r8d      <-- join.cpp:142 
+   0.      0.    0.      0.             [ 404]   405dec:  mov    %ecx,%r11d            <-- join.cpp:262 
+   0.      0.    0.      0.             [ 404]   405def:  and    $0x7f,%r11d           <-- join.cpp:262 
+   0.      0.    0.      0.             [ 404]   405df3:  mov    0xf0(%rsp,%rax,1),%eax <-- array:210 
+   0.      0.    0.      0.             [ 404]   405dfa:  imul   $0x2078,%r11,%r10     <-- array:211 
+   0.007   0.    0.007   0.             [ 404]   405e01:  and    $0x7fffffff,%eax      <-- join.cpp:144 
+   0.      0.    0.      0.             [ 404]   405e06:  add    $0x40b200,%r10        <-- array:211 
+   0.      0.    0.      0.             [ 404]   405e0d:  cmp    $0x10,%eax            <-- join.cpp:144 
+   0.      0.    0.      0.             [ 404]   405e10:  ja     .+0x170 [ 0x405f80 ]  <-- join.cpp:144 
+   0.      0.    0.      0.             [ 404]   405e16:  shr    $0x7,%ecx             <-- join.cpp:144 
+   0.      0.    0.      0.             [ 404]   405e19:  and    $0x7ff,%ecx           <-- join.cpp:200 
+   0.      0.    0.      0.             [ 404]   405e1f:  mov    0x40(%r10,%rcx,4),%edx <-- join.cpp:201 
+   0.009   0.    0.009   0.             [ 404]   405e24:  mov    %edx,%esi             <-- join.cpp:204 
+   0.      0.    0.      0.             [ 404]   405e26:  and    $0xfff,%si            <-- join.cpp:204 
+   0.001   0.    0.001   0.             [ 404]   405e2b:  je     .+0xd5 [ 0x405f00 ]   <-- join.cpp:204 
+   0.      0.    0.      0.             [ 404]   405e31:  shl    $0xc,%eax             <-- join.cpp:204 
+   0.004   0.    0.004   0.             [ 404]   405e34:  or     %eax,%r8d             <-- join.cpp:144 
+   0.      0.    0.      0.             [ 404]   405e37:  and    $0xfffff000,%edx      <-- join.cpp:208 
+   0.001   0.    0.001   0.             [ 404]   405e3d:  cmp    %edx,%r8d             <-- join.cpp:208 
+   0.001   0.    0.001   0.             [ 404]   405e40:  je     .-0x198 [ 0x405ca8 ]  <-- join.cpp:208 
+   0.      0.    0.      0.             [ 404]   405e46:  movq   $0x7ff,0x48(%rsp)     <-- join.cpp:208 
+   0.006   0.    0.006   0.             [ 404]   405e4f:  add    $0x1,%rcx             <-- join.cpp:213 
+   0.      0.    0.      0.             [ 404]   405e53:  and    $0x7ff,%ecx           <-- join.cpp:213 
+   0.      0.    0.      0.             [ 404]   405e59:  mov    0x40(%r10,%rcx,4),%eax <-- join.cpp:202 
+   0.001   0.    0.001   0.             [ 404]   405e5e:  mov    %eax,%edx             <-- join.cpp:203 
+   0.      0.    0.      0.             [ 404]   405e60:  and    $0xfff,%dx            <-- join.cpp:203 
+   0.      0.    0.      0.             [ 404]   405e65:  je     .+0x9b [ 0x405f00 ]   <-- join.cpp:204 
+   0.      0.    0.      0.             [ 404]   405e6b:  and    $0xfffff000,%eax      <-- join.cpp:208 
+   0.002   0.    0.002   0.             [ 404]   405e70:  cmp    %r8d,%eax             <-- join.cpp:208 
+   0.      0.    0.      0.             [ 404]   405e73:  jne    .+0x6d [ 0x405ee0 ]   <-- join.cpp:208 
+   0.      0.    0.      0.             [ 404]   405e75:  movzwl %dx,%eax              <-- join.cpp:209 
+   0.002   0.    0.002   0.             [ 404]   405e78:  imul   $0x2078,%r11,%rsi     <-- join.cpp:209 
+   0.      0.    0.      0.             [ 404]   405e7f:  lea    -0x3(%rax,%rax,2),%r9 <-- join.cpp:209 
+   0.      0.    0.      0.             [ 404]   405e84:  imul   $0x38,%r14,%rax       <-- join.cpp:150 
+   0.      0.    0.      0.             [ 404]   405e88:  shl    $0x4,%r9              <-- join.cpp:209 
+   0.      0.    0.      0.             [ 404]   405e8c:  add    0x40d240(%rsi),%r9    <-- join.cpp:209 
+   0.002   0.    0.002   0.             [ 404]   405e93:  mov    0xf0(%rsp,%rax,1),%eax <-- join.cpp:150 
+   0.      0.    0.      0.             [ 404]   405e9a:  and    $0x7fffffff,%eax      <-- join.cpp:150 
+   0.001   0.    0.001   0.             [ 404]   405e9f:  cmp    $0x10,%eax            <-- join.cpp:150 
+   0.      0.    0.      0.             [ 404]   405ea2:  ja     .+0x1ee [ 0x406090 ]  <-- join.cpp:150 
+   0.      0.    0.      0.             [ 404]   405ea8:  mov    0x0(%r13),%rdx        <-- emmintrin.h:705 
+   0.      0.    0.      0.             [ 404]   405eac:  vmovdqu (%r9),%xmm0          <-- emmintrin.h:707 
+   0.058   0.    0.058   0.             [ 404]   405eb1:  mov    $0x10,%esi            <-- join.cpp:154 
+   0.      0.    0.      0.             [ 404]   405eb6:  sub    %eax,%esi             <-- join.cpp:154 
+   0.      0.    0.      0.             [ 404]   405eb8:  mov    $0xffff,%eax          <-- join.cpp:154 
+   0.      0.    0.      0.             [ 404]   405ebd:  vpcmpeqb (%rdx),%xmm0,%xmm0  <-- emmintrin.h:1342 
+   0.002   0.    0.002   0.             [ 404]   405ec1:  shrx   %esi,%eax,%eax        <-- join.cpp:154 
+   0.      0.    0.      0.             [ 404]   405ec6:  vpmovmskb %xmm0,%edx         <-- emmintrin.h:1462 
+   0.001   0.    0.001   0.             [ 404]   405eca:  andn   %eax,%edx,%eax        <-- join.cpp:155 
+   0.002   0.    0.002   0.             [ 404]   405ecf:  je     .-0x1c7 [ 0x405d08 ]  <-- join.cpp:155 
+   0.      0.    0.      0.             [ 404]   405ed5:  data16 cs nopw 0x0(%rax,%rax,1) <-- join.cpp:155 
+   0.      0.    0.      0.             [ 404]   405ee0:  add    $0x1,%rcx             <-- join.cpp:213 
+   0.003   0.    0.003   0.             [ 404]   405ee4:  and    $0x7ff,%ecx           <-- join.cpp:213 
+   0.      0.    0.      0.             [ 404]   405eea:  subq   $0x1,0x48(%rsp)       <-- join.cpp:201 
+   0.      0.    0.      0.             [ 404]   405ef0:  jne    .-0x97 [ 0x405e59 ]   <-- join.cpp:201 
+   0.      0.    0.      0.             [ 404]   405ef6:  cs nopw 0x0(%rax,%rax,1)     <-- join.cpp:201 
+   0.      0.    0.      0.             [ 404]   405f00:  mov    %r15d,%edx            <-- join.cpp:201 
+   0.      0.    0.      0.             [ 404]   405f03:  mov    %r13,%rsi             <-- join.cpp:201 
+   0.      0.    0.      0.             [ 404]   405f06:  mov    %r10,%rdi             <-- join.cpp:201 
+   0.      0.    0.      0.             [ 404]   405f09:  vzeroupper                   <-- join.cpp:201 
+   0.      0.    0.058   0.             [ 404]   405f0c:  call   SharedNames::slow_first(SharedNames::Shard&, Field const&, unsigned int) [ 0x406320, .+0x414] <-- join.cpp:201 
+   0.      0.    0.      0.             [ 404]   405f11:  mov    %eax,%edx             <-- join.cpp:201 
+   0.      0.    0.      0.             [ 404]   405f13:  jmp    .-0x1f3 [ 0x405d20 ]  <-- join.cpp:201 
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/stl_vector.h_iTD5DGmF6Kf>
+   0.      0.    0.      0.             [1264]   405f18:  mov    0x20(%rsp),%rax
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace>
+   0.001   0.    0.001   0.             [ 404]   405f1d:  mov    0x10(%r13),%r8d       <-- join.cpp:262 
+   0.      0.    0.      0.             [ 404]   405f21:  mov    0x4(%rsp),%r15d       <-- join.cpp:262 
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/stl_vector.h_iTD5DGmF6Kf>
+   0.      0.    0.      0.             [1264]   405f26:  mov    (%rax),%rax
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace>
+   0.      0.    0.      0.             [ 404]   405f29:  mov    %r8d,%ecx             <-- join.cpp:142 
+   0.      0.    0.      0.             [ 404]   405f2c:  shr    $0xb,%ecx             <-- join.cpp:142 
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/stl_vector.h_iTD5DGmF6Kf>
+   0.      0.    0.      0.             [1264]   405f2f:  mov    %rax,0x58(%rsp)
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace>
+   0.      0.    0.      0.             [ 404]   405f34:  mov    %r8d,%eax             <-- stl_vector.h:1264 
+   0.      0.    0.      0.             [ 404]   405f37:  shr    $0x16,%eax            <-- stl_vector.h:1264 
+   0.      0.    0.      0.             [ 404]   405f3a:  xor    %eax,%ecx             <-- join.cpp:142 
+   0.      0.    0.      0.             [ 404]   405f3c:  imul   $0x38,%r14,%rax       <-- join.cpp:144 
+   0.      0.    0.      0.             [ 404]   405f40:  xor    %r8d,%ecx             <-- join.cpp:142 
+   0.      0.    0.      0.             [ 404]   405f43:  and    $0xfffe0000,%r8d      <-- join.cpp:142 
+   0.      0.    0.      0.             [ 404]   405f4a:  mov    %ecx,%r11d            <-- join.cpp:262 
+   0.      0.    0.      0.             [ 404]   405f4d:  and    $0x7f,%r11d           <-- join.cpp:262 
+   0.      0.    0.      0.             [ 404]   405f51:  mov    0xf0(%rsp,%rax,1),%eax <-- join.cpp:144 
+   0.      0.    0.      0.             [ 404]   405f58:  imul   $0x2078,%r11,%r10     <-- array:211 
+   0.      0.    0.      0.             [ 404]   405f5f:  and    $0x7fffffff,%eax      <-- join.cpp:144 
+   0.      0.    0.      0.             [ 404]   405f64:  add    $0x40b200,%r10        <-- array:211 
+   0.      0.    0.      0.             [ 404]   405f6b:  cmp    $0x10,%eax            <-- join.cpp:263 
+   0.      0.    0.      0.             [ 404]   405f6e:  jbe    .-0x158 [ 0x405e16 ]  <-- join.cpp:263 
+   0.      0.    0.      0.             [ 404]   405f74:  data16 cs nopw 0x0(%rax,%rax,1) <-- join.cpp:263 
+   0.      0.    0.      0.             [ 404]   405f7f:  nop                          <-- join.cpp:263 
+   0.      0.    0.      0.             [ 404]   405f80:  shr    $0x7,%ecx             <-- join.cpp:144 
+   0.001   0.    0.001   0.             [ 404]   405f83:  and    $0x7ff,%ecx           <-- join.cpp:200 
+   0.      0.    0.      0.             [ 404]   405f89:  mov    0x40(%r10,%rcx,4),%edx <-- atomic_base.h:501 
+   0.      0.    0.      0.             [ 404]   405f8e:  mov    %edx,%esi             <-- join.cpp:204 
+   0.      0.    0.      0.             [ 404]   405f90:  and    $0xfff,%si            <-- join.cpp:204 
+   0.      0.    0.      0.             [ 404]   405f95:  je     .-0x95 [ 0x405f00 ]   <-- join.cpp:204 
+   0.      0.    0.      0.             [ 404]   405f9b:  or     $0x1f000,%r8d         <-- join.cpp:204 
+   0.001   0.    0.001   0.             [ 404]   405fa2:  jmp    .-0x16b [ 0x405e37 ]  <-- join.cpp:144 
+   0.      0.    0.      0.             [ 404]   405fa7:  nopw   0x0(%rax,%rax,1)      <-- join.cpp:144 
+   0.      0.    0.      0.             [ 404]   405fb0:  mov    (%r9),%rdi            <-- join.cpp:157 
+   0.019   0.    0.019   0.             [ 404]   405fb3:  cmp    0x8(%r9),%eax         <-- join.cpp:160 
+   0.      0.    0.      0.             [ 404]   405fb7:  jne    .-0x171 [ 0x405e46 ]  <-- join.cpp:160 
+   0.      0.    0.      0.             [ 404]   405fbd:  mov    0x0(%r13),%rsi        <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   405fc1:  mov    (%rsi),%edx           <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   405fc3:  cmp    %edx,0xc(%r9)         <-- join.cpp:161 
+   0.002   0.    0.002   0.             [ 404]   405fc7:  jne    .-0x181 [ 0x405e46 ]  <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   405fcd:  mov    %r11,0x28(%rsp)       <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   405fd2:  sub    $0x4,%eax             <-- join.cpp:162 
+   0.      0.    0.      0.             [ 404]   405fd5:  add    $0x4,%rsi             <-- join.cpp:162 
+   0.      0.    0.      0.             [ 404]   405fd9:  add    $0x4,%rdi             <-- join.cpp:162 
+   0.      0.    0.      0.             [ 404]   405fdd:  mov    %r10,0x38(%rsp)       <-- join.cpp:162 
+   0.      0.    0.      0.             [ 404]   405fe2:  movslq %eax,%rdx             <-- join.cpp:162 
+   0.      0.    0.      0.             [ 404]   405fe5:  mov    %r8d,0x40(%rsp)       <-- join.cpp:162 
+   0.      0.    0.      0.             [ 404]   405fea:  mov    %rcx,0x48(%rsp)       <-- join.cpp:162 
+   0.001   0.    0.001   0.             [ 404]   405fef:  mov    %r9,0x18(%rsp)        <-- join.cpp:162 
+   0.      0.    0.      0.             [ 404]   405ff4:  vzeroupper                   <-- join.cpp:162 
+   0.      0.    0.062   0.             [ 404]   405ff7:  call   memcmp@plt [ 0x4020a0, .-0x3f57] <-- join.cpp:162 
+   0.      0.    0.      0.             [ 404]   405ffc:  mov    0x48(%rsp),%rcx       <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   406001:  mov    0x40(%rsp),%r8d       <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   406006:  test   %eax,%eax             <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   406008:  mov    0x38(%rsp),%r10       <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   40600d:  mov    0x28(%rsp),%r11       <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   406012:  mov    0x18(%rsp),%r9        <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   406017:  je     .-0x30f [ 0x405d08 ]  <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   40601d:  jmp    .-0x1d7 [ 0x405e46 ]  <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   406022:  nopw   0x0(%rax,%rax,1)      <-- join.cpp:161 
+                                   404.                                     shared.first(r.name, group));
+                                   405.             }
+                                   406.             if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [ 406]   406028:  mov    %r12,%rax
+   0.      0.    0.      0.             [ 406]   40602b:  sub    0x8(%rsp),%rax
+   0.      0.    0.      0.             [ 406]   406030:  cmp    $0xfffff,%rax
+   0.      0.    0.      0.             [ 406]   406036:  jle    .-0xb96 [ 0x4054a0 ]
+   0.      0.    0.      0.             [ 406]   40603c:  movzbl 0x108dbd(%rip),%eax        # 0x108dc4
+   0.      0.    0.      0.             [  44]   406043:  test   %al,%al
+   0.      0.    0.      0.             [  44]   406045:  je     .+0x21a [ 0x40625f ]
+   0.      0.    0.      0.             [  45]   40604b:  mov    0x108db6(%rip),%rax        # 0x108dbd
+   0.      0.    0.      0.             [  45]   406052:  mov    0x8(%rsp),%rdi
+   0.      0.    0.      0.             [  45]   406057:  mov    %rax,%r13
+   0.      0.    0.      0.             [  45]   40605a:  lea    -0x1(%rdi,%rax,1),%rdi
+   0.      0.    0.      0.             [  45]   40605f:  neg    %r13
+   0.      0.    0.      0.             [  45]   406062:  and    %r13,%rdi
+   0.      0.    0.      0.             [  46]   406065:  and    %r12,%r13
+   0.      0.    0.      0.             [  47]   406068:  cmp    %r13,%rdi
+   0.      0.    0.      0.             [  47]   40606b:  jae    .-0xbcb [ 0x4054a0 ]
+   0.      0.    0.      0.             [  48]   406071:  mov    %r13,%rsi
+   0.      0.    0.      0.             [  48]   406074:  mov    $0x4,%edx
+   0.      0.    0.      0.             [  48]   406079:  sub    %rdi,%rsi
+   0.      0.    0.      0.             [  48]   40607c:  vzeroupper
+   0.      0.    0.033   0.             [  48]   40607f:  call   madvise@plt [ 0x402260, .-0x3e1f]
+   0.      0.    0.      0.             [  49]   406084:  mov    %r13,0x8(%rsp)
+   0.      0.    0.      0.             [  49]   406089:  jmp    .-0xbe9 [ 0x4054a0 ]
+   0.      0.    0.      0.             [  49]   40608e:  xchg   %ax,%ax
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace>
+   0.      0.    0.      0.             [ 404]   406090:  mov    (%r9),%rdi            <-- workspace:263 <-- workspace:210 <-- join.cpp:159 
+   0.006   0.    0.006   0.             [ 404]   406093:  cmp    %eax,0x8(%r9)         <-- workspace:263 <-- workspace:210 <-- join.cpp:160 
+   0.      0.    0.      0.             [ 404]   406097:  jne    .-0x1b7 [ 0x405ee0 ]  <-- workspace:263 <-- workspace:210 <-- join.cpp:160 
+   0.      0.    0.      0.             [ 404]   40609d:  mov    0x0(%r13),%rsi        <-- workspace:263 <-- workspace:210 <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   4060a1:  mov    0xc(%r9),%edx         <-- workspace:263 <-- workspace:210 <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   4060a5:  cmp    %edx,(%rsi)           <-- workspace:263 <-- workspace:210 <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   4060a7:  jne    .-0x1c7 [ 0x405ee0 ]  <-- workspace:263 <-- workspace:210 <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   4060ad:  mov    %r11,0x18(%rsp)       <-- workspace:263 <-- workspace:210 <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   4060b2:  sub    $0x4,%eax             <-- workspace:263 <-- workspace:210 <-- join.cpp:162 
+   0.      0.    0.      0.             [ 404]   4060b5:  add    $0x4,%rsi             <-- workspace:263 <-- workspace:210 <-- join.cpp:162 
+   0.      0.    0.      0.             [ 404]   4060b9:  add    $0x4,%rdi             <-- workspace:263 <-- workspace:210 <-- join.cpp:162 
+   0.      0.    0.      0.             [ 404]   4060bd:  mov    %r10,0x28(%rsp)       <-- workspace:263 <-- workspace:210 <-- join.cpp:162 
+   0.      0.    0.      0.             [ 404]   4060c2:  movslq %eax,%rdx             <-- workspace:263 <-- workspace:210 <-- join.cpp:162 
+   0.      0.    0.      0.             [ 404]   4060c5:  mov    %r8d,0x38(%rsp)       <-- workspace:263 <-- workspace:210 <-- join.cpp:162 
+   0.      0.    0.      0.             [ 404]   4060ca:  mov    %rcx,0x40(%rsp)       <-- workspace:263 <-- workspace:210 <-- join.cpp:162 
+   0.      0.    0.      0.             [ 404]   4060cf:  mov    %r9,0x10(%rsp)        <-- workspace:263 <-- workspace:210 <-- join.cpp:162 
+   0.      0.    0.      0.             [ 404]   4060d4:  vzeroupper                   <-- workspace:263 <-- workspace:210 <-- join.cpp:162 
+   0.      0.    0.017   0.             [ 404]   4060d7:  call   memcmp@plt [ 0x4020a0, .-0x4037] <-- workspace:263 <-- workspace:210 <-- join.cpp:162 
+   0.      0.    0.      0.             [ 404]   4060dc:  mov    0x40(%rsp),%rcx       <-- workspace:263 <-- workspace:210 <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   4060e1:  mov    0x38(%rsp),%r8d       <-- workspace:263 <-- workspace:210 <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   4060e6:  test   %eax,%eax             <-- workspace:263 <-- workspace:210 <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   4060e8:  mov    0x28(%rsp),%r10       <-- workspace:263 <-- workspace:210 <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   4060ed:  mov    0x18(%rsp),%r11       <-- workspace:263 <-- workspace:210 <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   4060f2:  jne    .-0x212 [ 0x405ee0 ]  <-- workspace:263 <-- workspace:210 <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   4060f8:  mov    0x10(%rsp),%r9        <-- workspace:263 <-- workspace:210 <-- join.cpp:161 
+   0.      0.    0.      0.             [ 404]   4060fd:  jmp    .-0x3f5 [ 0x405d08 ]  <-- workspace:263 <-- workspace:210 <-- join.cpp:161 
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [ 161]   406102:  add    $0x20,%rdx
+   0.      0.    0.      0.             [  91]   406106:  mov    %rbx,%rcx
+   0.      0.    0.      0.             [  91]   406109:  sub    %rdx,%rcx
+   0.      0.    0.      0.             [  91]   40610c:  cmp    $0x1f,%rcx
+   0.      0.    0.      0.             [  91]   406110:  jg     .-0x5f8 [ 0x405b18 ]
+   0.      0.    0.      0.             [  91]   406116:  jmp    .-0x64c [ 0x405aca ]
+   0.      0.    0.      0.             [  91]   40611b:  nopl   0x0(%rax,%rax,1)
+   0.      0.    0.      0.             [  91]   406120:  add    $0x20,%rax
+   0.      0.    0.      0.             [  91]   406124:  mov    %rbx,%rdx
+   0.      0.    0.      0.             [  91]   406127:  sub    %rax,%rdx
+   0.      0.    0.      0.             [  91]   40612a:  cmp    $0x1f,%rdx
+   0.      0.    0.      0.             [  91]   40612e:  jg     .-0x5da [ 0x405b54 ]
+   0.      0.    0.      0.             [  91]   406134:  jmp    .-0x6c2 [ 0x405a72 ]
+   0.      0.    0.      0.             [  91]   406139:  nopl   0x0(%rax)
+   0.      0.    0.      0.             [  91]   406140:  cmp    $0x2c,%dl
+   0.      0.    0.      0.             [  91]   406143:  ja     .-0x2bda [ 0x403569 ]
+   0.      0.    0.      0.             [  91]   406149:  movabs $0x100000002400,%rax
+   0.      0.    0.      0.             [  91]   406153:  bt     %rdx,%rax
+   0.      0.    0.      0.             [  91]   406157:  jae    .-0x2bee [ 0x403569 ]
+   0.      0.    0.      0.             [ 111]   40615d:  movl   $0x0,0x50(%rsp)
+   0.      0.    0.      0.             [ 111]   406165:  jmp    .-0x943 [ 0x405822 ]
+   0.      0.    0.      0.             [ 130]   40616a:  movzbl 0x1(%rax),%edx
+   0.      0.    0.      0.             [ 129]   40616e:  mov    %rcx,0x60(%rsp)
+   0.      0.    0.      0.             [ 130]   406173:  cmp    $0x2c,%dl
+   0.      0.    0.      0.             [ 130]   406176:  ja     .+0x11e [ 0x406294 ]
+   0.      0.    0.      0.             [ 130]   40617c:  movabs $0x100000002400,%rsi
+   0.      0.    0.      0.             [ 130]   406186:  bt     %rdx,%rsi
+   0.      0.    0.      0.             [ 130]   40618a:  jae    .-0x2eaf [ 0x4032db ]
+   0.      0.    0.      0.             [ 134]   406190:  andl   $0x80000000,0x68(%rsp)
+   0.      0.    0.      0.             [ 135]   406198:  xor    %edx,%edx
+   0.      0.    0.      0.             [  67]   40619a:  mov    $0x10,%esi
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/emmintrin.h_OuAb1vYBIb9>
+   0.      0.    0.      0.             [ 707]   40619f:  vmovdqu 0x1(%rax),%xmm1
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [  71]   4061a4:  sub    %rdx,%rsi
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/emmintrin.h_OuAb1vYBIb9>
+   0.      0.    0.      0.             [1318]   4061a7:  vpand  0x4083d0(%rsi),%xmm1,%xmm1
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/smmintrin.h_OuAb1vYBIb9>
+   0.      0.    0.      0.             [ 843]   4061af:  mov    $0x1505,%esi
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/emmintrin.h_OuAb1vYBIb9>
+   0.      0.    0.      0.             [ 238]   4061b4:  vmovq  %xmm1,%rdx
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/smmintrin.h_OuAb1vYBIb9>
+   0.      0.    0.      0.             [ 457]   4061b9:  vpextrq $0x1,%xmm1,%rax
+   0.      0.    0.      0.             [ 843]   4061bf:  crc32  %rdx,%rsi
+   0.      0.    0.      0.             [ 843]   4061c5:  crc32  %rax,%rsi
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [  73]   4061cb:  jmp    .-0xa86 [ 0x405745 ]
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/smmintrin.h_OuAb1vYBIb9>
+   0.      0.    0.      0.             [ 836]   4061d0:  crc32l 0x8(%r8),%esi
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.001   0.    0.001   0.             [  83]   4061d7:  lea    0xc(%r8),%rax
+   0.      0.    0.      0.             [  83]   4061db:  jmp    .-0x5b2 [ 0x405c29 ]
+   0.      0.    0.      0.             [  83]   4061e0:  mov    %rdx,%rdi
+   0.      0.    0.      0.             [  80]   4061e3:  lea    0x12(%rax),%r10
+   0.      0.    0.      0.             [  80]   4061e7:  and    $0x7ffffff8,%edi
+   0.      0.    0.      0.             [  80]   4061ed:  lea    0x2(%rax,%rdi,1),%rax
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace/work/public-research/short-pgo.er/archives/smmintrin.h_OuAb1vYBIb9>
+   0.      0.    0.      0.             [ 843]   4061f2:  crc32q (%r10),%rsi
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [  80]   4061f8:  add    $0x8,%r10
+   0.      0.    0.      0.             [  76]   4061fc:  cmp    %rax,%r10
+   0.      0.    0.      0.             [  76]   4061ff:  je     .-0x5fa [ 0x405c05 ]
+   0.      0.    0.      0.             [  76]   406205:  jmp    .-0x13 [ 0x4061f2 ]
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace>
+   0.      0.    0.      0.             [ 403]   406207:  mov    %rcx,0x28(%r15)       <-- join.cpp:341 
+   0.      0.    0.      0.             [ 403]   40620b:  mov    %rcx,0x30(%r15)       <-- join.cpp:342 
+   0.      0.    0.      0.             [ 403]   40620f:  jmp    .-0x4b0 [ 0x405d5f ]  <-- join.cpp:342 
+   0.      0.    0.      0.             [ 403]   406214:  mov    %rcx,0x28(%r15)       <-- join.cpp:341 
+   0.      0.    0.      0.             [ 403]   406218:  jmp    .-0x4c3 [ 0x405d55 ]  <-- join.cpp:341 
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [ 392]   40621d:  movl   $0xffffffff,0x40(%rsp)
+   0.      0.    0.      0.             [ 392]   406225:  jmp    .-0x920 [ 0x405905 ]
+   0.      0.    0.      0.             [ 332]   40622a:  cmpb   $0xbb,0x1(%rcx)
+   0.      0.    0.      0.             [ 332]   40622e:  jne    .-0xc92 [ 0x40559c ]
+   0.      0.    0.      0.             [ 333]   406234:  cmpb   $0xbf,0x2(%rcx)
+   0.      0.    0.      0.             [ 333]   406238:  jne    .-0xc9c [ 0x40559c ]
+   0.      0.    0.      0.             [ 333]   40623e:  add    $0x3,%rcx
+   0.      0.    0.      0.             [ 271]   406242:  mov    %rbx,%rax
+   0.      0.    0.      0.             [ 271]   406245:  sub    %rcx,%rax
+   0.      0.    0.      0.             [ 271]   406248:  jmp    .-0xcac [ 0x40559c ]
+   0.      0.    0.      0.             [ 271]   40624d:  vzeroupper
+                                   407.         }
+                                   408.     } catch (...) { w.error = std::current_exception(); }
+                                   409. }
+   0.      0.    0.      0.             [ 409]   406250:  lea    -0x28(%rbp),%rsp
+   0.      0.    0.      0.             [ 409]   406254:  pop    %rbx
+   0.      0.    0.      0.             [ 409]   406255:  pop    %r12
+   0.      0.    0.      0.             [ 409]   406257:  pop    %r13
+   0.      0.    0.      0.             [ 409]   406259:  pop    %r14
+   0.      0.    0.      0.             [ 409]   40625b:  pop    %r15
+   0.      0.    0.      0.             [ 409]   40625d:  pop    %rbp
+   0.      0.    0.      0.             [ 409]   40625e:  ret
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0], instructions from source file /workspace>
+   0.      0.    0.      0.             [ 406]   40625f:  mov    $0x50ee00,%edi        <-- discard_consumed join.cpp:44 
+   0.      0.    0.      0.             [ 406]   406264:  vzeroupper                   <-- discard_consumed join.cpp:44 
+   0.      0.    0.      0.             [ 406]   406267:  call   __cxa_guard_acquire@plt [ 0x402350, .-0x3f17] <-- discard_consumed join.cpp:44 
+   0.      0.    0.      0.             [ 406]   40626c:  test   %eax,%eax             <-- discard_consumed join.cpp:44 
+   0.      0.    0.      0.             [ 406]   40626e:  je     .-0x223 [ 0x40604b ]  <-- discard_consumed join.cpp:44 
+   0.      0.    0.      0.             [ 406]   406274:  mov    $0x1e,%edi            <-- discard_consumed join.cpp:44 
+   0.      0.    0.      0.             [ 406]   406279:  call   sysconf@plt [ 0x402120, .-0x4159] <-- discard_consumed join.cpp:44 
+   0.      0.    0.      0.             [ 406]   40627e:  mov    $0x50ee00,%edi        <-- discard_consumed join.cpp:44 
+   0.      0.    0.      0.             [ 406]   406283:  mov    %rax,0x108b7e(%rip)        # 0x108b85 <-- discard_consumed join.cpp:44 
+   0.      0.    0.      0.             [ 406]   40628a:  call   __cxa_guard_release@plt [ 0x402110, .-0x417a] <-- discard_consumed join.cpp:44 
+   0.      0.    0.      0.             [ 406]   40628f:  jmp    .-0x244 [ 0x40604b ]  <-- discard_consumed join.cpp:44 
+   0.      0.    0.      0.             [ 406]   406294:  jmp    .-0x2fb9 [ 0x4032db ] <-- discard_consumed join.cpp:44 
+                                        <Function: parse_range(char const*, char const*, std::vector<unsigned char, std::allocator<unsigned char> > const&, unsigned int, Worker&, SharedNames&) [clone .constprop.0]>
+   0.      0.    0.      0.             [  44]   406299:  mov    %rdi,%rcx
+   0.      0.    0.      0.             [  44]   40629c:  jmp    .-0xd9f [ 0x4054fd ]
+   0.      0.    0.      0.             [  44]   4062a1:  mov    %edx,0x50(%rsp)
+   0.      0.    0.      0.             [  44]   4062a5:  jmp    .-0x3002 [ 0x4032a3 ]
+   0.      0.    0.      0.             [  44]   4062aa:  jmp    .-0x2cc4 [ 0x4035e6 ]
+   0.      0.    0.      0.             [  44]   4062af:  jmp    .-0x2e4d [ 0x403462 ]
+   0.      0.    0.      0.             [  44]   4062b4:  jmp    .-0x29da [ 0x4038da ]
+   0.      0.    0.      0.             [  44]   4062b9:  jmp    .-0x2996 [ 0x403923 ]
+                                   410. 
+                                   411. int main() {
+                                   412.     try {
+                                   413.         File lookup("/workspace/work/pgo-data/regions.csv");
+                                   414.         const char *p = lookup.data, *end = p + lookup.size;
+                                   415.         const char *header = "region_id,country\n";
+                                   416.         if (end - p < 18 || memcmp(p, header, 18)) throw std::runtime_error("regions header");
+                                   417.         p += 18;
+                                   418.         std::vector<uint8_t> regions(1000000, UINT8_MAX);
+                                   419.         std::array<int16_t, 17576> code_index;
+                                   420.         code_index.fill(-1);
+                                   421.         std::vector<std::string> country;
+                                   422.         while (p < end) {
+                                   423.             uint64_t id = number(p, end);
+                                   424.             comma(p, end);
+                                   425.             if (end - p < 3) throw std::runtime_error("short country");
+                                   426.             int code = ((p[0] - 'A') * 26 + p[1] - 'A') * 26 + p[2] - 'A';
+                                   427.             if (code < 0 || code >= 17576) throw std::runtime_error("bad country");
+                                   428.             if (code_index[code] == -1) {
+                                   429.                 code_index[code] = static_cast<int16_t>(country.size());
+                                   430.                 country.emplace_back(p, 3);
+                                   431.             }
+                                   432.             if (id >= regions.size()) throw std::runtime_error("lookup id out of range");
+                                   433.             regions[id] = static_cast<uint8_t>(code_index[code]);
+                                   434.             p += 3;
+                                   435.             newline(p, end);
+                                   436.         }
+                                   437.         if (country.size() > 255) throw std::runtime_error("too many countries");
+                                   438.         (void)madvise(const_cast<char *>(lookup.data), lookup.size, MADV_DONTNEED);
+                                   439.         const unsigned unmatched = static_cast<unsigned>(country.size());
+                                   440.         File records("/workspace/work/pgo-data/records.csv");
+                                   441.         p = records.data;
+                                   442.         end = p + records.size;
+                                   443.         bom(p, end);
+                                   444.         const char *rh = "id,name,note,region_id,amount";
+                                   445.         if (end - p < 29 || memcmp(p, rh, 29)) throw std::runtime_error("records header");
+                                   446.         p += 29;
+                                   447.         newline(p, end);
+                                   448.         const char *record_start = p;
+                                   449.         unsigned threads = end - p < (1 << 20) ? 1 : 6;
+                                   450.         std::vector<const char *> cuts(threads + 1);
+                                   451.         cuts[0] = record_start;
+                                   452.         cuts[threads] = end;
+                                   453.         if (threads > 1) {
+                                   454.             // Generated notes contain no digits; LF followed by an id and comma certifies a record boundary.
+                                   455.             for (unsigned i = 1; i < threads; ++i) {
+                                   456.                 const char *q = record_start + (end - record_start) * i / threads;
+                                   457.                 while (q < end) {
+                                   458.                     const char *lf = static_cast<const char *>(memchr(q, '\n', end - q));
+                                   459.                     if (!lf) { q = end; break; }
+                                   460.                     const char *candidate = lf + 1;
+                                   461.                     const char *digit = candidate;
+                                   462.                     if (end - digit >= 3 && static_cast<unsigned char>(digit[0]) == 0xef &&
+                                   463.                         static_cast<unsigned char>(digit[1]) == 0xbb &&
+                                   464.                         static_cast<unsigned char>(digit[2]) == 0xbf) digit += 3;
+                                   465.                     const char *first = digit;
+                                   466.                     while (digit < end && *digit >= '0' && *digit <= '9') ++digit;
+                                   467.                     if (digit != first && digit < end && *digit == ',') {
+                                   468.                         q = candidate;
+                                   469.                         break;
+                                   470.                     }
+                                   471.                     q = candidate;
+                                   472.                 }
+                                   473.                 cuts[i] = q;
+                                   474.             }
+                                   475.         }
+                                   476.         static SharedNames shared;
+                                   477.         std::vector<Worker> workers;
+                                   478.         workers.reserve(threads);
+                                   479.         for (unsigned i = 0; i < threads; ++i) workers.emplace_back(unmatched + 1);
+                                   480.         std::vector<std::thread> jobs;
+                                   481.         for (unsigned i = 0; i < threads; ++i)
+                                   482.             jobs.emplace_back([&, i] { parse_range(cuts[i], cuts[i + 1], regions, unmatched, workers[i], shared); });
+                                   483.         for (auto &job : jobs) job.join();
+                                   484.         for (const auto &w : workers) if (w.error) std::rethrow_exception(w.error);
+                                   485.         std::vector<Group> groups(unmatched + 1);
+                                   486.         for (const Worker &w : workers) for (unsigned g = 0; g <= unmatched; ++g) {
+                                   487.             const Group &src = w.groups[g];
+                                   488.             if (!src.count) continue;
+                                   489.             Group &dst = groups[g];
+                                   490.             if (!dst.count || src.min < dst.min) dst.min = src.min;
+                                   491.             if (!dst.count || src.max > dst.max) dst.max = src.max;
+                                   492.             dst.count += src.count;
+                                   493.             dst.id_sum += src.id_sum;
+                                   494.             dst.sum += src.sum;
+                                   495.             dst.name_bytes += src.name_bytes;
+                                   496.             dst.note_bytes += src.note_bytes;
+                                   497.             dst.distinct += src.distinct;
+                                   498.         }
+                                   499.         std::vector<unsigned> order;
+                                   500.         for (unsigned i = 0; i < country.size(); ++i) if (groups[i].count) order.push_back(i);
+                                   501.         std::sort(order.begin(), order.end(), [&](unsigned a, unsigned b) { return country[a] < country[b]; });
+                                   502.         if (groups[unmatched].count) order.push_back(unmatched);
+                                   503.         FILE *out = fopen("/workspace/work/out/aggregates.txt", "wb");
+                                   504.         if (!out) throw std::runtime_error("open output");
+                                   505.         for (unsigned i : order) {
+                                   506.             const Group &g = groups[i];
+                                   507.             std::string line = (i == unmatched ? "_UNMATCHED" : country[i]) + " " +
+                                   508.                 std::to_string(g.count) + " " + std::to_string(g.id_sum) + " " +
+                                   509.                 money(g.sum) + " " + money(g.min) + " " + money(g.max) + " " +
+                                   510.                 std::to_string(g.distinct) + " " + std::to_string(g.name_bytes) + " " +
+                                   511.                 std::to_string(g.note_bytes) + "\n";
+                                   512.             if (fwrite(line.data(), 1, line.size(), out) != line.size()) throw std::runtime_error("write output");
+                                   513.         }
+                                   514.         if (fclose(out)) throw std::runtime_error("close output");
+                                   515.         return 0;
+                                   516.     } catch (const std::exception &e) {
+                                   517.         fprintf(stderr, "track-c: %s\n", e.what());
+                                   518.         return 1;
+                                   519.     }
+                                   520. }

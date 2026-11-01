@@ -1,0 +1,20 @@
+worked-example: exact, 144 output bytes, sha256=72ed9e59bff2dad354a9fb4cbc2d4b102477f634230b47e86035864c88d27444
+quoted-bom-no-final-terminator: exact, 60 output bytes, sha256=0c084eef633858f79b023d1d767c8c474e73ad5c37f3f587c1145c3aa36e52ec
+colliding-name-hashes: exact, 30 output bytes, sha256=7f1663c6c185848cdcfeffd76a87c54c5ac6c930a726609e04254071a95834c0
+canonical-raw-name-equivalence: exact, 32 output bytes, sha256=e26766ec88917afefd9c0718502ba613c54bb0290a0e4d3f02de77fc996b3701
+wide-unknown-region-id: exact, 68 output bytes, sha256=e3a1aad8d6ae9bdaf4776c35c17c45e6d725a66ad7649f448d0fa22f04e2b1f6
+eight-digit-id-fast-path: exact, 38 output bytes, sha256=0e12e730cfd62e802a2eaa25d66db993367206f35136895305d7514aab17ab9f
+quote-vector-boundary-and-escaped-pairs: exact, 79 output bytes, sha256=7452e0d9bf1d0f2e9ad8d4ee66a7cdf47c74a9ff5cccbcf16c309a9764d57d2e
+packed-metadata-lengths-and-full-hash-collisions: exact, 115 output bytes, sha256=26631f91ae32b799363bbfff3d21674175ee70f20c2b08e3525d0db689b96dfd
+long-quoted-record-crosses-worker-boundary: exact, 98 output bytes, sha256=e26343acbacaddb7d01c8c0a821f6e4861ddaee5caedda527083e01174421313
+huge-name-arena-1048593: exact, long name and worker boundaries
+huge-name-arena-16777233: exact, long name and worker boundaries
+sharded-name-table-grow: exact, 60 output bytes, sha256=f8af717c6731f00daf15d7be5e37cfb7bd589cfb4ddd005886fd10922fb286c5
+concentrated-name-shard-overflow: exact, 53 output bytes, sha256=fef2e72ed2588534e42e864ed7cef5288351572fb2cbd46585040599c3a82611
+cross-worker-colliding-names: exact, 109 output bytes, sha256=34f1fa808d87d2639010072d341d574e18bd9e65d9cb6cb81be1fee2048917fe
+tiny-seed1: exact, 1195 output bytes, sha256=e4e43bc39920e9d446c3fcd700fdd35b3959e9495c6aaa738491df38a1aed733
+tiny-seed2: exact, 1191 output bytes, sha256=33751caa2d533502b540bad1ad914bce49118ca9732c89c37892541c91b6713a
+tiny-seed3: exact, 1193 output bytes, sha256=c080b7e7d70f1abe437c77e3f242007dd9d286e95b5ec56dc9d1127816e7a30a
+sample-seed2: exact, 15408 output bytes, sha256=f389938275df1b495a38c4375fe741795df180e64617e01e2cf77a95a56982a3
+sample-seed1: exact, 15415 output bytes, sha256=9035fed36823232dd41ae2d1b9d6d21aa7c73f49d8e95647e953a89d5ebe9a66
+full-seed1: exact, 17054 output bytes, sha256=d8088b1cd42ba1338b1345b107b55db7b96ef1f5066f3ff64fd26a8912a0f536

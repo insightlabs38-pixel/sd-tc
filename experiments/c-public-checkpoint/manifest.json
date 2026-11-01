@@ -1,0 +1,865 @@
+[
+  {
+    "file": "experiments/c-public-checkpoint/src/byte-comma.cpp",
+    "sha256": "c8feaaeee00df2d38b7fe64281f30bf633c821734c0ff0a35d058071e34139dd",
+    "git_blob": "32665e2eb1aeec2a2ae70f1302e8f6e5c243a615",
+    "pgo15": {
+      "compiled_source_sha256": "6a0ac129887d4c449238cb18ed8cd762dde8c3c1ea50e436aa149f5cc047bae4",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/byte-comma/join",
+        "/workspace/work/pgo15/byte-comma/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/byte-exact16.cpp",
+    "sha256": "191864ce99f9fc56efd6b5604169da17a3fe6f42782f213f2b8493b04220f06a",
+    "git_blob": "b0eb35ba93433aa7fadef101e68724b4b7ed8226",
+    "pgo15": {
+      "compiled_source_sha256": "985a6b663a8f455c9f3ebf224cef28a3b75ba654819d4ceb881edaf52d24ad25",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/byte-exact16/join",
+        "/workspace/work/pgo15/byte-exact16/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/byte-exact18.cpp",
+    "sha256": "a5a05aca627f65b251a30b0a7b0e6d8fb7d73eb58f0512ff190219fdf1637190",
+    "git_blob": "b2a366c866ece802afffe472ddb920f09dc8255f",
+    "pgo15": {
+      "compiled_source_sha256": "3677da81b310b66f619a1bcf86363b470214e35c54efe4a4f6cf35b83e33253b",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/byte-exact18/join",
+        "/workspace/work/pgo15/byte-exact18/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/byte-pf2-l2.cpp",
+    "sha256": "f2c523478a24998ceea973e4e123aedd7c9e61a373645cae75196d8666e06bff",
+    "git_blob": "9be156c2ff33fb21be1d96d13d84311eb12ac30e",
+    "pgo15": {
+      "compiled_source_sha256": "9be486f32c07596070f270da62c3af3dc7946b88359138e8af8eaa1004d6a268",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/byte-pf2-l2/join",
+        "/workspace/work/pgo15/byte-pf2-l2/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/byte-pf2.cpp",
+    "sha256": "4fce32d9583942f58c7f853fe8b270bd14125d5033a20b1c19aa94c71050ef04",
+    "git_blob": "b9e54519fd76d0e8ff43805934b37a3c1682b10e",
+    "pgo15": {
+      "compiled_source_sha256": "954321f0e3dcc85367869d62a8b3572ab6f6812aeaabacc8d133a17ff110b5e0",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/byte-pf2/join",
+        "/workspace/work/pgo15/byte-pf2/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/byte-pf3.cpp",
+    "sha256": "2fd21d8c1fdb0d3c1cefb55cffa1b9dd388ab559cd38220911a9be82ddabc2a9",
+    "git_blob": "84e76d3b000ad28592efe2c856f48dfcaa9be0fe",
+    "pgo15": {
+      "compiled_source_sha256": "2cb6092a958abd87e8f733ab1e1987a3170ef7f4a4a6f6c487c787f8a737d811",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/byte-pf3/join",
+        "/workspace/work/pgo15/byte-pf3/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/byte-ring-group.cpp",
+    "sha256": "adf59654b274b968e780da950b748de6c7c27403c2b14c62fdf3cbd88f8d007d",
+    "git_blob": "c7adf83b7cec19ad81484fcc473d3b9661e880ed",
+    "pgo15": {
+      "compiled_source_sha256": "af190c6cf141de1efe2fba07effc9440c732c3e8f2db06c96b75343a1f685a5b",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/byte-ring-group/join",
+        "/workspace/work/pgo15/byte-ring-group/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/byte-ring-prefill.cpp",
+    "sha256": "e6ff9c0de0052f9da71e4ca10d735e38614812dda14f1a1287b5806d6cb88bf1",
+    "git_blob": "83e3ffc8fc2ba995ff3a2dceb24ed54459797641",
+    "pgo15": {
+      "compiled_source_sha256": "d13339aa6de142ab8c8d7122b1d977f7313e3b3e01aa0ff1cacac6592184a8b8",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/byte-ring-prefill/join",
+        "/workspace/work/pgo15/byte-ring-prefill/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/byte-ring32.cpp",
+    "sha256": "725faf74abf7583d32ef9696e554b05d686dfd541380838b8429bce493412542",
+    "git_blob": "3ea4bd9fbb075abe9020129599ba729d16f73f8b",
+    "pgo15": {
+      "compiled_source_sha256": "f2c3d66f885bcbc777a042edba9f7a66a5e7e51f03f9128c1a849c09cc2151ae",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/byte-ring32/join",
+        "/workspace/work/pgo15/byte-ring32/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/byte-ring8.cpp",
+    "sha256": "37a6ec65706bb09f70b8a4e929caf2513d1339d837db3567bc07a9f2a907c1b9",
+    "git_blob": "1a2fa8312309b81d34c303a02804e860ed23d362",
+    "pgo15": {
+      "compiled_source_sha256": "5f03e49c71e0f3a87a0ae8adcbd38d8af9f6fb6f44907609e4a3a5d7cab6d581",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/byte-ring8/join",
+        "/workspace/work/pgo15/byte-ring8/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/byte-sharded.cpp",
+    "sha256": "e2c806683657ebbc2ec218ca33a816fedc4ff801052e8f1a2348ea8037c72a72",
+    "git_blob": "853e96e71f82ce3e90f267fead393471c4dc0814",
+    "pgo15": {
+      "compiled_source_sha256": "2b14dffb095e0fd0608f072f637e6940bae4ec0811f1a889fd094228eef55ca4",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/byte-sharded/join",
+        "/workspace/work/pgo15/byte-sharded/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/byte-sharded128.cpp",
+    "sha256": "aeba4787f14475cf8946bbd4968948eecdd2e4c86dab4ca02b5f9cc6af7bc370",
+    "git_blob": "7e9458e5b437c55478feb9dc5dfb8ebad283725f",
+    "pgo15": {
+      "compiled_source_sha256": "363b28c56c5604bf971d4994ada95d54ce9b38ff72fff696d641a9d0af3c9741",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/byte-sharded128/join",
+        "/workspace/work/pgo15/byte-sharded128/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/byte-short-batch.cpp",
+    "sha256": "6dd2aee70b06809d685a83ea8e4803bda5bfa8d4d8441cc04499cf87e6725d23",
+    "git_blob": "19f5efa44da8c5f2ae0a7c450370edb8d8507e58",
+    "pgo15": {
+      "compiled_source_sha256": "f664f3e1ea9ab0651fcfb60ac2514db55a3831bef019206a2fdd566177f0fe61",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/byte-short-batch/join",
+        "/workspace/work/pgo15/byte-short-batch/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/byte-short-ring.cpp",
+    "sha256": "5016298928228d42d05c8f8088f36670c2760d1000fc86f6ea438a2e2a6ce19b",
+    "git_blob": "40b28cdb22f189bb7f062bc92c093b0f6efbfbc2",
+    "pgo15": {
+      "compiled_source_sha256": "16b0f1f666fbb5e4d92196a3abfbd94e8c244c3f6ae2eeeeb25349dc2e541433",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/byte-short-ring/join",
+        "/workspace/work/pgo15/byte-short-ring/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/byte-short.cpp",
+    "sha256": "75e761680ab95a2c410ab090d2db2e4d31592ef74dd15496e2ec0769c3f8f42d",
+    "git_blob": "f4750f4b85be11f2f1fa06358bb1db2eaae71989",
+    "pgo15": {
+      "compiled_source_sha256": "15f2fdfa79dd1a9b3f01775bd95e8d5a48b4c0d8a3b2ec04436b29ef5a7ab621",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/byte-short/join",
+        "/workspace/work/pgo15/byte-short/join.cpp"
+      ]
+    },
+    "pgo15prfchw": {
+      "compiled_source_sha256": "15f2fdfa79dd1a9b3f01775bd95e8d5a48b4c0d8a3b2ec04436b29ef5a7ab621",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-mprfchw",
+        "-o",
+        "/workspace/work/pgo15prfchw/byte-short/join",
+        "/workspace/work/pgo15prfchw/byte-short/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/control-main-one.cpp",
+    "sha256": "0a08451dbb82827107195ecd824ceaf7f61bb9c24984d1d2cf8fb21d16739e73",
+    "git_blob": "9a9f718fc37539150c4709ea7cf3d366c174e77d"
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/control-main-short-one.cpp",
+    "sha256": "0a08451dbb82827107195ecd824ceaf7f61bb9c24984d1d2cf8fb21d16739e73",
+    "git_blob": "9a9f718fc37539150c4709ea7cf3d366c174e77d"
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/control-main.cpp",
+    "sha256": "65159bb2623ad45a085b19651aff630029203bc628b2a9d321d2012dbcfe71c8",
+    "git_blob": "a9b2c765efe2a5fedec7671d9df9be77a700c853",
+    "pgo15": {
+      "compiled_source_sha256": "ddba462b32b7f844f3cf26a572fae053eacbf2bf1744b2719e96750f373ef7ea",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/control-main/join",
+        "/workspace/work/pgo15/control-main/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/csv-cursor.cpp",
+    "sha256": "ad45c366db2ec1f7594636420ead44d8488cdf1b2a5389c3844e26316c582166",
+    "git_blob": "3e9538782646b8ad22267208acd78802f7a25652",
+    "pgo15": {
+      "compiled_source_sha256": "69db00af0d2b37b1ad6c4484f143d80f384720d04571164e25389fd0a2aaf268",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/csv-cursor/join",
+        "/workspace/work/pgo15/csv-cursor/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/csv-prepare-pclmul.cpp",
+    "sha256": "68546dddada35e069e672dbcad7c95ad8a0b3b036f5855eaa0e05f635cddb0a0",
+    "git_blob": "088b0c0bc496563d7a533b436d9498e6527eb7e9",
+    "pgo15": {
+      "compiled_source_sha256": "b629a7f551b0926dbec4545f0b47554bd33308996d0c0bd6b6bc649682d69075",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/csv-prepare-pclmul/join",
+        "/workspace/work/pgo15/csv-prepare-pclmul/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/csv-prepare.cpp",
+    "sha256": "fe10de6b049045e0964665b65db3dcbabf1954f0b01eab12f58a95f56ea7a49f",
+    "git_blob": "e680c87ac7d0b06800ffab0cdc5ac5e219018b15",
+    "pgo15": {
+      "compiled_source_sha256": "8b143dd07e9af4bc7a0085bb6370dec1b7c63fd0606f60d874fd8abf4e1f2219",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/csv-prepare/join",
+        "/workspace/work/pgo15/csv-prepare/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/direct64-nofill.cpp",
+    "sha256": "97a9c246856a84a338b2e835fe02651e14d75147a42e5cbbb39e25cac162bee1",
+    "git_blob": "73db66ce41698b3ac890293b1f0787c1c0c170db",
+    "pgo15prfchw": {
+      "compiled_source_sha256": "9c4db55461d0968ec0aa5cea34d77ce1e78ace4bff15fef9c2c29b26d3c4114b",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-mprfchw",
+        "-o",
+        "/workspace/work/pgo15prfchw/direct64-nofill/join",
+        "/workspace/work/pgo15prfchw/direct64-nofill/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/direct64-pf1.cpp",
+    "sha256": "6dd65494a400bdc0f83596ada3aa825b5735c8363628a7b8b6d0008c0a72a057",
+    "git_blob": "07ef13f8f9d6695ce3239805f731801fc41ae89a",
+    "pgo15prfchw": {
+      "compiled_source_sha256": "174385309459eb182c279361e6d66c5050fc4b954864b3a1489304d7f9dafb67",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-mprfchw",
+        "-o",
+        "/workspace/work/pgo15prfchw/direct64-pf1/join",
+        "/workspace/work/pgo15prfchw/direct64-pf1/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/direct64.cpp",
+    "sha256": "e6fab2a6230f6365285bd8b1491d2398e2254cb1b37b73a6aee6f96e744faa6d",
+    "git_blob": "af6ddd0412b9740da07cfee315a290b2c240fde7",
+    "pgo15prfchw": {
+      "compiled_source_sha256": "48d026e9eed4c1a4734f589188d22f3539051c00871e7bf5e0b8ccb8e2153a80",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-mprfchw",
+        "-o",
+        "/workspace/work/pgo15prfchw/direct64/join",
+        "/workspace/work/pgo15prfchw/direct64/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/padded-equal-short-one.cpp",
+    "sha256": "c23c4f3e3a824f9ba944552800d4a0d9e3d5c0861b6a2ee0357033950cca5ff6",
+    "git_blob": "91726411f8ed304e3d426987e584dc5bdf71326b"
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/padded-equal.cpp",
+    "sha256": "2c894104a7979fcbe5348e9fefc32760da2326bc6b083b86a740a1f810a0371f",
+    "git_blob": "51a5dea60cf394b73764e051dd580418b7e0464e"
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/padded-hash-equal-short-one.cpp",
+    "sha256": "f880d9d0ccbfdbeff00abb135a7c70a593c7c8825d27499de643ef9d299d28e3",
+    "git_blob": "fd78ffb7235378c079a3191b467f5c040ad87fbc"
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/padded-hash-equal.cpp",
+    "sha256": "a18e71ef217ae083cde454f11110a589b8735cc4eb2600cfb6788e1beead3c8f",
+    "git_blob": "dbe0c89f86fe5cbea58ae789f9c2257f8d9f62c5"
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/padded-hash-short-one.cpp",
+    "sha256": "d7c3a0d457cfec94daa86e320cf6a7ad409e47eba79d4ab16dcb6642931996d4",
+    "git_blob": "202531d92fcb87fffec12bcdf2f246b3fc925865"
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/padded-hash.cpp",
+    "sha256": "52484c8b5a64d669567e6021b61512bfa52b3b1f1caa324b1142259435837d58",
+    "git_blob": "09e4eaa85b26424ab8af170288e9099452f82001"
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/padded-short-one.cpp",
+    "sha256": "4122ea8a1b75ecf4ab8a5650b77f64ff5055d6979974200720c29644e93541f8",
+    "git_blob": "12e1f2c386b57f2ab760464624acfcb84d76fc55"
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/padded.cpp",
+    "sha256": "6638febddecdc0580931f8f731ee5d13bc818fccf53836d1ca8c70f1f799c0d3",
+    "git_blob": "dad159a10d3cf9fe3e2ff419654ec0f5fc9691df"
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/quote-cache-one.cpp",
+    "sha256": "71f98059c5b5ab1e6fc424199ec0cc5efac64d67bf31688ed1a11f6d73aec978",
+    "git_blob": "c8a74f78e3e21d317e7daa5588ecb2408743206b"
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/quote-cache.cpp",
+    "sha256": "8fc687d47cdeae5e65594f2bb8ba583c3c688b46d420879d6dda4947d7cc1dbc",
+    "git_blob": "633c24f44655827b0c9a9ed1206ec90a371cb386"
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/quote-cache32.cpp",
+    "sha256": "dbe75181638f7957b91485c722b842a646890bbeba4a8f14938f4ca8b29ab7cb",
+    "git_blob": "eab0f9362ecd775a2bd9e9789c453e25d57362b6"
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/short-comma.cpp",
+    "sha256": "e91384d42baad490e6b38320da1eec507ee79642aac1d0e1dbcae4fc68b891e0",
+    "git_blob": "149260f66edcab9529391521224f47a95cd7dcfc",
+    "pgo15": {
+      "compiled_source_sha256": "1713299a8f96f3ef62633f3aaa4011daec8d69655ba1f20fa3fe87b003a6db57",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/short-comma/join",
+        "/workspace/work/pgo15/short-comma/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/short-frame-prepare-thp.cpp",
+    "sha256": "ae9a099d5c9e02410221b0d60bc27351246613724afdaf8c19dd6d8e9f7d406a",
+    "git_blob": "9e7d845e5b46927169c7db440efa8f0649f70a17",
+    "pgo15": {
+      "compiled_source_sha256": "19dd49455f596e7e9b8dd553dfc4ae9e2db0914e5397a9759c1f58da55d8fefb",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/short-frame-prepare-thp/join",
+        "/workspace/work/pgo15/short-frame-prepare-thp/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/short-frame-prepare-write.cpp",
+    "sha256": "68a65f9610cfc773d702cc730c59f35b60acb9480c2f2e7922391cf0b17a853d",
+    "git_blob": "e05ac86d1f2b98c9d33f34725cb1ee1e884e50fe",
+    "pgo15prfchw": {
+      "compiled_source_sha256": "e0707cf53c9dc4788897ef52efa7b994e263a8f7ca631c7179ec9986daaacb0b",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-mprfchw",
+        "-o",
+        "/workspace/work/pgo15prfchw/short-frame-prepare-write/join",
+        "/workspace/work/pgo15prfchw/short-frame-prepare-write/join.cpp"
+      ]
+    },
+    "plain15": {
+      "compiled_source_sha256": "e0707cf53c9dc4788897ef52efa7b994e263a8f7ca631c7179ec9986daaacb0b",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-mprfchw",
+        "-o",
+        "/workspace/work/plain15/short-frame-prepare-write/join",
+        "/workspace/work/plain15/short-frame-prepare-write/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/short-frame-prepare.cpp",
+    "sha256": "d9631649abf3fc5280d4a3bc9f7cb941640079069018fc2019389c89c69ba74c",
+    "git_blob": "c4b41459c8ce1ea8d47e834a136cb9d11b73cd2a",
+    "pgo15": {
+      "compiled_source_sha256": "c23dfe4b57a985f43c8d3d9f510686249134e52590256883d20e79950a50118f",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/short-frame-prepare/join",
+        "/workspace/work/pgo15/short-frame-prepare/join.cpp"
+      ]
+    },
+    "plain15": {
+      "compiled_source_sha256": "c23dfe4b57a985f43c8d3d9f510686249134e52590256883d20e79950a50118f",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/plain15/short-frame-prepare/join",
+        "/workspace/work/plain15/short-frame-prepare/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/short-frame48.cpp",
+    "sha256": "a7a6dcdf27e39f872d61b26a7fb8b39ca8f4246b9fa4649d863cf446661df628",
+    "git_blob": "5fe54a3c7b18923e592572c2b04e70a3248ed5f1",
+    "pgo15": {
+      "compiled_source_sha256": "d6b9a9743f7bb3455da084b85ffc7cbeab3bc7c24a2b24cbfcb5149338d3d698",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/short-frame48/join",
+        "/workspace/work/pgo15/short-frame48/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/short-group64.cpp",
+    "sha256": "673043dc4052bf88043b17705d15a9f29901fedb69b0012f9fa317369a45d5fb",
+    "git_blob": "6fffda07ecae8eaf79add5647c334653860ba796",
+    "pgo15": {
+      "compiled_source_sha256": "23149c74de020733449404bd44b3da30102df57836f58ca20f06a449e5a9493a",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/short-group64/join",
+        "/workspace/work/pgo15/short-group64/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/short-guarded-one.cpp",
+    "sha256": "796e97e3b5ce9c03d284e444f2fa85c74981f49aacdc42b5f78e7a4a8019cc07",
+    "git_blob": "fe0ec90c91387732001038e4690a2f35e256a891"
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/short-guarded.cpp",
+    "sha256": "29059236e292b560492519d86af18e99a955247e258f58e1022bdf6ace7ba6e2",
+    "git_blob": "c2f48973648fe03dc0a8c019aef63e89954016a3"
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/short-inspect.cpp",
+    "sha256": "b0b7d3613e0462abc13ab6ba3976c92bbece62ca75e2c9a79a05119554f140d9",
+    "git_blob": "5bde79b60eb714748f85a22515caa1edacd4dc3b"
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/short-money-one.cpp",
+    "sha256": "79568a3fdc0d5ab89348bcaac11a981b538c30dd6fd235cd1cb60cacc4d86726",
+    "git_blob": "784ecc3c5e2872d4f9ffa1b7ef5e1d07b704d8d0"
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/short-money.cpp",
+    "sha256": "5c64f817d4ad3f1bb7755c2272d1b19bd49263d867c1898efeb1be787282d9ce",
+    "git_blob": "8bee2ee3a2cb027098f5b95a4279bfb9a30da785",
+    "pgo15": {
+      "compiled_source_sha256": "cf850f45fe62ec53b582b4891a2cea9c792c3981d21617a95f9047f016de824d",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/short-money/join",
+        "/workspace/work/pgo15/short-money/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/short-packet40.cpp",
+    "sha256": "36e78a0613876d117228e49283078095732bd589f6ecfc73758c465300d7d04b",
+    "git_blob": "bdd032b65c471c270619c03a887300a02ffbb69b",
+    "pgo15": {
+      "compiled_source_sha256": "42862fcb72eac33a72d9c65b5f99a1bdf0ac880fedbe823e34f501d18f68e0e9",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/short-packet40/join",
+        "/workspace/work/pgo15/short-packet40/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/short-prepare-read.cpp",
+    "sha256": "f2bc051d711f8ef4128c987a43ac1019dcb224c67edd75bc342a1314da393636",
+    "git_blob": "d8c3b332aa3f563d4c58aa11ecf844a184388b7d",
+    "pgo15": {
+      "compiled_source_sha256": "72bc0f2e58c21172ea40387871ae7c87ff1e06360663f7ce04a7d6f077962e8f",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/short-prepare-read/join",
+        "/workspace/work/pgo15/short-prepare-read/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/short-prepare-write.cpp",
+    "sha256": "886766bdecf84f28ef71e47f21075c5012615c8516c0191e5f15b193a61ba665",
+    "git_blob": "343a807516b9c36b40b1d2efb9e8029cf05ac1b3",
+    "pgo15": {
+      "compiled_source_sha256": "db315cd9776f0e56095bbfa61721bad0841066bee21bda4232c1ca0156fdae3d",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/short-prepare-write/join",
+        "/workspace/work/pgo15/short-prepare-write/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/short-row48.cpp",
+    "sha256": "598dbccbeffd3966b6bd90cc5e6056951725bdef0ae5679f96d2c2bcdc922b27",
+    "git_blob": "7bd0877f68b9a3ef0389b9f693131535052af3a5",
+    "pgo15": {
+      "compiled_source_sha256": "157704b84f766689dfe373c8a2ef3b9c4011cd4aa920c99ebfda8ffa45203d28",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/short-row48/join",
+        "/workspace/work/pgo15/short-row48/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/short-slot64.cpp",
+    "sha256": "97dddf1d8998dd92c3f9b878fe6e466ae49260840c8a1b029980351c71fa660a",
+    "git_blob": "093efca87ac865420bacf70bd477bf13558af56c",
+    "pgo15": {
+      "compiled_source_sha256": "060d4b2b1a98e65ad737daa3c9eb0a3bb7519bc2d4ad31288ea4630ab79aecb7",
+      "flags": [
+        "/workspace/work/gcc15/usr/local/bin/g++",
+        "-O3",
+        "-march=x86-64-v3",
+        "-std=c++17",
+        "-DNDEBUG",
+        "-flto",
+        "-pthread",
+        "-static",
+        "-o",
+        "/workspace/work/pgo15/short-slot64/join",
+        "/workspace/work/pgo15/short-slot64/join.cpp"
+      ]
+    }
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/slot-qualified.cpp",
+    "sha256": "02976daf8db36bba2a132192aadcad91229e1127300c84c271cb98d7267779c5",
+    "git_blob": "90fd94acfbcedbee6e45d532dd81bd1321528684"
+  },
+  {
+    "file": "experiments/c-public-checkpoint/src/structural-one.cpp",
+    "sha256": "5e40de4c9c327fa248d4bc7fed94ca19b5697758800a07e551d147ca8149b747",
+    "git_blob": "b538b0e681e73603e2da72dadfa5e404aa3ec8ec"
+  }
+]

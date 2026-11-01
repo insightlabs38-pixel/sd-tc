@@ -1,0 +1,83 @@
+[
+  {
+    "variant": "short-money",
+    "status": 0,
+    "user_ms": 284.97099999999995,
+    "sys_ms": 28.499999999999996,
+    "minflt": 3698,
+    "majflt": 0,
+    "rss": 29896
+  },
+  {
+    "variant": "byte-short",
+    "status": 0,
+    "user_ms": 294.46299999999997,
+    "sys_ms": 24.732999999999997,
+    "minflt": 3453,
+    "majflt": 0,
+    "rss": 30696
+  },
+  {
+    "variant": "byte-sharded",
+    "status": 0,
+    "user_ms": 315.67699999999996,
+    "sys_ms": 7.536999999999999,
+    "minflt": 3449,
+    "majflt": 0,
+    "rss": 27000
+  },
+  {
+    "variant": "short-money",
+    "status": 0,
+    "user_ms": 313.975,
+    "sys_ms": 12.166,
+    "minflt": 3678,
+    "majflt": 0,
+    "rss": 28204
+  },
+  {
+    "variant": "byte-short",
+    "status": 0,
+    "user_ms": 307.005,
+    "sys_ms": 14.879,
+    "minflt": 3464,
+    "majflt": 0,
+    "rss": 39940
+  },
+  {
+    "variant": "byte-sharded",
+    "status": 0,
+    "user_ms": 271.10799999999995,
+    "sys_ms": 18.852999999999998,
+    "minflt": 3461,
+    "majflt": 0,
+    "rss": 38648
+  },
+  {
+    "variant": "short-money",
+    "status": 0,
+    "user_ms": 295.00499999999994,
+    "sys_ms": 15.890999999999998,
+    "minflt": 3704,
+    "majflt": 0,
+    "rss": 42332
+  },
+  {
+    "variant": "byte-short",
+    "status": 0,
+    "user_ms": 318.569,
+    "sys_ms": 16.977,
+    "minflt": 3448,
+    "majflt": 0,
+    "rss": 27080
+  },
+  {
+    "variant": "byte-sharded",
+    "status": 0,
+    "user_ms": 313.33299999999997,
+    "sys_ms": 19.201,
+    "minflt": 3456,
+    "majflt": 0,
+    "rss": 39664
+  }
+]
