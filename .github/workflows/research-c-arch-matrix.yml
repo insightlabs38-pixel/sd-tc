@@ -1,0 +1,20 @@
+name: C same-runner exact architectural PGO matrix
+on:
+  push:
+    branches: ["research/c-breakthrough-20261101-single-window"]
+    paths: ["research/c-breakthrough-20261101-window-matrix.py", ".github/workflows/research-c-arch-matrix.yml"]
+jobs:
+  architectures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Generate full organizer seed 1
+        run: |
+          sudo mkdir -p /data /out
+          sudo chown "$(id -u):$(id -g)" /data /out
+          python3 tests/oracle/generator.py --seed 1 --scale full --out /data
+      - name: Immutable pinned-GCC15 PGO full-system exact matrix, two CPU affinity
+        run: python3 research/c-breakthrough-20261101-window-matrix.py
