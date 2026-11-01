@@ -65,8 +65,20 @@ https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41290327422 .
 Machine interference changed absolute times substantially; only same-run *paired ratios* are meaningful. Batch128/root/6-worker repeatedly beat incumbent by ~4–9%. Fieldscan/exact quad are inferior to the leading batch design. Batch256/512 do not offer reliable additional speed, with matrix RSS ~65–68 MiB versus ~40 MiB for batch128. No matrix uses the official 12 P-core scoring host; thread-count comparisons on a two-CPU-quota CI runner do not establish official scaling.
 
 ## Pinned PGO independent decision gate
-Run: https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41290459067
-`research/c-breakthrough-20261101/pgo_matrix.py` builds immutable commit sources with the same pinned official Dockerfile, including seed-37 full PGO, and measures all whole executables interleaved on one runner. Inspect its `PGO_MATRIX_RESULTS_JSON` output; the workflow was running when this report was first written. Do not promote until those measurements are reviewed.
+PASS: https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41290459067
+`research/c-breakthrough-20261101/pgo_matrix.py` built five immutable full executables with the pinned official Dockerfile, including seed-37 full PGO, and completed nine interleaved runs each with exact hash on two pinned CI CPUs.
+
+| Candidate | Pinned PGO median ms | GHA process median RSS KiB |
+| --- | ---: | ---: |
+| incumbent | 176.532 | 41,676 |
+| root batch64 | 167.503 | 29,792 |
+| batch128 | **167.384** | 30,916 |
+| batch256 | 167.669 | 56,384 |
+| fieldscan128 | 168.226 | 30,792 |
+
+Batch128 reduces wall time by 5.18% versus that immutable incumbent on the same runner. The batch64 difference is within noise. These figures are not official board K, and per-process RSS on Linux includes page-fault noise; use fresh Docker cgroup measurements for official M extrapolation.
+
+All complete-solver variants described here have fully passing adversarial, sanitizer and Docker workflows, including batch256 https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41290181197 , batch512 https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41290191972 , fieldscan128 https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41290199500 , and quadprobe https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41290315988 .
 
 ## Conclusions / remaining high-upside work
 - Strongest qualified default: **batch128** at `research/c-breakthrough-20261101-batch128` / `26681ca`. Root batch64 is equally reasonable within noise. Neither is an official submission.
