@@ -439,8 +439,12 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
                 newline(p, end);
                 batch[count++] = Pending{name, id, static_cast<int32_t>(amount), name_len, note_len, group};
             } while (count < batch.size() && p < end);
-            // Prefetch index lines before dependent slot probes.
+            // Perform independent aggregation while the name indexes arrive.
             for (unsigned i = 0; i < count; ++i) shared.prefetch_index(batch[i].name);
+            for (unsigned i = 0; i < count; ++i) {
+                const Pending &r = batch[i];
+                w.groups[r.group].add(r.id, r.amount, r.name_len, r.note_len, false);
+            }
             for (unsigned i = 0; i < count; ++i) {
                 slots[i] = shared.prepare(batch[i].name);
                 if (slots[i]) {
@@ -450,7 +454,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
             }
             for (unsigned i = 0; i < count; ++i) {
                 const Pending &r = batch[i];
-                w.groups[r.group].add(r.id, r.amount, r.name_len, r.note_len, shared.first(r.name, r.group, slots[i], end));
+                w.groups[r.group].distinct += shared.first(r.name, r.group, slots[i], end);
             }
             if (p - reclaimed >= (1 << 20)) discard_consumed(reclaimed, p);
         }
