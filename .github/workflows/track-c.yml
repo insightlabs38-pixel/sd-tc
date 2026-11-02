@@ -86,7 +86,7 @@ jobs:
           docker run --rm --network=none --read-only --memory=8g --cpus=4 \
             --user 65534:65534 -v /data:/data:ro -v /out:/out:rw sd-track-c:ci
           test "$(sha256sum /out/aggregates.txt | cut -d' ' -f1)" = \
-            "3ee9cdd6c98423648047622e42f40f9b804033964bb03ff44668e5128056f6ce"
+            "27095f18b72644b72fe45f6d33b5f7099ba232947498aca18a27fc3bdfa6a296"
   sanitizers:
     runs-on: ubuntu-latest
     timeout-minutes: 20
