@@ -368,6 +368,31 @@ static Field text_pair(const char *&p, const char *end, uint32_t &name_len,
                                 p = block + te + 2;
                                 return fast;
                             }
+                        } else if (bytes == 64 && end - block > 65) {
+                            const char *next = block + 64;
+                            unsigned available = std::min<ptrdiff_t>(64, end - next);
+                            alignas(32) char next_tail[64]{};
+                            const char *load_next = next;
+                            if (available < 64) {
+                                std::memcpy(next_tail, next, available);
+                                load_next = next_tail;
+                            }
+                            __m256i c = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(load_next));
+                            __m256i d = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(load_next + 32));
+                            uint64_t more_quotes =
+                                static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(c, quote))) |
+                                (uint64_t(static_cast<uint32_t>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(d, quote)))) << 32);
+                            if (more_quotes) {
+                                unsigned te = __builtin_ctzll(more_quotes);
+                                if (te + 1 < available && next[te + 1] == ',') {
+                                    Field fast{p + 1, ne - 1, 0};
+                                    name_len = fast.raw_len;
+                                    note_len = 64 + te - ne - 3;
+                                    fast.hash = raw_hash(fast.raw, fast.raw_len, end);
+                                    p = next + te + 2;
+                                    return fast;
+                                }
+                            }
                         }
                     }
                 }
