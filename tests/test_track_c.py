@@ -267,7 +267,7 @@ def numeric_lines_inside_quoted_note():
     for i in range(1, 6001):
         rows.extend(f'{i},"pre","x",7,1.00\n'.encode())
     note_start = len(rows)
-    rows.extend(b'6001,"special","' + b'alpha\n123,noise,' * 6000 + b'omega",7,1.00\n')
+    # Embedded physical lines can resemble complete valid CSV rows, with escaped quotes.\n    rows.extend(b'6001,"special","' + b'alpha\n123,""fake"",""x"",7,1.00\n' * 6000 + b'omega",7,1.00\n')
     note_end = len(rows)
     for i in range(6002, 42002):
         rows.extend(f'{i},"post","x",7,1.00\n'.encode())
