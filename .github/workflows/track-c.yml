@@ -73,6 +73,20 @@ jobs:
       - name: Independent full references for the final PGO binary
         if: hashFiles('track-c/generator.py') != ''
         run: python3 tests/check_binary_seeds.py --binary /tmp/sd-track-c --seeds 11 29
+
+      - name: Sandboxed retry on a false quoted-note split
+        run: |
+          python3 - <<'PY'
+          import sys
+          sys.path.insert(0, "tests")
+          import test_track_c as cases
+          cases.numeric_lines_inside_quoted_note()
+          PY
+          rm -f /out/aggregates.txt
+          docker run --rm --network=none --read-only --memory=8g --cpus=4 \
+            --user 65534:65534 -v /data:/data:ro -v /out:/out:rw sd-track-c:ci
+          test "$(sha256sum /out/aggregates.txt | cut -d' ' -f1)" = \
+            "3ee9cdd6c98423648047622e42f40f9b804033964bb03ff44668e5128056f6ce"
   sanitizers:
     runs-on: ubuntu-latest
     timeout-minutes: 20
