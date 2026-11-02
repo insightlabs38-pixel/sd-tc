@@ -561,3 +561,10 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - [CI 41378281829](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41378281829) passed full seed-1 SHA, three repeated full comparisons each for seeds 11/29, hostile numeric-LF and aligned-cut fixtures, ASan/UBSan/TSan, offline Docker and sandbox. Full-PGO **71.974 -> 71.711 ms**, cgroup **10,309,632 -> 10,262,528 B**, source **570 -> 579 lines**, D=1; complete-K runner proxy **+0.04%**, effectively neutral.
 - [CI 41378625208](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41378625208) independently passed all gates and additionally exercised the false-cut serial retry inside a read-only, offline, nonroot Docker container. Exact qualified source blob `c60485189842d4cd151bedc76c27d16dafc4755f`; previous champion `0b6a6ef559781147f07ac541631ed36faeddac09` retained for rollback.
 - No official scoring-box T/M/S/D/K or submission; Luna owns official integration.
+
+## Complete-row decoys inside quoted notes (2026-11-02)
+
+- Strengthened the six-worker false-cut regression: 3,500 embedded LF lines now resemble valid five-field CSV rows, including doubled quotes. The nominal cut remains inside the quoted note; the reference's 131,072-character field limit is respected.
+- [CI 41383367947](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41383367947) passed seed-1 full SHA, full holdouts 11/29, adversarial fixtures, ASan/UBSan/TSan, offline Docker and nonroot read-only sandbox retry.
+- The first two fixture revisions failed due a literal escaped newline in a Python comment and an oversized reference CSV field; both test-only errors were corrected. No production-code regression was observed.
+- Champion `join.cpp` blob remains `c60485189842d4cd151bedc76c27d16dafc4755f`; no new T/M/S/D/K measurement or official submission.
