@@ -552,3 +552,12 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - [CI 41373135180](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41373135180) passed full seed-1 hash, holdouts 11/29, adversarial cases, ASan/UBSan/TSan, pinned offline Docker and sandbox.
 - Direct champion full-PGO median **44.983 -> 47.204 ms** (+4.94% T); cgroup **10,235,904 -> 10,356,736 B** (+1.18% M); source **570 -> 574 lines**, D=1.
 - Complete-K runner proxy **-2.71%**; source-only 51.435 -> 52.709 ms. Rejected and restored champion blob `0b6a6ef559781147f07ac541631ed36faeddac09`. No official score or submission.
+
+## Speculative worker-cut certification (2026-11-02)
+
+- Audit found two cut hazards: a nominal split exactly at a record start could skip that row; LF followed by digits and comma inside quoted text could be mistaken for a record boundary. Both now have exact reference fixtures, including sanitizer coverage.
+- [31fb8d3](https://github.com/insightlabs38-pixel/sd-tc/commit/31fb8d32eff5b2afa6e5fb15418b07670ecf6af6) qualified deterministic parallel quote-parity cuts in [CI 41377899715](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41377899715). Direct full-PGO **60.477 -> 69.243 ms**; cgroup **10,246,144 -> 10,272,768 B**; source **570 -> 609 lines**, D=1. Complete-K runner proxy **-7.52%**; rejected as default.
+- [b03b54a](https://github.com/insightlabs38-pixel/sd-tc/commit/b03b54a9e959f1ba2efc6906627cb526e26fdfae) preserves fast candidate cuts, handles exactly aligned starts, and retries the entire input in authoritative single-worker mode on any worker parse error, before writing output.
+- [CI 41378281829](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41378281829) passed full seed-1 SHA, three repeated full comparisons each for seeds 11/29, hostile numeric-LF and aligned-cut fixtures, ASan/UBSan/TSan, offline Docker and sandbox. Full-PGO **71.974 -> 71.711 ms**, cgroup **10,309,632 -> 10,262,528 B**, source **570 -> 579 lines**, D=1; complete-K runner proxy **+0.04%**, effectively neutral.
+- [CI 41378625208](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41378625208) independently passed all gates and additionally exercised the false-cut serial retry inside a read-only, offline, nonroot Docker container. Exact qualified source blob `c60485189842d4cd151bedc76c27d16dafc4755f`; previous champion `0b6a6ef559781147f07ac541631ed36faeddac09` retained for rollback.
+- No official scoring-box T/M/S/D/K or submission; Luna owns official integration.
