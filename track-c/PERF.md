@@ -538,3 +538,17 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Direct champion full-PGO 12-pair medians **87.407 -> 89.013 ms** (+1.84% T); cgroup median **10,291,200 -> 10,235,904 B** (-0.54% M). Source **570 -> 578** lines; D=1.
 - Complete-K runner proxy **-1.01%**, including T/M/S/D. Source-only 84.037 -> 88.045 ms also regressed. **Rejected**.
 - Restored exact qualified source blob `0b6a6ef559781147f07ac541631ed36faeddac09`; no redundant restoration CI. Official six-P-core K remains Luna's responsibility.
+
+## Two-block SIMD note-close trial (2026-11-02)
+
+- [856b156](https://github.com/insightlabs38-pixel/sd-tc/commit/856b156b0ebbae41ebe1361f66b3a4b782b13e70) added a guarded second 64-byte AVX2 quote scan for simple quoted notes spanning two blocks.
+- [CI 41372874735](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41372874735) passed full seed-1 hash, holdouts 11/29, adversarial cases, ASan/UBSan/TSan, pinned offline Docker and sandbox.
+- Direct champion full-PGO median **46.785 -> 47.399 ms** (+1.31% T); cgroup **10,487,808 -> 10,248,192 B** (-2.28% M); source **570 -> 595 lines**, D=1.
+- Complete-K runner proxy **-0.83%**; source-only 51.267 -> 52.658 ms. Rejected and restored champion blob `0b6a6ef559781147f07ac541631ed36faeddac09`.
+
+## Latency-hidden aggregate/name resolution trial (2026-11-02)
+
+- [3e7162c](https://github.com/insightlabs38-pixel/sd-tc/commit/3e7162c02e09fafd5fed867fefd2a6bdbea2268e) moved independent group aggregation between index prefetch and slot probing, leaving exact distinct-name resolution last.
+- [CI 41373135180](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41373135180) passed full seed-1 hash, holdouts 11/29, adversarial cases, ASan/UBSan/TSan, pinned offline Docker and sandbox.
+- Direct champion full-PGO median **44.983 -> 47.204 ms** (+4.94% T); cgroup **10,235,904 -> 10,356,736 B** (+1.18% M); source **570 -> 574 lines**, D=1.
+- Complete-K runner proxy **-2.71%**; source-only 51.435 -> 52.709 ms. Rejected and restored champion blob `0b6a6ef559781147f07ac541631ed36faeddac09`. No official score or submission.
