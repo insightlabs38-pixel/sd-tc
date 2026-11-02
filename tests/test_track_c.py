@@ -277,6 +277,20 @@ def numeric_lines_inside_quoted_note():
     DATA.joinpath("records.csv").write_bytes(rows)
     check_case("quoted-note-numeric-line-is-not-worker-boundary")
 
+
+def aligned_worker_cut_stress():
+    # A nominal byte split can coincide exactly with a record start.
+    header = b"id,name,note,region_id,amount\n"
+    DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n")
+    rows = bytearray(header)
+    for i in range(10000000, 10120000):
+        rows.extend(f'{i},"n","x",7,1.00\n'.encode())
+    assert len(rows) > (1 << 20)
+    assert (len(rows) - len(header)) % 6 == 0
+    assert (len(rows) - len(header)) // 6 % 24 == 0
+    DATA.joinpath("records.csv").write_bytes(rows)
+    check_case("exactly-aligned-worker-cut")
+
 def grow_stress():
     DATA.joinpath("regions.csv").write_bytes(b"region_id,country\n7,AAA\n")
     rows = bytearray(b"id,name,note,region_id,amount\n")
@@ -358,6 +372,7 @@ def main():
     packed_metadata_stress()
     split_boundary_stress()
     numeric_lines_inside_quoted_note()
+    aligned_worker_cut_stress()
     huge_name_arena_stress()
     grow_stress()
     capacity_cutover_stress()

@@ -458,42 +458,7 @@ static void parse_range(const char *p, const char *end, const std::vector<uint8_
 }
 
 
-struct QuoteSummary {
-    unsigned parity = 0;
-    const char *first_lf[2] = {nullptr, nullptr};
-};
-
-// A strict doubled-quote CSV has an external LF exactly when quote parity is even.
-__attribute__((target("pclmul")))
-static QuoteSummary quote_summary(const char *p, const char *end) {
-    QuoteSummary result;
-    uint64_t carry = 0;
-    const __m256i quote = _mm256_set1_epi8('"'), lf = _mm256_set1_epi8('\n');
-    for (const char *block = p; block < end; block += std::min<ptrdiff_t>(64, end - block)) {
-        unsigned bytes = std::min<ptrdiff_t>(64, end - block);
-        alignas(32) char tail[64]{};
-        const char *load = block;
-        if (bytes < 64) { std::memcpy(tail, block, bytes); load = tail; }
-        __m256i a = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(load));
-        __m256i b = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(load + 32));
-        uint64_t quotes = uint32_t(_mm256_movemask_epi8(_mm256_cmpeq_epi8(a, quote))) |
-            (uint64_t(uint32_t(_mm256_movemask_epi8(_mm256_cmpeq_epi8(b, quote)))) << 32);
-        uint64_t newlines = uint32_t(_mm256_movemask_epi8(_mm256_cmpeq_epi8(a, lf))) |
-            (uint64_t(uint32_t(_mm256_movemask_epi8(_mm256_cmpeq_epi8(b, lf)))) << 32);
-        uint64_t inside = uint64_t(_mm_cvtsi128_si64(_mm_clmulepi64_si128(
-            _mm_cvtsi64_si128(quotes), _mm_set1_epi32(-1), 0))) ^ carry;
-        carry = 0 - (inside >> 63);
-        if (bytes < 64) newlines &= (uint64_t(1) << bytes) - 1;
-        uint64_t outside = newlines & ~inside;
-        uint64_t inverted = newlines & inside;
-        if (outside && !result.first_lf[0]) result.first_lf[0] = block + __builtin_ctzll(outside);
-        if (inverted && !result.first_lf[1]) result.first_lf[1] = block + __builtin_ctzll(inverted);
-    }
-    result.parity = carry & 1;
-    return result;
-}
-
-int main() {
+int main(int argc, char **argv) {
     try {
         (void)prctl(PR_SET_THP_DISABLE, 1, 0, 0, 0);
         File lookup("/data/regions.csv");
@@ -532,32 +497,30 @@ int main() {
         p += 29;
         newline(p, end);
         const char *record_start = p;
-        unsigned threads = end - p < (1 << 20) ? 1 : 6;
+        unsigned threads = end - p < (1 << 20) || (argc > 1 && std::strcmp(argv[1], "--serial") == 0) ? 1 : 6;
         std::vector<const char *> cuts(threads + 1);
         cuts[0] = record_start;
         cuts[threads] = end;
         if (threads > 1) {
-            // Scan byte partitions in parallel, then prefix-XOR quote parity.
-            std::vector<const char *> nominal(threads + 1);
-            for (unsigned i = 0; i <= threads; ++i)
-                nominal[i] = record_start + (end - record_start) * i / threads;
-            std::vector<QuoteSummary> summary(threads);
-            std::vector<std::thread> scans;
-            for (unsigned i = 0; i < threads; ++i)
-                scans.emplace_back([&, i] { summary[i] = quote_summary(nominal[i], nominal[i + 1]); });
-            for (auto &job : scans) job.join();
-            std::vector<unsigned> prefix(threads);
-            for (unsigned i = 1; i < threads; ++i)
-                prefix[i] = prefix[i - 1] ^ summary[i - 1].parity;
+            // Fast candidate cuts; an invalid guess triggers an exact serial retry.
             for (unsigned i = 1; i < threads; ++i) {
-                cuts[i] = end;
-                if (nominal[i][-1] == '\n' && prefix[i] == 0) {
-                    cuts[i] = nominal[i];
-                    continue;
-                }
-                for (unsigned j = i; j < threads; ++j) {
-                    const char *lf = summary[j].first_lf[prefix[j]];
-                    if (lf) { cuts[i] = lf + 1; break; }
+                const char *q = record_start + (end - record_start) * i / threads;
+                while (true) {
+                    if (q > record_start && q[-1] == '\n') {
+                        const char *digit = q;
+                        if (end - digit >= 3 && static_cast<unsigned char>(digit[0]) == 0xef &&
+                            static_cast<unsigned char>(digit[1]) == 0xbb &&
+                            static_cast<unsigned char>(digit[2]) == 0xbf) digit += 3;
+                        const char *first = digit;
+                        while (digit < end && *digit >= '0' && *digit <= '9') ++digit;
+                        if (digit != first && digit < end && *digit == ',') {
+                            cuts[i] = q;
+                            break;
+                        }
+                    }
+                    const char *lf = static_cast<const char *>(memchr(q, '\n', end - q));
+                    if (!lf) { cuts[i] = end; break; }
+                    q = lf + 1;
                 }
             }
         }
@@ -569,7 +532,14 @@ int main() {
         for (unsigned i = 0; i < threads; ++i)
             jobs.emplace_back([&, i] { parse_range(cuts[i], cuts[i + 1], regions, unmatched, workers[i], shared); });
         for (auto &job : jobs) job.join();
-        for (const auto &w : workers) if (w.error) std::rethrow_exception(w.error);
+        for (const auto &w : workers) if (w.error) {
+            if (threads > 1) {
+                // No partial aggregate is published; restart with one authoritative parser.
+                execl("/proc/self/exe", "/proc/self/exe", "--serial", static_cast<char *>(nullptr));
+                throw std::runtime_error("serial retry exec failed");
+            }
+            std::rethrow_exception(w.error);
+        }
         std::vector<Group> groups(unmatched + 1);
         for (const Worker &w : workers) for (unsigned g = 0; g <= unmatched; ++g) {
             const Group &src = w.groups[g];

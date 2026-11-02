@@ -24,6 +24,8 @@ def main():
     cases.quote_vector_boundary_stress()
     cases.packed_metadata_stress()
     cases.split_boundary_stress()
+    cases.numeric_lines_inside_quoted_note()
+    cases.aligned_worker_cut_stress()
     cases.huge_name_arena_stress()
     cases.grow_stress()
     cases.capacity_cutover_stress()
