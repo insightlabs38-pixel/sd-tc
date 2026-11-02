@@ -530,3 +530,11 @@ Official run `run-15adbc1f561c` passed all gates on this packed-metadata source:
 - Direct champion full-PGO 12-trial medians **60.290 -> 60.630 ms** (+0.56% T); cgroup peak **10,242,048 -> 10,477,568 B** (+2.30% M). Source **570 -> 591 physical lines**, D=1.
 - Complete-K development proxy **-1.27%**, accounting for T/M/S/D; the pinned PGO-vs-untrained comparison is not a champion comparison. Rejected, restored qualified blob `0b6a6ef559781147f07ac541631ed36faeddac09`.
 - Official six-P-core T/M/S/D/K remains unmeasured; Luna controls official integration.
+
+## Exact 64-bit short-name comparison trial (2026-11-02)
+
+- Candidate [b108f0c](https://github.com/insightlabs38-pixel/sd-tc/commit/b108f0cba6b93a0104060e39b8790b7fcb62baae) replaced AVX2 masked short-name equality with exact 8/16/24-byte scalar loads.
+- [CI 41367102878](https://github.com/insightlabs38-pixel/sd-tc/actions/runs/41367102878) passed full seed-1 hash, holdouts 11/29, adversarial cases, ASan/UBSan/TSan, pinned offline Docker and sandbox.
+- Direct champion full-PGO 12-pair medians **87.407 -> 89.013 ms** (+1.84% T); cgroup median **10,291,200 -> 10,235,904 B** (-0.54% M). Source **570 -> 578** lines; D=1.
+- Complete-K runner proxy **-1.01%**, including T/M/S/D. Source-only 84.037 -> 88.045 ms also regressed. **Rejected**.
+- Restored exact qualified source blob `0b6a6ef559781147f07ac541631ed36faeddac09`; no redundant restoration CI. Official six-P-core K remains Luna's responsibility.
