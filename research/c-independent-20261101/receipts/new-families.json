@@ -1,0 +1,362 @@
+[
+  {
+    "name": "filter",
+    "trial": 0,
+    "wall_ms": 315.8409920001759,
+    "user_ms": 505.99399999999997,
+    "system_ms": 85.399,
+    "rss_kib": 19384,
+    "minor_faults": 10551
+  },
+  {
+    "name": "owner-futex",
+    "trial": 0,
+    "wall_ms": 246.60858500010363,
+    "user_ms": 300.467,
+    "system_ms": 51.0,
+    "rss_kib": 205796,
+    "minor_faults": 5122
+  },
+  {
+    "name": "main-baseline",
+    "trial": 0,
+    "wall_ms": 162.99388900006306,
+    "user_ms": 281.188,
+    "system_ms": 31.021,
+    "rss_kib": 14344,
+    "minor_faults": 5257
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 0,
+    "wall_ms": 152.17161500004295,
+    "user_ms": 250.24799999999996,
+    "system_ms": 35.623,
+    "rss_kib": 15144,
+    "minor_faults": 5436
+  },
+  {
+    "name": "owner-inline",
+    "trial": 0,
+    "wall_ms": 245.33438900016336,
+    "user_ms": 347.31999999999994,
+    "system_ms": 126.23499999999999,
+    "rss_kib": 16624,
+    "minor_faults": 5291
+  },
+  {
+    "name": "owner-futex",
+    "trial": 1,
+    "wall_ms": 238.81977599967286,
+    "user_ms": 290.107,
+    "system_ms": 61.167,
+    "rss_kib": 205816,
+    "minor_faults": 5122
+  },
+  {
+    "name": "main-baseline",
+    "trial": 1,
+    "wall_ms": 166.99506600025416,
+    "user_ms": 279.227,
+    "system_ms": 30.855999999999998,
+    "rss_kib": 14476,
+    "minor_faults": 5254
+  },
+  {
+    "name": "owner-inline",
+    "trial": 1,
+    "wall_ms": 243.10178899986568,
+    "user_ms": 340.88399999999996,
+    "system_ms": 130.518,
+    "rss_kib": 17568,
+    "minor_faults": 5322
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 1,
+    "wall_ms": 152.69576499986215,
+    "user_ms": 261.318,
+    "system_ms": 19.896,
+    "rss_kib": 14832,
+    "minor_faults": 5435
+  },
+  {
+    "name": "filter",
+    "trial": 1,
+    "wall_ms": 305.4818810001052,
+    "user_ms": 507.043,
+    "system_ms": 62.068,
+    "rss_kib": 19320,
+    "minor_faults": 10539
+  },
+  {
+    "name": "filter",
+    "trial": 2,
+    "wall_ms": 306.864422000217,
+    "user_ms": 493.38599999999997,
+    "system_ms": 71.245,
+    "rss_kib": 19736,
+    "minor_faults": 10545
+  },
+  {
+    "name": "owner-inline",
+    "trial": 2,
+    "wall_ms": 238.0201699997997,
+    "user_ms": 321.249,
+    "system_ms": 139.731,
+    "rss_kib": 16912,
+    "minor_faults": 5320
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 2,
+    "wall_ms": 154.8698440001317,
+    "user_ms": 260.146,
+    "system_ms": 27.448999999999998,
+    "rss_kib": 15000,
+    "minor_faults": 5435
+  },
+  {
+    "name": "main-baseline",
+    "trial": 2,
+    "wall_ms": 163.46681000004537,
+    "user_ms": 279.99999999999994,
+    "system_ms": 26.858,
+    "rss_kib": 14720,
+    "minor_faults": 5275
+  },
+  {
+    "name": "owner-futex",
+    "trial": 2,
+    "wall_ms": 226.98605899995528,
+    "user_ms": 284.212,
+    "system_ms": 67.97299999999998,
+    "rss_kib": 205792,
+    "minor_faults": 5122
+  },
+  {
+    "name": "main-baseline",
+    "trial": 3,
+    "wall_ms": 164.3042890000288,
+    "user_ms": 290.916,
+    "system_ms": 15.215,
+    "rss_kib": 14456,
+    "minor_faults": 5260
+  },
+  {
+    "name": "owner-inline",
+    "trial": 3,
+    "wall_ms": 358.5956819997591,
+    "user_ms": 439.64300000000003,
+    "system_ms": 265.339,
+    "rss_kib": 16536,
+    "minor_faults": 5292
+  },
+  {
+    "name": "owner-futex",
+    "trial": 3,
+    "wall_ms": 275.04646100032915,
+    "user_ms": 373.549,
+    "system_ms": 44.926,
+    "rss_kib": 205704,
+    "minor_faults": 5122
+  },
+  {
+    "name": "filter",
+    "trial": 3,
+    "wall_ms": 302.25026100015384,
+    "user_ms": 493.247,
+    "system_ms": 76.599,
+    "rss_kib": 19960,
+    "minor_faults": 10541
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 3,
+    "wall_ms": 166.05351899988818,
+    "user_ms": 280.254,
+    "system_ms": 29.967999999999996,
+    "rss_kib": 15104,
+    "minor_faults": 5435
+  },
+  {
+    "name": "owner-futex",
+    "trial": 4,
+    "wall_ms": 241.0807709998153,
+    "user_ms": 304.70399999999995,
+    "system_ms": 49.239,
+    "rss_kib": 205832,
+    "minor_faults": 5123
+  },
+  {
+    "name": "main-baseline",
+    "trial": 4,
+    "wall_ms": 160.6687299999976,
+    "user_ms": 284.90999999999997,
+    "system_ms": 19.773,
+    "rss_kib": 14716,
+    "minor_faults": 5245
+  },
+  {
+    "name": "owner-inline",
+    "trial": 4,
+    "wall_ms": 241.09679100001813,
+    "user_ms": 352.819,
+    "system_ms": 111.37599999999999,
+    "rss_kib": 14832,
+    "minor_faults": 5288
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 4,
+    "wall_ms": 153.23873199986338,
+    "user_ms": 273.845,
+    "system_ms": 7.233,
+    "rss_kib": 15488,
+    "minor_faults": 5434
+  },
+  {
+    "name": "filter",
+    "trial": 4,
+    "wall_ms": 293.1317150000723,
+    "user_ms": 494.17699999999996,
+    "system_ms": 53.73,
+    "rss_kib": 19224,
+    "minor_faults": 10546
+  },
+  {
+    "name": "filter",
+    "trial": 5,
+    "wall_ms": 302.11824900015927,
+    "user_ms": 489.868,
+    "system_ms": 78.06299999999999,
+    "rss_kib": 19040,
+    "minor_faults": 10540
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 5,
+    "wall_ms": 183.98615600017365,
+    "user_ms": 285.04799999999994,
+    "system_ms": 35.601,
+    "rss_kib": 14588,
+    "minor_faults": 5434
+  },
+  {
+    "name": "main-baseline",
+    "trial": 5,
+    "wall_ms": 184.2465730001095,
+    "user_ms": 298.788,
+    "system_ms": 33.784,
+    "rss_kib": 14692,
+    "minor_faults": 5277
+  },
+  {
+    "name": "owner-inline",
+    "trial": 5,
+    "wall_ms": 300.93902600037836,
+    "user_ms": 362.466,
+    "system_ms": 221.244,
+    "rss_kib": 17580,
+    "minor_faults": 5295
+  },
+  {
+    "name": "owner-futex",
+    "trial": 5,
+    "wall_ms": 252.6289449997421,
+    "user_ms": 293.847,
+    "system_ms": 73.007,
+    "rss_kib": 205700,
+    "minor_faults": 5124
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 6,
+    "wall_ms": 165.29173099979744,
+    "user_ms": 281.706,
+    "system_ms": 22.529999999999998,
+    "rss_kib": 15028,
+    "minor_faults": 5435
+  },
+  {
+    "name": "owner-futex",
+    "trial": 6,
+    "wall_ms": 253.17737500017756,
+    "user_ms": 340.51,
+    "system_ms": 42.474,
+    "rss_kib": 205672,
+    "minor_faults": 5122
+  },
+  {
+    "name": "owner-inline",
+    "trial": 6,
+    "wall_ms": 245.1921530000618,
+    "user_ms": 348.04999999999995,
+    "system_ms": 126.45399999999998,
+    "rss_kib": 17952,
+    "minor_faults": 5349
+  },
+  {
+    "name": "filter",
+    "trial": 6,
+    "wall_ms": 314.173485000083,
+    "user_ms": 512.0310000000001,
+    "system_ms": 64.18799999999999,
+    "rss_kib": 19200,
+    "minor_faults": 10542
+  },
+  {
+    "name": "main-baseline",
+    "trial": 6,
+    "wall_ms": 189.88465800021004,
+    "user_ms": 318.524,
+    "system_ms": 15.896,
+    "rss_kib": 14828,
+    "minor_faults": 5224
+  },
+  {
+    "name": "filter",
+    "trial": 7,
+    "wall_ms": 332.6298880001559,
+    "user_ms": 525.736,
+    "system_ms": 86.761,
+    "rss_kib": 19816,
+    "minor_faults": 10547
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 7,
+    "wall_ms": 157.3773329996584,
+    "user_ms": 266.82099999999997,
+    "system_ms": 18.938999999999997,
+    "rss_kib": 14976,
+    "minor_faults": 5435
+  },
+  {
+    "name": "owner-inline",
+    "trial": 7,
+    "wall_ms": 236.55046199974095,
+    "user_ms": 312.385,
+    "system_ms": 142.505,
+    "rss_kib": 17168,
+    "minor_faults": 5320
+  },
+  {
+    "name": "main-baseline",
+    "trial": 7,
+    "wall_ms": 166.3304749999952,
+    "user_ms": 287.964,
+    "system_ms": 15.927999999999997,
+    "rss_kib": 14420,
+    "minor_faults": 5250
+  },
+  {
+    "name": "owner-futex",
+    "trial": 7,
+    "wall_ms": 233.58785600021292,
+    "user_ms": 306.593,
+    "system_ms": 54.86299999999999,
+    "rss_kib": 205688,
+    "minor_faults": 5121
+  }
+]

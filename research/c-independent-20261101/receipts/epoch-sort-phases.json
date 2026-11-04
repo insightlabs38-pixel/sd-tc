@@ -1,0 +1,62 @@
+[
+  {
+    "name": "epoch-sort-phases",
+    "trial": 0,
+    "wall_ms": 207.533424,
+    "cpu_ms": {
+      "collect": 26.530888,
+      "sorting": 37.67904300000001,
+      "merging": 107.30616000000002
+    }
+  },
+  {
+    "name": "epoch-sort-phases",
+    "trial": 1,
+    "wall_ms": 208.923909,
+    "cpu_ms": {
+      "collect": 26.18235700000002,
+      "sorting": 38.157385,
+      "merging": 110.59106199999998
+    }
+  },
+  {
+    "name": "epoch-sort-phases",
+    "trial": 2,
+    "wall_ms": 209.013671,
+    "cpu_ms": {
+      "collect": 27.44530000000001,
+      "sorting": 38.199964000000016,
+      "merging": 110.09412600000005
+    }
+  },
+  {
+    "name": "epoch-sort-compact-phases",
+    "trial": 0,
+    "wall_ms": 201.586454,
+    "cpu_ms": {
+      "collect": 27.526564000000004,
+      "sorting": 22.891004999999996,
+      "merging": 100.10483799999997
+    }
+  },
+  {
+    "name": "epoch-sort-compact-phases",
+    "trial": 1,
+    "wall_ms": 189.462134,
+    "cpu_ms": {
+      "collect": 26.735082000000006,
+      "sorting": 22.579182000000003,
+      "merging": 95.37683899999996
+    }
+  },
+  {
+    "name": "epoch-sort-compact-phases",
+    "trial": 2,
+    "wall_ms": 191.679315,
+    "cpu_ms": {
+      "collect": 26.475804000000007,
+      "sorting": 21.284681,
+      "merging": 91.40238099999999
+    }
+  }
+]

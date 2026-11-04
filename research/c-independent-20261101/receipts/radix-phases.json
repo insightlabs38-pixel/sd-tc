@@ -1,0 +1,38 @@
+[
+  {
+    "name": "radix-bucket-phases",
+    "trial": 0,
+    "wall_ms": 261.767754,
+    "stderr": "RADIX 0 collect=475457 sort=22594622 reduce=8744153\nRADIX 5 collect=961240 sort=24028481 reduce=11586346\nRADIX 4 collect=536917 sort=23439586 reduce=8312125\nRADIX 1 collect=393229 sort=23973005 reduce=10216998\nRADIX 2 collect=417437 sort=23660019 reduce=9892031\nRADIX 3 collect=391658 sort=25353439 reduce=8214530\nPARSE parse=42323511 partition=8854293\nPARSE parse=46483677 partition=12119596\nPARSE parse=34461958 partition=8054095\nPARSE parse=34776355 partition=9734941\nPARSE parse=35585206 partition=8855464\nPARSE parse=35035687 partition=9328341\n"
+  },
+  {
+    "name": "radix-bucket-phases",
+    "trial": 1,
+    "wall_ms": 261.331431,
+    "stderr": "RADIX 0 collect=462905 sort=24622326 reduce=10737502\nRADIX 5 collect=673801 sort=23998231 reduce=11589996\nRADIX 4 collect=544579 sort=23700646 reduce=9051389\nRADIX 3 collect=446212 sort=23130252 reduce=8050005\nRADIX 2 collect=500074 sort=22763482 reduce=8976126\nRADIX 1 collect=539787 sort=23587641 reduce=9603611\nPARSE parse=40099620 partition=7371558\nPARSE parse=35086084 partition=10793291\nPARSE parse=35580386 partition=10497393\nPARSE parse=35670617 partition=10045724\nPARSE parse=35252301 partition=8629817\nPARSE parse=35433751 partition=8037090\n"
+  },
+  {
+    "name": "radix-bucket-phases",
+    "trial": 2,
+    "wall_ms": 250.346464,
+    "stderr": "RADIX 3 collect=448333 sort=22608902 reduce=8015151\nRADIX 1 collect=451386 sort=22351216 reduce=9267197\nRADIX 2 collect=423502 sort=22346447 reduce=9699946\nRADIX 5 collect=716495 sort=23192845 reduce=9887516\nRADIX 4 collect=874594 sort=22546905 reduce=9788916\nRADIX 0 collect=453409 sort=24505897 reduce=9682547\nPARSE parse=38423043 partition=8712878\nPARSE parse=35362617 partition=8936627\nPARSE parse=34228375 partition=8801790\nPARSE parse=35862457 partition=11149306\nPARSE parse=36028233 partition=10496774\nPARSE parse=34242586 partition=10291354\n"
+  },
+  {
+    "name": "radix-name-phases",
+    "trial": 0,
+    "wall_ms": 260.471535,
+    "stderr": "RADIX 0 collect=474100 sort=11530759 reduce=23201670\nRADIX 5 collect=460736 sort=11676602 reduce=24601045\nRADIX 3 collect=475627 sort=10980153 reduce=20850230\nRADIX 1 collect=511551 sort=10669869 reduce=21899996\nRADIX 4 collect=470692 sort=10162152 reduce=20633139\nRADIX 2 collect=730420 sort=11584552 reduce=24013003\nPARSE parse=38554478 partition=7237385\nPARSE parse=34640394 partition=8664463\nPARSE parse=34724107 partition=9098352\nPARSE parse=35315170 partition=10172721\nPARSE parse=35438260 partition=10395696\nPARSE parse=35741263 partition=10034477\n"
+  },
+  {
+    "name": "radix-name-phases",
+    "trial": 1,
+    "wall_ms": 266.898309,
+    "stderr": "RADIX 5 collect=660621 sort=10371729 reduce=22671978\nRADIX 0 collect=920119 sort=10898879 reduce=24600468\nRADIX 3 collect=626629 sort=11224075 reduce=20925149\nRADIX 4 collect=602456 sort=11439816 reduce=20230716\nRADIX 1 collect=907632 sort=11266538 reduce=22706289\nRADIX 2 collect=1131825 sort=11267609 reduce=23957387\nPARSE parse=38090881 partition=10367018\nPARSE parse=36554001 partition=10573712\nPARSE parse=35464277 partition=11055816\nPARSE parse=35487141 partition=10401559\nPARSE parse=34507425 partition=8975824\nPARSE parse=35370665 partition=10066539\n"
+  },
+  {
+    "name": "radix-name-phases",
+    "trial": 2,
+    "wall_ms": 257.769747,
+    "stderr": "RADIX 0 collect=569072 sort=10953421 reduce=22397472\nRADIX 5 collect=492764 sort=11106876 reduce=24331665\nRADIX 4 collect=636188 sort=11133190 reduce=20140600\nRADIX 1 collect=482542 sort=11029186 reduce=22220218\nRADIX 3 collect=557815 sort=10934137 reduce=22005906\nRADIX 2 collect=655063 sort=11860586 reduce=24234952\nPARSE parse=36840206 partition=7728371\nPARSE parse=37029557 partition=9461891\nPARSE parse=35499920 partition=10352226\nPARSE parse=36666481 partition=8997943\nPARSE parse=34709765 partition=9868805\nPARSE parse=34357050 partition=10326454\n"
+  }
+]

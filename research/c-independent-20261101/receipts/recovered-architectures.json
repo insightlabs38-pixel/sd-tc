@@ -1,0 +1,226 @@
+[
+  {
+    "name": "pair-clean",
+    "trial": 0,
+    "wall_ms": 161.27370399999563,
+    "cpu_ms": 304.51099999999997,
+    "rss_kib": 14128
+  },
+  {
+    "name": "main-baseline",
+    "trial": 0,
+    "wall_ms": 165.96744199978275,
+    "cpu_ms": 315.45799999999997,
+    "rss_kib": 14648
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 0,
+    "wall_ms": 150.71615099986957,
+    "cpu_ms": 285.606,
+    "rss_kib": 14912
+  },
+  {
+    "name": "radix-bucket",
+    "trial": 0,
+    "wall_ms": 259.0376470002411,
+    "cpu_ms": 463.924,
+    "rss_kib": 228280
+  },
+  {
+    "name": "pair-clean",
+    "trial": 1,
+    "wall_ms": 156.12118600029135,
+    "cpu_ms": 294.33699999999993,
+    "rss_kib": 14572
+  },
+  {
+    "name": "radix-bucket",
+    "trial": 1,
+    "wall_ms": 260.41563600028894,
+    "cpu_ms": 469.558,
+    "rss_kib": 228476
+  },
+  {
+    "name": "main-baseline",
+    "trial": 1,
+    "wall_ms": 165.09215699989,
+    "cpu_ms": 312.39,
+    "rss_kib": 14828
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 1,
+    "wall_ms": 151.0952650000945,
+    "cpu_ms": 277.538,
+    "rss_kib": 15612
+  },
+  {
+    "name": "main-baseline",
+    "trial": 2,
+    "wall_ms": 170.3263720000905,
+    "cpu_ms": 311.99,
+    "rss_kib": 14624
+  },
+  {
+    "name": "radix-bucket",
+    "trial": 2,
+    "wall_ms": 258.0460019999009,
+    "cpu_ms": 470.40999999999997,
+    "rss_kib": 228540
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 2,
+    "wall_ms": 149.85636099982003,
+    "cpu_ms": 277.306,
+    "rss_kib": 14628
+  },
+  {
+    "name": "pair-clean",
+    "trial": 2,
+    "wall_ms": 161.5924200000336,
+    "cpu_ms": 293.33,
+    "rss_kib": 13848
+  },
+  {
+    "name": "main-baseline",
+    "trial": 3,
+    "wall_ms": 164.49335099969176,
+    "cpu_ms": 301.431,
+    "rss_kib": 14316
+  },
+  {
+    "name": "radix-bucket",
+    "trial": 3,
+    "wall_ms": 270.4649580000478,
+    "cpu_ms": 483.4599999999999,
+    "rss_kib": 228468
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 3,
+    "wall_ms": 154.27679100002933,
+    "cpu_ms": 289.746,
+    "rss_kib": 15564
+  },
+  {
+    "name": "pair-clean",
+    "trial": 3,
+    "wall_ms": 157.49883499984207,
+    "cpu_ms": 289.813,
+    "rss_kib": 14844
+  },
+  {
+    "name": "radix-bucket",
+    "trial": 4,
+    "wall_ms": 256.9339140000011,
+    "cpu_ms": 472.833,
+    "rss_kib": 228324
+  },
+  {
+    "name": "pair-clean",
+    "trial": 4,
+    "wall_ms": 162.32437999997273,
+    "cpu_ms": 298.448,
+    "rss_kib": 14372
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 4,
+    "wall_ms": 155.60725000023012,
+    "cpu_ms": 292.4,
+    "rss_kib": 14824
+  },
+  {
+    "name": "main-baseline",
+    "trial": 4,
+    "wall_ms": 163.90256300019246,
+    "cpu_ms": 308.888,
+    "rss_kib": 14436
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 5,
+    "wall_ms": 155.1548309998907,
+    "cpu_ms": 294.302,
+    "rss_kib": 15068
+  },
+  {
+    "name": "main-baseline",
+    "trial": 5,
+    "wall_ms": 159.81101299985312,
+    "cpu_ms": 300.87399999999997,
+    "rss_kib": 14640
+  },
+  {
+    "name": "radix-bucket",
+    "trial": 5,
+    "wall_ms": 254.75009199999477,
+    "cpu_ms": 468.09499999999997,
+    "rss_kib": 228480
+  },
+  {
+    "name": "pair-clean",
+    "trial": 5,
+    "wall_ms": 154.40559600028791,
+    "cpu_ms": 288.63899999999995,
+    "rss_kib": 14420
+  },
+  {
+    "name": "pair-clean",
+    "trial": 6,
+    "wall_ms": 161.2908049996804,
+    "cpu_ms": 302.817,
+    "rss_kib": 14004
+  },
+  {
+    "name": "radix-bucket",
+    "trial": 6,
+    "wall_ms": 256.5817880004033,
+    "cpu_ms": 478.59799999999996,
+    "rss_kib": 228412
+  },
+  {
+    "name": "main-baseline",
+    "trial": 6,
+    "wall_ms": 162.2015109996937,
+    "cpu_ms": 304.587,
+    "rss_kib": 14312
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 6,
+    "wall_ms": 148.60133000001952,
+    "cpu_ms": 279.474,
+    "rss_kib": 15076
+  },
+  {
+    "name": "main-baseline",
+    "trial": 7,
+    "wall_ms": 169.2665069999748,
+    "cpu_ms": 315.703,
+    "rss_kib": 14432
+  },
+  {
+    "name": "pair-inline32",
+    "trial": 7,
+    "wall_ms": 158.45882999974492,
+    "cpu_ms": 293.101,
+    "rss_kib": 14900
+  },
+  {
+    "name": "pair-clean",
+    "trial": 7,
+    "wall_ms": 161.2527570000566,
+    "cpu_ms": 302.08899999999994,
+    "rss_kib": 14456
+  },
+  {
+    "name": "radix-bucket",
+    "trial": 7,
+    "wall_ms": 253.80646600024193,
+    "cpu_ms": 464.68999999999994,
+    "rss_kib": 228376
+  }
+]

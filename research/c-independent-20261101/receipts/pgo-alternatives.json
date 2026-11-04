@@ -1,0 +1,542 @@
+[
+  {
+    "trial": 0,
+    "name": "block",
+    "wall_ms": 641.9655879999482,
+    "cpu_ms": 1270.136,
+    "rss_kib": 15040,
+    "minor_faults": 5286,
+    "major_faults": 0
+  },
+  {
+    "trial": 0,
+    "name": "private",
+    "wall_ms": 292.585387000031,
+    "cpu_ms": 550.583,
+    "rss_kib": 57484,
+    "minor_faults": 25086,
+    "major_faults": 0
+  },
+  {
+    "trial": 0,
+    "name": "official-best",
+    "wall_ms": 175.24073699996734,
+    "cpu_ms": 384.865,
+    "rss_kib": 14904,
+    "minor_faults": 5273,
+    "major_faults": 0
+  },
+  {
+    "trial": 0,
+    "name": "private-v2",
+    "wall_ms": 282.37863800006835,
+    "cpu_ms": 517.651,
+    "rss_kib": 52668,
+    "minor_faults": 16534,
+    "major_faults": 0
+  },
+  {
+    "trial": 0,
+    "name": "main-baseline",
+    "wall_ms": 190.29734299999745,
+    "cpu_ms": 384.799,
+    "rss_kib": 14256,
+    "minor_faults": 5274,
+    "major_faults": 0
+  },
+  {
+    "trial": 0,
+    "name": "owner",
+    "wall_ms": 227.9083249999303,
+    "cpu_ms": 466.406,
+    "rss_kib": 31004,
+    "minor_faults": 7375,
+    "major_faults": 0
+  },
+  {
+    "trial": 1,
+    "name": "official-best",
+    "wall_ms": 186.3959210000985,
+    "cpu_ms": 366.179,
+    "rss_kib": 14508,
+    "minor_faults": 5282,
+    "major_faults": 0
+  },
+  {
+    "trial": 1,
+    "name": "private",
+    "wall_ms": 293.65012599998863,
+    "cpu_ms": 514.837,
+    "rss_kib": 56488,
+    "minor_faults": 24995,
+    "major_faults": 0
+  },
+  {
+    "trial": 1,
+    "name": "block",
+    "wall_ms": 194.42250099996272,
+    "cpu_ms": 417.52799999999996,
+    "rss_kib": 14288,
+    "minor_faults": 5253,
+    "major_faults": 0
+  },
+  {
+    "trial": 1,
+    "name": "private-v2",
+    "wall_ms": 303.7485940000124,
+    "cpu_ms": 580.8439999999999,
+    "rss_kib": 52280,
+    "minor_faults": 16568,
+    "major_faults": 0
+  },
+  {
+    "trial": 1,
+    "name": "main-baseline",
+    "wall_ms": 186.82559199999105,
+    "cpu_ms": 370.38999999999993,
+    "rss_kib": 14236,
+    "minor_faults": 5267,
+    "major_faults": 0
+  },
+  {
+    "trial": 1,
+    "name": "owner",
+    "wall_ms": 275.49295100004656,
+    "cpu_ms": 486.307,
+    "rss_kib": 31988,
+    "minor_faults": 7377,
+    "major_faults": 0
+  },
+  {
+    "trial": 2,
+    "name": "private-v2",
+    "wall_ms": 267.2713660000454,
+    "cpu_ms": 545.0540000000001,
+    "rss_kib": 53876,
+    "minor_faults": 16567,
+    "major_faults": 0
+  },
+  {
+    "trial": 2,
+    "name": "private",
+    "wall_ms": 282.2801330000857,
+    "cpu_ms": 510.286,
+    "rss_kib": 63404,
+    "minor_faults": 25014,
+    "major_faults": 0
+  },
+  {
+    "trial": 2,
+    "name": "main-baseline",
+    "wall_ms": 176.47725000006176,
+    "cpu_ms": 389.15199999999993,
+    "rss_kib": 14620,
+    "minor_faults": 5287,
+    "major_faults": 0
+  },
+  {
+    "trial": 2,
+    "name": "official-best",
+    "wall_ms": 207.43475200004013,
+    "cpu_ms": 406.409,
+    "rss_kib": 13880,
+    "minor_faults": 5266,
+    "major_faults": 0
+  },
+  {
+    "trial": 2,
+    "name": "owner",
+    "wall_ms": 262.15590300000713,
+    "cpu_ms": 485.467,
+    "rss_kib": 31464,
+    "minor_faults": 7372,
+    "major_faults": 0
+  },
+  {
+    "trial": 2,
+    "name": "block",
+    "wall_ms": 210.51719000001867,
+    "cpu_ms": 408.389,
+    "rss_kib": 14040,
+    "minor_faults": 5250,
+    "major_faults": 0
+  },
+  {
+    "trial": 3,
+    "name": "official-best",
+    "wall_ms": 191.68704100002287,
+    "cpu_ms": 368.548,
+    "rss_kib": 14248,
+    "minor_faults": 5280,
+    "major_faults": 0
+  },
+  {
+    "trial": 3,
+    "name": "block",
+    "wall_ms": 200.35990600001696,
+    "cpu_ms": 391.381,
+    "rss_kib": 14248,
+    "minor_faults": 5247,
+    "major_faults": 0
+  },
+  {
+    "trial": 3,
+    "name": "owner",
+    "wall_ms": 233.4359050000785,
+    "cpu_ms": 470.85299999999995,
+    "rss_kib": 30264,
+    "minor_faults": 7352,
+    "major_faults": 0
+  },
+  {
+    "trial": 3,
+    "name": "main-baseline",
+    "wall_ms": 185.60458299998572,
+    "cpu_ms": 368.141,
+    "rss_kib": 14220,
+    "minor_faults": 5281,
+    "major_faults": 0
+  },
+  {
+    "trial": 3,
+    "name": "private",
+    "wall_ms": 289.81171400005223,
+    "cpu_ms": 519.143,
+    "rss_kib": 60656,
+    "minor_faults": 24646,
+    "major_faults": 0
+  },
+  {
+    "trial": 3,
+    "name": "private-v2",
+    "wall_ms": 243.40268699995704,
+    "cpu_ms": 521.727,
+    "rss_kib": 54964,
+    "minor_faults": 16568,
+    "major_faults": 0
+  },
+  {
+    "trial": 4,
+    "name": "owner",
+    "wall_ms": 266.8071489999875,
+    "cpu_ms": 527.194,
+    "rss_kib": 32600,
+    "minor_faults": 7373,
+    "major_faults": 0
+  },
+  {
+    "trial": 4,
+    "name": "private-v2",
+    "wall_ms": 281.0712360000025,
+    "cpu_ms": 532.079,
+    "rss_kib": 52908,
+    "minor_faults": 16535,
+    "major_faults": 0
+  },
+  {
+    "trial": 4,
+    "name": "official-best",
+    "wall_ms": 203.26826600000913,
+    "cpu_ms": 393.024,
+    "rss_kib": 14504,
+    "minor_faults": 5267,
+    "major_faults": 0
+  },
+  {
+    "trial": 4,
+    "name": "private",
+    "wall_ms": 270.4153939999969,
+    "cpu_ms": 515.0369999999999,
+    "rss_kib": 56204,
+    "minor_faults": 25240,
+    "major_faults": 0
+  },
+  {
+    "trial": 4,
+    "name": "main-baseline",
+    "wall_ms": 169.0390070000376,
+    "cpu_ms": 369.99499999999995,
+    "rss_kib": 14720,
+    "minor_faults": 5269,
+    "major_faults": 0
+  },
+  {
+    "trial": 4,
+    "name": "block",
+    "wall_ms": 205.2810220000083,
+    "cpu_ms": 405.817,
+    "rss_kib": 14572,
+    "minor_faults": 5288,
+    "major_faults": 0
+  },
+  {
+    "trial": 5,
+    "name": "owner",
+    "wall_ms": 388.4645580000097,
+    "cpu_ms": 762.513,
+    "rss_kib": 25144,
+    "minor_faults": 7280,
+    "major_faults": 0
+  },
+  {
+    "trial": 5,
+    "name": "private-v2",
+    "wall_ms": 351.8935250000368,
+    "cpu_ms": 553.233,
+    "rss_kib": 53744,
+    "minor_faults": 16569,
+    "major_faults": 0
+  },
+  {
+    "trial": 5,
+    "name": "block",
+    "wall_ms": 244.06100900000638,
+    "cpu_ms": 427.51599999999996,
+    "rss_kib": 14688,
+    "minor_faults": 5248,
+    "major_faults": 0
+  },
+  {
+    "trial": 5,
+    "name": "official-best",
+    "wall_ms": 269.64193000003434,
+    "cpu_ms": 392.87899999999996,
+    "rss_kib": 13996,
+    "minor_faults": 5230,
+    "major_faults": 0
+  },
+  {
+    "trial": 5,
+    "name": "main-baseline",
+    "wall_ms": 316.45361000005323,
+    "cpu_ms": 410.807,
+    "rss_kib": 14768,
+    "minor_faults": 5259,
+    "major_faults": 0
+  },
+  {
+    "trial": 5,
+    "name": "private",
+    "wall_ms": 561.7642099999784,
+    "cpu_ms": 668.851,
+    "rss_kib": 69816,
+    "minor_faults": 24518,
+    "major_faults": 0
+  },
+  {
+    "trial": 6,
+    "name": "private-v2",
+    "wall_ms": 427.2887260000289,
+    "cpu_ms": 611.828,
+    "rss_kib": 53760,
+    "minor_faults": 16569,
+    "major_faults": 0
+  },
+  {
+    "trial": 6,
+    "name": "private",
+    "wall_ms": 393.8265859999319,
+    "cpu_ms": 576.2819999999999,
+    "rss_kib": 57028,
+    "minor_faults": 24456,
+    "major_faults": 0
+  },
+  {
+    "trial": 6,
+    "name": "main-baseline",
+    "wall_ms": 287.5981509999974,
+    "cpu_ms": 426.101,
+    "rss_kib": 14116,
+    "minor_faults": 5231,
+    "major_faults": 0
+  },
+  {
+    "trial": 6,
+    "name": "official-best",
+    "wall_ms": 251.05763199997,
+    "cpu_ms": 403.06299999999993,
+    "rss_kib": 14148,
+    "minor_faults": 5239,
+    "major_faults": 0
+  },
+  {
+    "trial": 6,
+    "name": "block",
+    "wall_ms": 280.3384909999522,
+    "cpu_ms": 413.13,
+    "rss_kib": 14644,
+    "minor_faults": 5245,
+    "major_faults": 0
+  },
+  {
+    "trial": 6,
+    "name": "owner",
+    "wall_ms": 856.7370009999422,
+    "cpu_ms": 1209.487,
+    "rss_kib": 30404,
+    "minor_faults": 7349,
+    "major_faults": 0
+  },
+  {
+    "trial": 7,
+    "name": "owner",
+    "wall_ms": 415.41427399999975,
+    "cpu_ms": 679.411,
+    "rss_kib": 32288,
+    "minor_faults": 7378,
+    "major_faults": 0
+  },
+  {
+    "trial": 7,
+    "name": "private",
+    "wall_ms": 278.9512880000302,
+    "cpu_ms": 539.2429999999999,
+    "rss_kib": 54768,
+    "minor_faults": 25517,
+    "major_faults": 0
+  },
+  {
+    "trial": 7,
+    "name": "private-v2",
+    "wall_ms": 259.2785900000081,
+    "cpu_ms": 528.746,
+    "rss_kib": 53880,
+    "minor_faults": 16568,
+    "major_faults": 0
+  },
+  {
+    "trial": 7,
+    "name": "official-best",
+    "wall_ms": 189.6806589999187,
+    "cpu_ms": 377.25699999999995,
+    "rss_kib": 14792,
+    "minor_faults": 5291,
+    "major_faults": 0
+  },
+  {
+    "trial": 7,
+    "name": "main-baseline",
+    "wall_ms": 206.43417700000555,
+    "cpu_ms": 393.601,
+    "rss_kib": 14552,
+    "minor_faults": 5270,
+    "major_faults": 0
+  },
+  {
+    "trial": 7,
+    "name": "block",
+    "wall_ms": 207.94929600003798,
+    "cpu_ms": 410.82399999999996,
+    "rss_kib": 13804,
+    "minor_faults": 5262,
+    "major_faults": 0
+  },
+  {
+    "trial": 8,
+    "name": "main-baseline",
+    "wall_ms": 192.1914580000248,
+    "cpu_ms": 380.32099999999997,
+    "rss_kib": 14192,
+    "minor_faults": 5281,
+    "major_faults": 0
+  },
+  {
+    "trial": 8,
+    "name": "private-v2",
+    "wall_ms": 297.51732600004743,
+    "cpu_ms": 545.234,
+    "rss_kib": 53876,
+    "minor_faults": 16568,
+    "major_faults": 0
+  },
+  {
+    "trial": 8,
+    "name": "private",
+    "wall_ms": 287.31247399991844,
+    "cpu_ms": 518.697,
+    "rss_kib": 55680,
+    "minor_faults": 25231,
+    "major_faults": 0
+  },
+  {
+    "trial": 8,
+    "name": "official-best",
+    "wall_ms": 169.3977109999878,
+    "cpu_ms": 367.6449999999999,
+    "rss_kib": 14316,
+    "minor_faults": 5270,
+    "major_faults": 0
+  },
+  {
+    "trial": 8,
+    "name": "owner",
+    "wall_ms": 230.67348400002174,
+    "cpu_ms": 477.282,
+    "rss_kib": 30716,
+    "minor_faults": 7336,
+    "major_faults": 0
+  },
+  {
+    "trial": 8,
+    "name": "block",
+    "wall_ms": 209.6193620000122,
+    "cpu_ms": 425.08199999999994,
+    "rss_kib": 14468,
+    "minor_faults": 5290,
+    "major_faults": 0
+  },
+  {
+    "trial": 9,
+    "name": "private",
+    "wall_ms": 296.5399269999125,
+    "cpu_ms": 524.454,
+    "rss_kib": 64636,
+    "minor_faults": 24243,
+    "major_faults": 0
+  },
+  {
+    "trial": 9,
+    "name": "block",
+    "wall_ms": 190.62997600008202,
+    "cpu_ms": 404.191,
+    "rss_kib": 14260,
+    "minor_faults": 5260,
+    "major_faults": 0
+  },
+  {
+    "trial": 9,
+    "name": "official-best",
+    "wall_ms": 194.5235870000488,
+    "cpu_ms": 380.687,
+    "rss_kib": 14308,
+    "minor_faults": 5278,
+    "major_faults": 0
+  },
+  {
+    "trial": 9,
+    "name": "owner",
+    "wall_ms": 421.2584030000244,
+    "cpu_ms": 860.1229999999999,
+    "rss_kib": 22732,
+    "minor_faults": 7191,
+    "major_faults": 0
+  },
+  {
+    "trial": 9,
+    "name": "main-baseline",
+    "wall_ms": 201.95403800005352,
+    "cpu_ms": 388.48699999999997,
+    "rss_kib": 15016,
+    "minor_faults": 5255,
+    "major_faults": 0
+  },
+  {
+    "trial": 9,
+    "name": "private-v2",
+    "wall_ms": 291.2097729999914,
+    "cpu_ms": 543.7350000000001,
+    "rss_kib": 54644,
+    "minor_faults": 16568,
+    "major_faults": 0
+  }
+]

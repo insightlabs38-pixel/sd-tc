@@ -1,0 +1,162 @@
+[
+  {
+    "trial": 0,
+    "name": "structural-v2",
+    "wall_s": 0.17790970999999445
+  },
+  {
+    "trial": 0,
+    "name": "baseline",
+    "wall_s": 0.1867086589999758
+  },
+  {
+    "trial": 0,
+    "name": "structural",
+    "wall_s": 0.21136251600000833
+  },
+  {
+    "trial": 0,
+    "name": "private",
+    "wall_s": 0.27114936599997463
+  },
+  {
+    "trial": 1,
+    "name": "private",
+    "wall_s": 0.2503113200000371
+  },
+  {
+    "trial": 1,
+    "name": "baseline",
+    "wall_s": 0.1642614330000356
+  },
+  {
+    "trial": 1,
+    "name": "structural-v2",
+    "wall_s": 0.21090119300004062
+  },
+  {
+    "trial": 1,
+    "name": "structural",
+    "wall_s": 0.20577981100001352
+  },
+  {
+    "trial": 2,
+    "name": "structural",
+    "wall_s": 0.21079902299999276
+  },
+  {
+    "trial": 2,
+    "name": "structural-v2",
+    "wall_s": 0.24375298900002917
+  },
+  {
+    "trial": 2,
+    "name": "private",
+    "wall_s": 0.26295382799997924
+  },
+  {
+    "trial": 2,
+    "name": "baseline",
+    "wall_s": 0.16536668499998086
+  },
+  {
+    "trial": 3,
+    "name": "private",
+    "wall_s": 0.2780458340000109
+  },
+  {
+    "trial": 3,
+    "name": "baseline",
+    "wall_s": 0.1484016300000235
+  },
+  {
+    "trial": 3,
+    "name": "structural-v2",
+    "wall_s": 0.24166621900002383
+  },
+  {
+    "trial": 3,
+    "name": "structural",
+    "wall_s": 0.22574632799995697
+  },
+  {
+    "trial": 4,
+    "name": "structural-v2",
+    "wall_s": 0.20029739299997118
+  },
+  {
+    "trial": 4,
+    "name": "baseline",
+    "wall_s": 0.2024705959999551
+  },
+  {
+    "trial": 4,
+    "name": "private",
+    "wall_s": 0.273349683000049
+  },
+  {
+    "trial": 4,
+    "name": "structural",
+    "wall_s": 0.22101742799998192
+  },
+  {
+    "trial": 5,
+    "name": "baseline",
+    "wall_s": 0.19899567800001705
+  },
+  {
+    "trial": 5,
+    "name": "structural",
+    "wall_s": 0.21346674400001575
+  },
+  {
+    "trial": 5,
+    "name": "private",
+    "wall_s": 0.29532636099997944
+  },
+  {
+    "trial": 5,
+    "name": "structural-v2",
+    "wall_s": 0.1886597970000139
+  },
+  {
+    "trial": 6,
+    "name": "private",
+    "wall_s": 0.2995023180000089
+  },
+  {
+    "trial": 6,
+    "name": "structural-v2",
+    "wall_s": 0.1900896790000388
+  },
+  {
+    "trial": 6,
+    "name": "structural",
+    "wall_s": 0.2175106910000295
+  },
+  {
+    "trial": 6,
+    "name": "baseline",
+    "wall_s": 0.1911173489999669
+  },
+  {
+    "trial": 7,
+    "name": "private",
+    "wall_s": 0.2932718480000176
+  },
+  {
+    "trial": 7,
+    "name": "structural",
+    "wall_s": 0.21321208800003433
+  },
+  {
+    "trial": 7,
+    "name": "baseline",
+    "wall_s": 0.18306538299998465
+  },
+  {
+    "trial": 7,
+    "name": "structural-v2",
+    "wall_s": 0.21055050699999356
+  }
+]

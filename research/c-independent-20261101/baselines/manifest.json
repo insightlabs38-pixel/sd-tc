@@ -1,0 +1,23 @@
+{
+  "current-official": {
+    "sha256": "d9631649abf3fc5280d4a3bc9f7cb941640079069018fc2019389c89c69ba74c",
+    "git_blob": "c4b41459c8ce1ea8d47e834a136cb9d11b73cd2a"
+  },
+  "main-baseline": {
+    "sha256": "235d2ba35db14dd48edca1085680d782910bbbcdace8f89e14fae91d103dd786",
+    "git_blob": "b31de39258eec335f79e14a0568a325d4ad2c732"
+  },
+  "official-best": {
+    "sha256": "d9631649abf3fc5280d4a3bc9f7cb941640079069018fc2019389c89c69ba74c",
+    "git_blob": "c4b41459c8ce1ea8d47e834a136cb9d11b73cd2a"
+  },
+  "official-best-20261101-065108": {
+    "official_commit": "6917275dbd2ee12fd19df6fe3b87a60920c86ef8",
+    "run_id": "run-e7eab9673214",
+    "git_blob": "0772ace04e358868f0b060b178d6ab77e93a15ab",
+    "sha256": "90ff49b2dbf26bc3d33e62c6e2e86ed990f19280e6b99d3e8dfca7426ec7ac65",
+    "docker_sha256": "f87557a6db85b4e6fde26f4b50e3deed6b82002fc9960cfd213e02728101b898",
+    "equivalent_sd_tc_commit": "e2531901a9fe5704ae3473c7e52db1f1de19c296",
+    "rollback_branch": "rollback/c-independent-official-6917275"
+  }
+}

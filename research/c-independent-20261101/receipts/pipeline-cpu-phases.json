@@ -1,0 +1,110 @@
+[
+  {
+    "name": "membership-pipeline-phases",
+    "trial": 0,
+    "wall_ms": 172.276191,
+    "cpu_ms": {
+      "parser": 297.280478,
+      "owner": 18.475973
+    }
+  },
+  {
+    "name": "membership-pipeline-phases",
+    "trial": 1,
+    "wall_ms": 164.721902,
+    "cpu_ms": {
+      "parser": 290.443966,
+      "owner": 17.280665
+    }
+  },
+  {
+    "name": "membership-pipeline-phases",
+    "trial": 2,
+    "wall_ms": 171.229437,
+    "cpu_ms": {
+      "parser": 295.657231,
+      "owner": 19.502468
+    }
+  },
+  {
+    "name": "membership-grouped-phases",
+    "trial": 0,
+    "wall_ms": 171.009953,
+    "cpu_ms": {
+      "parser": 287.908136,
+      "owner": 16.120613
+    }
+  },
+  {
+    "name": "membership-grouped-phases",
+    "trial": 1,
+    "wall_ms": 169.379342,
+    "cpu_ms": {
+      "parser": 291.825268,
+      "owner": 17.234721
+    }
+  },
+  {
+    "name": "membership-grouped-phases",
+    "trial": 2,
+    "wall_ms": 163.332279,
+    "cpu_ms": {
+      "parser": 283.679255,
+      "owner": 15.941513
+    }
+  },
+  {
+    "name": "membership-borrowed-grouped-phases",
+    "trial": 0,
+    "wall_ms": 194.389283,
+    "cpu_ms": {
+      "parser": 327.214757,
+      "owner": 18.12656
+    }
+  },
+  {
+    "name": "membership-borrowed-grouped-phases",
+    "trial": 1,
+    "wall_ms": 189.473876,
+    "cpu_ms": {
+      "parser": 326.197399,
+      "owner": 18.3296
+    }
+  },
+  {
+    "name": "membership-borrowed-grouped-phases",
+    "trial": 2,
+    "wall_ms": 189.770846,
+    "cpu_ms": {
+      "parser": 321.214573,
+      "owner": 18.200124
+    }
+  },
+  {
+    "name": "private-stream-phases",
+    "trial": 0,
+    "wall_ms": 182.401687,
+    "cpu_ms": {
+      "parser": 186.556641,
+      "owner": 146.14993
+    }
+  },
+  {
+    "name": "private-stream-phases",
+    "trial": 1,
+    "wall_ms": 184.961843,
+    "cpu_ms": {
+      "parser": 184.785019,
+      "owner": 142.733317
+    }
+  },
+  {
+    "name": "private-stream-phases",
+    "trial": 2,
+    "wall_ms": 191.612765,
+    "cpu_ms": {
+      "parser": 186.438029,
+      "owner": 145.150268
+    }
+  }
+]

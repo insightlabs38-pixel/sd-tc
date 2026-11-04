@@ -1,0 +1,29 @@
+[
+  {
+    "wall_ns": 177365656,
+    "exit_code": 0,
+    "signal": 0,
+    "peak_bytes": 13172736,
+    "image": "frontier-independent:tilestream",
+    "trial": 0,
+    "sha256": "0783e0b145954999192085d8a71cfed1cd265d8350292073ebf27f43887a5487"
+  },
+  {
+    "wall_ns": 177145801,
+    "exit_code": 0,
+    "signal": 0,
+    "peak_bytes": 37429248,
+    "image": "frontier-independent:radixstream",
+    "trial": 0,
+    "sha256": "0783e0b145954999192085d8a71cfed1cd265d8350292073ebf27f43887a5487"
+  },
+  {
+    "wall_ns": 188834221,
+    "exit_code": 0,
+    "signal": 0,
+    "peak_bytes": 14422016,
+    "image": "frontier-independent:epochpool",
+    "trial": 0,
+    "sha256": "0783e0b145954999192085d8a71cfed1cd265d8350292073ebf27f43887a5487"
+  }
+]

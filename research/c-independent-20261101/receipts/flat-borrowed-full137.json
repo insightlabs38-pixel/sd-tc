@@ -1,0 +1,92 @@
+[
+  {
+    "wall_ns": 200214553,
+    "exit_code": 0,
+    "signal": 0,
+    "peak_bytes": 8347648,
+    "image": "frontier-independent:flatborrowed",
+    "trial": 0,
+    "sha256": "0783e0b145954999192085d8a71cfed1cd265d8350292073ebf27f43887a5487"
+  },
+  {
+    "wall_ns": 155773192,
+    "exit_code": 0,
+    "signal": 0,
+    "peak_bytes": 10727424,
+    "image": "frontier-independent:inline32",
+    "trial": 0,
+    "sha256": "0783e0b145954999192085d8a71cfed1cd265d8350292073ebf27f43887a5487"
+  },
+  {
+    "wall_ns": 200395072,
+    "exit_code": 0,
+    "signal": 0,
+    "peak_bytes": 8065024,
+    "image": "frontier-independent:flatborrowed",
+    "trial": 1,
+    "sha256": "0783e0b145954999192085d8a71cfed1cd265d8350292073ebf27f43887a5487"
+  },
+  {
+    "wall_ns": 157900093,
+    "exit_code": 0,
+    "signal": 0,
+    "peak_bytes": 10653696,
+    "image": "frontier-independent:inline32",
+    "trial": 1,
+    "sha256": "0783e0b145954999192085d8a71cfed1cd265d8350292073ebf27f43887a5487"
+  },
+  {
+    "wall_ns": 155688138,
+    "exit_code": 0,
+    "signal": 0,
+    "peak_bytes": 10960896,
+    "image": "frontier-independent:inline32",
+    "trial": 2,
+    "sha256": "0783e0b145954999192085d8a71cfed1cd265d8350292073ebf27f43887a5487"
+  },
+  {
+    "wall_ns": 228628493,
+    "exit_code": 0,
+    "signal": 0,
+    "peak_bytes": 8183808,
+    "image": "frontier-independent:flatborrowed",
+    "trial": 2,
+    "sha256": "0783e0b145954999192085d8a71cfed1cd265d8350292073ebf27f43887a5487"
+  },
+  {
+    "wall_ns": 170457750,
+    "exit_code": 0,
+    "signal": 0,
+    "peak_bytes": 8122368,
+    "image": "frontier-independent:flatborrowed",
+    "trial": 3,
+    "sha256": "0783e0b145954999192085d8a71cfed1cd265d8350292073ebf27f43887a5487"
+  },
+  {
+    "wall_ns": 156949285,
+    "exit_code": 0,
+    "signal": 0,
+    "peak_bytes": 10981376,
+    "image": "frontier-independent:inline32",
+    "trial": 3,
+    "sha256": "0783e0b145954999192085d8a71cfed1cd265d8350292073ebf27f43887a5487"
+  },
+  {
+    "wall_ns": 237678584,
+    "exit_code": 0,
+    "signal": 0,
+    "peak_bytes": 8110080,
+    "image": "frontier-independent:flatborrowed",
+    "trial": 4,
+    "sha256": "0783e0b145954999192085d8a71cfed1cd265d8350292073ebf27f43887a5487"
+  },
+  {
+    "wall_ns": 153462647,
+    "exit_code": 0,
+    "signal": 0,
+    "peak_bytes": 10735616,
+    "image": "frontier-independent:inline32",
+    "trial": 4,
+    "sha256": "0783e0b145954999192085d8a71cfed1cd265d8350292073ebf27f43887a5487"
+  }
+]

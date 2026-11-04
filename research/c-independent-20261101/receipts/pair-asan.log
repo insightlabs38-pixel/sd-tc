@@ -1,0 +1,23 @@
+worked-example: exact, 144 output bytes, sha256=72ed9e59bff2dad354a9fb4cbc2d4b102477f634230b47e86035864c88d27444
+quoted-bom-no-final-terminator: exact, 60 output bytes, sha256=0c084eef633858f79b023d1d767c8c474e73ad5c37f3f587c1145c3aa36e52ec
+colliding-name-hashes: exact, 30 output bytes, sha256=7f1663c6c185848cdcfeffd76a87c54c5ac6c930a726609e04254071a95834c0
+canonical-raw-name-equivalence: exact, 32 output bytes, sha256=e26766ec88917afefd9c0718502ba613c54bb0290a0e4d3f02de77fc996b3701
+wide-unknown-region-id: exact, 68 output bytes, sha256=e3a1aad8d6ae9bdaf4776c35c17c45e6d725a66ad7649f448d0fa22f04e2b1f6
+eight-digit-id-fast-path: exact, 38 output bytes, sha256=0e12e730cfd62e802a2eaa25d66db993367206f35136895305d7514aab17ab9f
+page-tail-empty-name-4095: exact, 32 output bytes, sha256=8a0eee218fc00b5628acf18501af35ebed20a11fdf77d2fceb115bf25fe180e3
+page-tail-empty-name-4096: exact, 32 output bytes, sha256=fe795b51905b072935c9d7b69a4a742ceb7e551be038801ddbece2201d5df78e
+page-tail-empty-name-4097: exact, 32 output bytes, sha256=7c99e0025034e7740269473067aaa37e7bf3b4ac933cdecbcedfa0d5bf4f95f4
+page-tail-empty-name-8192: exact, 32 output bytes, sha256=2ed3b30d126ceff96883ac5a2464d4af5997afdbf9ce0d912014b824c89bb60b
+money-swar-widths-sign-and-eof: exact, 45 output bytes, sha256=6d004334e5b190994526f3e282367c8aada1675d0347955327f4f39500650193
+page-aligned-eof-short-name-and-money: exact, 32 output bytes, sha256=7617dffbc6d8808e53e0c6804a829af155aad12f5485953f289f3391179e4b46
+quote-vector-boundary-and-escaped-pairs: exact, 79 output bytes, sha256=7452e0d9bf1d0f2e9ad8d4ee66a7cdf47c74a9ff5cccbcf16c309a9764d57d2e
+packed-metadata-lengths-and-full-hash-collisions: exact, 115 output bytes, sha256=26631f91ae32b799363bbfff3d21674175ee70f20c2b08e3525d0db689b96dfd
+long-quoted-record-crosses-worker-boundary: exact, 98 output bytes, sha256=e26343acbacaddb7d01c8c0a821f6e4861ddaee5caedda527083e01174421313
+huge-name-arena-1048593: exact, long name and worker boundaries
+huge-name-arena-16777233: exact, long name and worker boundaries
+sharded-name-table-grow: exact, 60 output bytes, sha256=f8af717c6731f00daf15d7be5e37cfb7bd589cfb4ddd005886fd10922fb286c5
+concurrent-primary-overflow-cutover: exact, 124 output bytes, sha256=e4804303e66df689b9ec12407a75b636b25045d38e704a396579388f5649d363
+concentrated-name-shard-overflow: exact, 53 output bytes, sha256=4d6bca23cb6f9be27e5e320e843e399de3b6a3a2774fb811cfd0d7081a85a730
+cross-worker-colliding-names: exact, 109 output bytes, sha256=34f1fa808d87d2639010072d341d574e18bd9e65d9cb6cb81be1fee2048917fe
+pair-clean-address,undefined-tiny19: exact, 1197 output bytes, sha256=6e4118916628e4b69adcb8a01b2539f5ca05632b310564d9b4cf2c1c7387a9e8
+pair-clean-address,undefined-sample37: exact, 15405 output bytes, sha256=879315626e7d317b9b5cf45d551551cd711841f5b643cfa941499c93b6708054
